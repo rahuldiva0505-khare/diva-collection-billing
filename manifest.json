@@ -1,31 +1,25 @@
 {
-  "id": "./",
   "name": "Diva Collection Billing",
   "short_name": "Diva Billing",
-  "description": "Offline billing, stock, customer and bill history for Diva Collection",
-  "start_url": "./",
+  "description": "Diva Collection offline billing, stock and customer management",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": [
-    "window-controls-overlay",
-    "standalone"
+  "orientation": "portrait-primary",
+  "background_color": "#f5f5f7",
+  "theme_color": "#6d28d9",
+  "categories": [
+    "business",
+    "productivity",
+    "shopping"
   ],
-  "orientation": "any",
-  "background_color": "#f4f4f7",
-  "theme_color": "#6c2bd9",
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
