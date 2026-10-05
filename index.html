@@ -175,113 +175,7 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
     var s=printerSettings();
     var w=window.open('','_blank','width=600,height=600');
     if(!w){alert('Popup blocked है. Browser में popup Allow करें.');return}
-    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div><!-- DIVA BILLING LOCK + MULTI BILL V1 -->
-<script>
-(function(){
-  const LOCK_KEY='DIVA_APP_LOCK_V1', DRAFT_KEY='DIVA_MULTI_BILLS_V1';
-  let lockTimer=null, drafts=JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]'), activeDraft=0;
-
-  function ensureLockUI(){
-    if(document.getElementById('appLockOverlay'))return;
-    const o=document.createElement('div'); o.id='appLockOverlay';
-    o.style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:999999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
-    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔒 Diva Billing Locked</h2><p class="small">App खोलने के लिए PIN डालें.</p><input id="unlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digit PIN" style="text-align:center;font-size:22px;letter-spacing:6px"><button id="unlockBtn" style="margin-top:12px;width:100%">🔓 Unlock</button><div id="unlockMsg" class="small danger" style="margin-top:8px"></div></div>';
-    document.body.appendChild(o);
-    document.getElementById('unlockBtn').onclick=unlockApp;
-    document.getElementById('unlockPin').onkeydown=e=>{if(e.key==='Enter')unlockApp()};
-  }
-  function getPin(){return String(localStorage.getItem(LOCK_KEY)||'')}
-  function lockApp(){
-    ensureLockUI();
-    document.getElementById('appLockOverlay').style.display='flex';
-    document.getElementById('unlockPin').value='';
-    document.getElementById('unlockMsg').textContent='';
-  }
-  function unlockApp(){
-    const p=document.getElementById('unlockPin').value.trim();
-    if(p===getPin()){document.getElementById('appLockOverlay').style.display='none';startAutoLock()}
-    else document.getElementById('unlockMsg').textContent='❌ गलत PIN';
-  }
-  function setPin(){
-    const old=getPin();
-    if(old && prompt('Current PIN डालें')!==old){alert('❌ Current PIN गलत है.');return}
-    const p=prompt('नया 4–6 digit PIN बनाएं');
-    if(!/^\d{4,6}$/.test(String(p||''))){alert('PIN 4 से 6 digits का होना चाहिए.');return}
-    localStorage.setItem(LOCK_KEY,p); alert('✅ App Lock PIN सेट हो गया.');
-    startAutoLock();
-  }
-  function removePin(){
-    const p=prompt('Current PIN डालें');
-    if(p!==getPin()){alert('❌ PIN गलत है.');return}
-    localStorage.removeItem(LOCK_KEY);clearTimeout(lockTimer);alert('🔓 App Lock बंद हो गया.');
-  }
-  function startAutoLock(){
-    clearTimeout(lockTimer);
-    if(!getPin())return;
-    lockTimer=setTimeout(lockApp,5*60*1000);
-  }
-  function resetAutoLock(){if(getPin())startAutoLock()}
-  ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resetAutoLock,{passive:true}));
-  window.appLockSettings=function(){
-    const has=!!getPin();
-    if(has){
-      const a=confirm('App Lock चालू है. OK = PIN बदलें, Cancel = Lock बंद करें.');
-      if(a)setPin(); else if(confirm('क्या App Lock बंद करना है?'))removePin();
-    }else setPin();
-  };
-  window.lockNow=lockApp;
-
-  function draftSnapshot(){
-    return {customer:document.getElementById('cust')?.value||'',phone:document.getElementById('phone')?.value||'',cart:JSON.parse(JSON.stringify(window.cart||cart||[]))};
-  }
-  function loadDraft(d){
-    document.getElementById('cust').value=d?.customer||'';
-    document.getElementById('phone').value=d?.phone||'';
-    cart=JSON.parse(JSON.stringify(d?.cart||[]));
-    renderCart();
-  }
-  function saveDraftState(){
-    if(!drafts.length)drafts=[{customer:'',phone:'',cart:[]}];
-    drafts[activeDraft]=draftSnapshot();
-    localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));
-  }
-  function renderDraftBar(){
-    const billing=document.getElementById('billing'); if(!billing)return;
-    let box=document.getElementById('multiBillBox');
-    if(!box){
-      box=document.createElement('div');box.id='multiBillBox';box.className='card';box.style.background='#fff8ef';
-      billing.insertBefore(box,billing.children[0]);
-    }
-    box.innerHTML='<h3>🧾 Multiple Bills</h3><div class="small">एक साथ कई customers के bills खुले रखें और किसी भी bill पर वापस जाएँ.</div><div id="draftTabs" style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0"></div><button type="button" class="green" onclick="newParallelBill()">➕ New Bill</button> <button type="button" class="gray" onclick="saveParallelBill()">💾 Save Draft</button> <button type="button" onclick="closeParallelBill()">✕ Close Bill</button>';
-    const tabs=document.getElementById('draftTabs');
-    tabs.innerHTML=drafts.map((d,i)=>'<button type="button" class="'+(i===activeDraft?'':'gray')+'" onclick="switchParallelBill('+i+')">Bill '+(i+1)+(d.customer?' — '+esc(d.customer):'')+'</button>').join('');
-  }
-  window.saveParallelBill=function(){saveDraftState();renderDraftBar();alert('✅ Bill draft save हो गया.')};
-  window.switchParallelBill=function(i){saveDraftState();activeDraft=i;loadDraft(drafts[i]);renderDraftBar()};
-  window.newParallelBill=function(){saveDraftState();drafts.push({customer:'',phone:'',cart:[]});activeDraft=drafts.length-1;loadDraft(drafts[activeDraft]);localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));renderDraftBar()};
-  window.closeParallelBill=function(){
-    if(drafts.length<=1){if(!confirm('Current bill खाली करके नया bill शुरू करें?'))return;drafts[0]={customer:'',phone:'',cart:[]};activeDraft=0;loadDraft(drafts[0]);}
-    else{drafts.splice(activeDraft,1);activeDraft=Math.max(0,activeDraft-1);localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));loadDraft(drafts[activeDraft]);}
-    renderDraftBar();
-  };
-  function addHeaderButtons(){
-    const h=document.querySelector('header');if(!h||document.getElementById('lockBtns'))return;
-    const b=document.createElement('span');b.id='lockBtns';b.style='float:right;display:flex;gap:5px';
-    b.innerHTML='<button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button>';
-    h.appendChild(b);
-  }
-  function initMulti(){
-    if(!drafts.length)drafts=[{customer:'',phone:'',cart:[]}];
-    localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));
-    renderDraftBar();
-  }
-  window.addEventListener('load',function(){
-    ensureLockUI();addHeaderButtons();initMulti();
-    if(getPin())startAutoLock();
-  });
-  setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
-})();
-</script></body></html>');
+    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div></body></html>');
     w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
   };
   window.showJSCPrinterBox=function(){
@@ -962,5 +856,111 @@ setTimeout(function(){
   var e=document.getElementById(id);if(e)e.addEventListener('input',updateLabelLayoutInfo);
  });
 },0);
+})();
+</script><!-- DIVA BILLING LOCK + MULTI BILL V1 -->
+<script>
+(function(){
+  const LOCK_KEY='DIVA_APP_LOCK_V1', DRAFT_KEY='DIVA_MULTI_BILLS_V1';
+  let lockTimer=null, drafts=JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]'), activeDraft=0;
+
+  function ensureLockUI(){
+    if(document.getElementById('appLockOverlay'))return;
+    const o=document.createElement('div'); o.id='appLockOverlay';
+    o.style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:999999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔒 Diva Billing Locked</h2><p class="small">App खोलने के लिए PIN डालें.</p><input id="unlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digit PIN" style="text-align:center;font-size:22px;letter-spacing:6px"><button id="unlockBtn" style="margin-top:12px;width:100%">🔓 Unlock</button><div id="unlockMsg" class="small danger" style="margin-top:8px"></div></div>';
+    document.body.appendChild(o);
+    document.getElementById('unlockBtn').onclick=unlockApp;
+    document.getElementById('unlockPin').onkeydown=e=>{if(e.key==='Enter')unlockApp()};
+  }
+  function getPin(){return String(localStorage.getItem(LOCK_KEY)||'')}
+  function lockApp(){
+    ensureLockUI();
+    document.getElementById('appLockOverlay').style.display='flex';
+    document.getElementById('unlockPin').value='';
+    document.getElementById('unlockMsg').textContent='';
+  }
+  function unlockApp(){
+    const p=document.getElementById('unlockPin').value.trim();
+    if(p===getPin()){document.getElementById('appLockOverlay').style.display='none';startAutoLock()}
+    else document.getElementById('unlockMsg').textContent='❌ गलत PIN';
+  }
+  function setPin(){
+    const old=getPin();
+    if(old && prompt('Current PIN डालें')!==old){alert('❌ Current PIN गलत है.');return}
+    const p=prompt('नया 4–6 digit PIN बनाएं');
+    if(!/^\d{4,6}$/.test(String(p||''))){alert('PIN 4 से 6 digits का होना चाहिए.');return}
+    localStorage.setItem(LOCK_KEY,p); alert('✅ App Lock PIN सेट हो गया.');
+    startAutoLock();
+  }
+  function removePin(){
+    const p=prompt('Current PIN डालें');
+    if(p!==getPin()){alert('❌ PIN गलत है.');return}
+    localStorage.removeItem(LOCK_KEY);clearTimeout(lockTimer);alert('🔓 App Lock बंद हो गया.');
+  }
+  function startAutoLock(){
+    clearTimeout(lockTimer);
+    if(!getPin())return;
+    lockTimer=setTimeout(lockApp,5*60*1000);
+  }
+  function resetAutoLock(){if(getPin())startAutoLock()}
+  ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resetAutoLock,{passive:true}));
+  window.appLockSettings=function(){
+    const has=!!getPin();
+    if(has){
+      const a=confirm('App Lock चालू है. OK = PIN बदलें, Cancel = Lock बंद करें.');
+      if(a)setPin(); else if(confirm('क्या App Lock बंद करना है?'))removePin();
+    }else setPin();
+  };
+  window.lockNow=lockApp;
+
+  function draftSnapshot(){
+    return {customer:document.getElementById('cust')?.value||'',phone:document.getElementById('phone')?.value||'',cart:JSON.parse(JSON.stringify(window.cart||cart||[]))};
+  }
+  function loadDraft(d){
+    document.getElementById('cust').value=d?.customer||'';
+    document.getElementById('phone').value=d?.phone||'';
+    cart=JSON.parse(JSON.stringify(d?.cart||[]));
+    renderCart();
+  }
+  function saveDraftState(){
+    if(!drafts.length)drafts=[{customer:'',phone:'',cart:[]}];
+    drafts[activeDraft]=draftSnapshot();
+    localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));
+  }
+  function renderDraftBar(){
+    const billing=document.getElementById('billing'); if(!billing)return;
+    let box=document.getElementById('multiBillBox');
+    if(!box){
+      box=document.createElement('div');box.id='multiBillBox';box.className='card';box.style.background='#fff8ef';
+      billing.insertBefore(box,billing.children[0]);
+    }
+    box.innerHTML='<h3>🧾 Multiple Bills</h3><div class="small">एक साथ कई customers के bills खुले रखें और किसी भी bill पर वापस जाएँ.</div><div id="draftTabs" style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0"></div><button type="button" class="green" onclick="newParallelBill()">➕ New Bill</button> <button type="button" class="gray" onclick="saveParallelBill()">💾 Save Draft</button> <button type="button" onclick="closeParallelBill()">✕ Close Bill</button>';
+    const tabs=document.getElementById('draftTabs');
+    tabs.innerHTML=drafts.map((d,i)=>'<button type="button" class="'+(i===activeDraft?'':'gray')+'" onclick="switchParallelBill('+i+')">Bill '+(i+1)+(d.customer?' — '+esc(d.customer):'')+'</button>').join('');
+  }
+  window.saveParallelBill=function(){saveDraftState();renderDraftBar();alert('✅ Bill draft save हो गया.')};
+  window.switchParallelBill=function(i){saveDraftState();activeDraft=i;loadDraft(drafts[i]);renderDraftBar()};
+  window.newParallelBill=function(){saveDraftState();drafts.push({customer:'',phone:'',cart:[]});activeDraft=drafts.length-1;loadDraft(drafts[activeDraft]);localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));renderDraftBar()};
+  window.closeParallelBill=function(){
+    if(drafts.length<=1){if(!confirm('Current bill खाली करके नया bill शुरू करें?'))return;drafts[0]={customer:'',phone:'',cart:[]};activeDraft=0;loadDraft(drafts[0]);}
+    else{drafts.splice(activeDraft,1);activeDraft=Math.max(0,activeDraft-1);localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));loadDraft(drafts[activeDraft]);}
+    renderDraftBar();
+  };
+  function addHeaderButtons(){
+    const h=document.querySelector('header');if(!h||document.getElementById('lockBtns'))return;
+    const b=document.createElement('span');b.id='lockBtns';b.style='float:right;display:flex;gap:5px';
+    b.innerHTML='<button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button>';
+    h.appendChild(b);
+  }
+  function initMulti(){
+    if(!drafts.length)drafts=[{customer:'',phone:'',cart:[]}];
+    localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));
+    renderDraftBar();
+  }
+  window.addEventListener('load',function(){
+    ensureLockUI();addHeaderButtons();initMulti();
+    if(getPin())startAutoLock();
+  });
+  setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
 })();
 </script></body></html>
