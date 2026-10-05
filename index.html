@@ -64,7 +64,7 @@ function code128Svg(value,opts={}){
 <p class="small">यहीं से <b>नया Product add</b> करें या existing product में purchase quantity जोड़ें। Product add होते ही barcode बन जाएगा और यहीं से label print कर सकते हैं.</p>
 <div class="card" style="background:#fafafa"><h3>➕ Add New Product / Purchase Entry</h3>
 <div class="grid">
-<select id="pcat"><option value="">Select Category</option></select><input id="pnewcat" placeholder="नई Category (optional)">
+<div style="display:flex;gap:6px;align-items:center"><select id="pcat"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
@@ -113,7 +113,7 @@ function code128Svg(value,opts={}){
 <script>
 const KEY="DIVA_V5_DATA";
 let db=JSON.parse(localStorage.getItem(KEY)||'{"stock":[],"sales":[],"categories":["Suits","Kurtis","Lehenga","Saree","Dresses","Other"]}');
-if(!Array.isArray(db.categories))db.categories=["Suits","Kurtis","Lehenga","Saree","Dresses","Other"];
+if(!Array.isArray(db.categories))db.categories=["Saree","Silk Saree","Cotton Saree","Designer Saree","Ready-Made Saree","Lehenga Choli","Bridal Lehenga","Crop Top Lehenga","Sharara Set","Gharara Set","Anarkali Suit","Straight Suit","Palazzo Suit","Pant Suit","Peplum Set","Indo-Western","Ready-Made Suit","Three-Piece Suit","Kurti","Kurta Set","Long Kurti","Short Kurti","A-Line Kurti","Straight Kurti","Shirt Kurti","Kaftan","Kaftan Suit","Angrakha Suit","Afghani Suit","Aliya Set","Nayera Set","Dhoti Set","Gown","Party Wear Gown","Maxi Dress","Midi Dress","Mini Dress","Frock","Dress","Jumpsuit","Co-Ord Set","Top","T-Shirt","Shirt","Crop Top","Blouse","Tunics","Jeans","Jeggings","Trousers","Pants","Palazzo","Leggings","Track Pants","Skirt","Shorts","Dupatta","Stole","Shrug","Jacket","Cardigan","Sweater","Sweatshirt","Night Suit","Nightwear","Maternity Wear","Abaya","Hijab","Modest Wear","Innerwear","Heels","Platform Heels","High Heels","Block Heels","Wedges","Kitten Heels","Sandals","Flats","Jutti","Mojari","Slippers","Shoes","Sneakers","Boots","Sports Shoes","Handbags","Sling Bags","Clutches","Wallets","Belts","Sunglasses","Watches","Jewellery","Earrings","Necklace","Bracelet","Bangles","Rings","Anklets","Hair Accessories","Makeup","Skincare","Beauty Accessories","Home & Kitchen","Other"];
 if(!Array.isArray(db.stock))db.stock=[]; if(!Array.isArray(db.sales))db.sales=[]; if(!Array.isArray(db.expenses))db.expenses=[]; if(!Array.isArray(db.stockReturns))db.stockReturns=[]; if(!Array.isArray(db.purchases))db.purchases=[]; if(!Array.isArray(db.salesReturns))db.salesReturns=[];
 db.stock=db.stock.map(x=>({...x,category:x.category||"Other",mrp:Number(x.mrp)||0,selling:Number(x.selling||x.rate)||0,discount:Number(x.discount)||0,cost:Number(x.cost)||0,code:x.code||makeCode(x.category||'Other',x.sku||x.name||'ITEM',x.color||'',x.size||'')}));
 let cart=[];
@@ -161,6 +161,17 @@ function renderStock(){
  if(!filter.length){el.innerHTML='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';return}
  el.innerHTML='<div class="tablewrap"><table><tr><th>Category</th><th>Product / SKU</th><th>Colour</th><th>Size</th><th>Available Qty</th><th>MRP</th><th>Selling</th><th>Barcode</th></tr>'+filter.map(x=>`<tr><td><span class="pill">${esc(x.category)}</span></td><td>${esc(x.name)}<br><small>${esc(x.sku)}</small></td><td>${esc(x.color)}</td><td>${esc(x.size)}</td><td><b>${x.qty}</b></td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.selling||0).toFixed(2)}</td><td><button class="gray" onclick="printLabelByKey('${esc(x.key)}')">🏷️ Print</button></td></tr>`).join("")+'</table></div>';
 }
+
+function addNewCategory(){
+ const el=document.getElementById('pnewcat');
+ const name=(el&&el.value||'').trim() || prompt('नई Category का नाम लिखें:');
+ if(!name)return;
+ if(!Array.isArray(db.categories))db.categories=[];
+ if(db.categories.some(x=>String(x).trim().toLowerCase()===name.toLowerCase())){alert('यह Category पहले से मौजूद है.');return;}
+ db.categories.push(name); save(); renderCategories();
+ const pc=document.getElementById('pcat'); if(pc)pc.value=name;
+ if(el)el.value=''; alert('✅ नई Category add हो गई: '+name);
+}
 function selectedPurchaseSizes(){let a=[...document.querySelectorAll('.psizecheck:checked')].map(x=>x.value),c=(document.getElementById('pcustomSizes')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(a.concat(c))]}
 function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)}
 function buildPurchaseMatrix(){
@@ -170,7 +181,7 @@ function buildPurchaseMatrix(){
  sizes.forEach(sz=>{html+='<tr><td><b>'+esc(sz)+'</b></td>';colors.forEach(c=>{html+='<td><input class="purchasematrixqty" data-size="'+esc(sz)+'" data-color="'+esc(c)+'" type="number" min="0" placeholder="Qty"></td>'});html+='</tr>'});el.innerHTML=html+'</table>';
 }
 function clearPurchaseProductForm(){
- ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
+ ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
 }
 function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); (db.purchases||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); let stored=Number(localStorage.getItem('DIVA_NEXT_SKU_NO')||0); max=Math.max(max,stored-1); let n=max+1; while(seen.includes(n)) n++; return 'DIVA-'+n;}
 function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
@@ -196,7 +207,7 @@ function saveNewPurchaseProduct(){
  const m=sku.match(/^DIVA-(\d+)$/i); if(m) localStorage.setItem('DIVA_NEXT_SKU_NO',String(Number(m[1])+1));
  renderCategories(); renderStock(); renderPurchase(); renderLabels();
  document.getElementById('newPurchaseResult').innerHTML='<b>✅ Product purchase saved.</b> '+added.length+' entries added. Barcode labels ready हैं.';
- ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; preparePurchaseSku();
+ ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; preparePurchaseSku();
 
 }
 function printAllSpecificLabels(arr){
