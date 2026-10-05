@@ -372,7 +372,39 @@ function renderBillHistory(){
 function getSavedBill(billNo){return (db.sales||[]).find(b=>String(b.billNo)===String(billNo))}
 function printSavedBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill नहीं मिला');return}printSale(b)}
 function viewSavedBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill नहीं मिला');return}const rows=(b.items||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}<br><small>${esc(x.sku)} / ${esc(x.color)} / ${esc(x.size)}</small></td><td>${x.qty}</td><td>₹${Number(x.rate).toFixed(2)}</td><td>₹${Number(x.discount||0).toFixed(2)}</td><td>₹${(x.qty*Math.max(0,x.rate-x.discount)).toFixed(2)}</td></tr>`).join('');const w=window.open('','_blank','width=800,height=900');if(!w){alert('Pop-up blocked है. Browser में pop-up allow करें.');return}w.document.write(`<!doctype html><html><head><title>${esc(b.billNo)}</title><style>body{font-family:Arial;margin:25px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}.right{text-align:right;font-size:20px;font-weight:bold}</style></head><body><h1>Diva Collection</h1><p>Bill No: <b>${esc(b.billNo)}</b><br>Customer: ${esc(b.customer||'Walk-in Customer')}<br>Mobile: ${esc(b.phone||'')}<br>Date: ${new Date(b.date).toLocaleString()}</p><table><tr><th>#</th><th>Item</th><th>Qty</th><th>Rate</th><th>Discount</th><th>Amount</th></tr>${rows}</table><p class="right">Grand Total: ₹${Number(b.total||0).toFixed(2)}</p><button onclick="window.print()">🖨️ Print</button></body></html>`);w.document.close()}
-function renderDashboard(){const sales=db.sales||[],today=sales.filter(x=>inPeriod(x.date,'day')),month=sales.filter(x=>inPeriod(x.date,'month')),units=today.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.qty||0),0),0),revenue=today.reduce((s,b)=>s+Number(b.total||0),0),stockUnits=db.stock.reduce((s,x)=>s+Number(x.qty||0),0),low=db.stock.filter(x=>Number(x.qty||0)<=5).length;const d=document.getElementById('dashCards');if(d)d.innerHTML=`<div class="card"><div class="small">आज की Bills</div><div class="big">${today.length}</div></div><div class="card"><div class="small">आज की Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div><div class="card"><div class="small">आज Units Sold</div><div class="big">${units}</div></div><div class="card"><div class="small">Current Stock</div><div class="big">${stockUnits}</div></div><div class="card"><div class="small">Low Stock (≤5)</div><div class="big">${low}</div></div><div class="card"><div class="small">इस महीने Bills</div><div class="big">${month.length}</div></div>`;const r=document.getElementById('recentBills');if(r)r.innerHTML=sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Mobile</th><th>Total</th></tr>'+sales.slice(-10).reverse().map(b=>`<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo)}</td><td>${esc(b.customer||'Walk-in')}</td><td>${esc(b.phone||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td></tr>`).join('')+'</table></div>':'<div class="empty">अभी कोई bill नहीं है.</div>'}
+function profitForSales(sales){
+ let revenue=sales.reduce((s,b)=>s+Number(b.total||0),0);
+ let cost=sales.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0);
+ let gross=revenue-cost;
+ let expenses=(db.expenses||[]).filter(e=>sales.some(b=>String(b.date)===String(e.date)));// legacy-safe fallback; period expenses are calculated separately in report
+ return {revenue,cost,gross};
+}
+function periodProfit(period){
+ const sales=(db.sales||[]).filter(x=>inPeriod(x.date,period));
+ const revenue=sales.reduce((s,b)=>s+Number(b.total||0),0);
+ const cost=sales.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0);
+ const gross=revenue-cost;
+ const expenses=(db.expenses||[]).filter(e=>inPeriod(e.date,period)).reduce((s,e)=>s+Number(e.amount||0),0);
+ return {revenue,cost,gross,expenses,net:gross-expenses};
+}
+function renderDashboard(){
+ const sales=db.sales||[],today=sales.filter(x=>inPeriod(x.date,'day')),month=sales.filter(x=>inPeriod(x.date,'month'));
+ const units=today.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
+ const revenue=today.reduce((s,b)=>s+Number(b.total||0),0);
+ const day=periodProfit('day'),mon=periodProfit('month');
+ const stockUnits=db.stock.reduce((s,x)=>s+Number(x.qty||0),0),low=db.stock.filter(x=>Number(x.qty||0)<=5).length;
+ const d=document.getElementById('dashCards');
+ if(d)d.innerHTML=`<div class="card"><div class="small">आज की Bills</div><div class="big">${today.length}</div></div>
+ <div class="card"><div class="small">आज की Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div>
+ <div class="card"><div class="small">आज Gross Profit</div><div class="big">₹${day.gross.toFixed(2)}</div><div class="small">Sales − Cost</div></div>
+ <div class="card"><div class="small">आज Net Profit</div><div class="big">₹${day.net.toFixed(2)}</div><div class="small">Gross Profit − Expenses</div></div>
+ <div class="card"><div class="small">Current Stock</div><div class="big">${stockUnits}</div></div>
+ <div class="card"><div class="small">Low Stock (≤5)</div><div class="big">${low}</div></div>
+ <div class="card"><div class="small">इस महीने Bills</div><div class="big">${month.length}</div></div>
+ <div class="card"><div class="small">इस महीने Net Profit</div><div class="big">₹${mon.net.toFixed(2)}</div></div>`;
+ const r=document.getElementById('recentBills');
+ if(r)r.innerHTML=sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Mobile</th><th>Total</th></tr>'+sales.slice(-10).reverse().map(b=>`<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo)}</td><td>${esc(b.customer||'Walk-in')}</td><td>${esc(b.phone||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td></tr>`).join('')+'</table></div>':'<div class="empty">अभी कोई bill नहीं है.</div>';
+}
 
 function addExpense(){let amount=Number(document.getElementById("expenseAmount").value)||0,note=document.getElementById("expenseNote").value.trim();if(amount<=0){alert("Expense amount भरें");return}db.expenses=db.expenses||[];db.expenses.push({date:new Date().toISOString(),amount,note});save();document.getElementById("expenseAmount").value="";document.getElementById("expenseNote").value="";renderReport();alert("Expense save हो गया")}
 function inPeriod(date,period){let d=new Date(date),n=new Date();if(period==="day")return d.toDateString()===n.toDateString();if(period==="month")return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth();if(period==="year")return d.getFullYear()===n.getFullYear();return true}
