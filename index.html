@@ -123,6 +123,33 @@ function code128Svg(value,opts={}){
 <button class="gray" onclick="loadLabelPrintSettings();updateLabelLayoutInfo()">↻ Reset / Load Setting</button>
 </div><div id="labelsList" class="labelgrid" style="margin-top:12px"></div></div></section>
 
+<!-- JSC-9280 direct printer controls -->
+<script>
+(function(){
+  function printerSettings(){return {pw:Number(document.getElementById('lpPaperW')?.value||4),ph:Number(document.getElementById('lpPaperH')?.value||6),lw:Number(document.getElementById('lpLabelW')?.value||2),lh:Number(document.getElementById('lpLabelH')?.value||1),gx:Number(document.getElementById('lpGapX')?.value||0),gy:Number(document.getElementById('lpGapY')?.value||0)}}
+  window.connectJSC9280=function(){
+    if(!('serial' in navigator)){alert('इस browser में Web Serial available नहीं है. Laptop पर Chrome/Edge इस्तेमाल करें.');return}
+    navigator.serial.requestPort().then(function(p){window.jsc9280Port=p;return p.open({baudRate:9600});}).then(function(){localStorage.setItem('DIVA_JSC9280_CONNECTED','1');var e=document.getElementById('jscStatus');if(e)e.textContent='✅ JSC-9280 Connected (USB)';}).catch(function(e){console.error(e);alert('Printer connect नहीं हुआ. USB printer select करें और permission Allow करें.');});
+  };
+  window.disconnectJSC9280=function(){try{if(window.jsc9280Port)window.jsc9280Port.close()}catch(e){} window.jsc9280Port=null;localStorage.removeItem('DIVA_JSC9280_CONNECTED');var e=document.getElementById('jscStatus');if(e)e.textContent='Printer disconnected';};
+  window.testJSC9280=function(){
+    if(!window.jsc9280Port){alert('पहले JSC-9280 Connect करें.');return}
+    var writer=window.jsc9280Port.writable?.getWriter();if(!writer){alert('Printer writable नहीं है.');return}
+    var s='\x1B\x40\x1B\x61\x01DIVA COLLECTION BILLING\nJSC-9280 TEST PRINT\n\n\x1D\x56\x00';
+    writer.write(new TextEncoder().encode(s)).then(function(){writer.releaseLock();alert('Test print command भेज दिया गया.');}).catch(function(e){writer.releaseLock();console.error(e);alert('Test print failed.');});
+  };
+  window.showJSCPrinterBox=function(){
+    var labels=document.querySelector('#labels .card');if(!labels)return;
+    if(document.getElementById('jscPrinterBox'))return;
+    var d=document.createElement('div');d.id='jscPrinterBox';d.className='card';d.style.background='#fff8ef';d.innerHTML='<h3>🖨️ JSC-9280 Thermal Printer</h3><p class="small">Laptop USB direct connection. Chrome/Edge में printer permission दें.</p><button class="green" onclick="connectJSC9280()">🔌 Connect JSC-9280 USB</button> <button class="gray" onclick="disconnectJSC9280()">Disconnect</button> <button onclick="testJSC9280()">🧪 Test Print</button><div id="jscStatus" class="small" style="margin-top:8px">'+(localStorage.getItem('DIVA_JSC9280_CONNECTED')?'Printer permission saved — reconnect करने के लिए Connect दबाएँ.':'Not connected')+'</div><p class="small" style="margin-top:8px">Label size नीचे बदल सकते हैं: 4×6 sheet या 2×1 inch roll. Columns/rows अपने-आप adjust होंगे.</p>';
+    labels.insertBefore(d,labels.children[2]||null);
+  };
+  var oldPage=window.page;
+  window.page=function(id){oldPage(id);if(id==='labels')setTimeout(showJSCPrinterBox,0);};
+  setTimeout(showJSCPrinterBox,300);
+})();
+</script>
+
 <section id="cloudSync" class="page"><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Is purane billing version ka data Firebase Cloud me sync hoga. Isi Sync Code ko doosre phone/laptop par connect karke data la sakte hain.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" onclick="createCloudCode()">➕ New Sync Code</button><button onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" onclick="syncCloudNow()">🔄 Sync Now</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Offline-ready. Pehle Sync Code banayein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #f57c00;border-radius:10px;background:#fff8ef"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
 <div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
 <div id="report" style="margin-top:12px"></div></div></section>
