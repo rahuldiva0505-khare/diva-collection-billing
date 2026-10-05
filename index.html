@@ -171,23 +171,20 @@ function renderStock(){
 }
 
 function deleteStockRow(k){
- const x=db.stock.find(a=>a.key===k);
+ const x=db.stock.find(a=>String(a.key)===String(k));
  if(!x){alert('Stock entry नहीं मिली.');return}
  const ok=confirm('क्या यह Stock/Product entry delete करनी है?\\n\\n'+(x.name||'')+' | SKU: '+(x.sku||'')+' | '+(x.color||'')+' | Size: '+(x.size||'')+' | Qty: '+(x.qty||0));
  if(!ok)return;
- db.stock=db.stock.filter(a=>a.key!==k);
- // Stock row हटाने के साथ linked purchase entries भी हटाएं.
- if(Array.isArray(db.purchases)){
-   const norm=v=>String(v??'').trim().toLowerCase();
-   db.purchases=db.purchases.filter(p=>{
-     const sameKey=norm(p.key)===norm(k);
-     const sameItem=norm(p.sku)===norm(x.sku)&&norm(p.color)===norm(x.color)&&norm(p.size)===norm(x.size);
-     return !(sameKey||sameItem);
-   });
- }
+ const norm=v=>String(v??'').trim().toLowerCase();
+ const sku=norm(x.sku), color=norm(x.color), size=norm(x.size), stockKey=norm(x.key);
+ db.stock=(db.stock||[]).filter(a=>norm(a.key)!==stockKey);
+ db.purchases=(db.purchases||[]).filter(p=>{
+   const pk=norm(p.key), ps=norm(p.sku), pc=norm(p.color), pz=norm(p.size);
+   return !(pk===stockKey || (ps===sku && pc===color && pz===size));
+ });
  save();
  renderStock();renderLabels();loadBillProducts();renderPurchase();renderDashboard();
- alert('✅ Selected stock entry और उसकी Purchase entry delete हो गई.');
+ alert('✅ Stock और उसकी सभी linked Purchase entries delete हो गईं.');
 }
 function addNewCategory(){
  const el=document.getElementById('pnewcat');
