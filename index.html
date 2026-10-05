@@ -452,117 +452,6 @@ function syncWatchChanges(){
     },()=>cloudUI('☁️ Auto Sync reconnecting...'));
   }catch(e){cloudUI('☁️ Auto Sync unavailable')}
 }
-async function syncCloudNow(){if(cloudBusy)return;const code=cloudCode();if(!code){cloudUI('Pehle New Sync Code ya existing Sync Code connect karein.');return}cloudBusy=true;cloudUI('Cloud sync ho raha hai...');try{await initCloud();
-syncWatchChanges();const ref=cloudDb.collection('cloudShops').doc(code);const snap=await ref.get();const localStamp=Number(localStorage.getItem('DIVA_CLOUD_STAMP')||0);const remote=snap.exists?snap.data():null;if(remote&&remote.updatedAt&&Number(remote.updatedAt)>localStamp&&remote.data){db=remote.data;if(!Array.isArray(db.stock))db.stock=[];if(!Array.isArray(db.sales))db.sales=[];if(!Array.isArray(db.expenses))db.expenses=[];if(!Array.isArray(db.stockReturns))db.stockReturns=[];if(!Array.isArray(db.purchases))db.purchases=[];if(!Array.isArray(db.salesReturns))db.salesReturns=[];save();localStorage.setItem('DIVA_CLOUD_STAMP',String(remote.updatedAt));refreshCloudApp();cloudUI('Cloud se latest data aa gaya ✓ '+new Date(remote.updatedAt).toLocaleTimeString());}else{const stamp=Date.now();await ref.set({updatedAt:stamp,device:cloudDevice(),data:cleanCloudData()});localStorage.setItem('DIVA_CLOUD_STAMP',String(stamp));cloudUI('Data cloud me save ho gaya ✓ '+new Date(stamp).toLocaleTimeString());}}catch(e){console.error(e);cloudUI('Cloud sync failed. Internet/Firebase check karein.')}finally{cloudBusy=false}}
-async function createCloudCode(){const code=randomCloudCode();localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');cloudUI('New Sync Code ready: '+code);await syncCloudNow()}
-async function connectCloudCode(){const code=document.getElementById('cloudCode').value.trim().toUpperCase();if(!code){cloudUI('Sync Code dalo.');return}localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');await syncCloudNow()}
-function refreshCloudApp(){renderCategories();loadBillProducts();renderStock();renderCart();renderPurchase();renderDashboard();renderBillHistory();renderCustomers();renderReport();renderLabels();renderStockReturns();renderSalesReturn()}
-/* DIVA CLOUD SYNC V2 — offline outbox + merge-safe stock deltas */
-let syncApplying=false;
-let syncBaseline=null;
-const SYNC_BASELINE_KEY='DIVA_SYNC_BASELINE_V2';
-const SYNC_APPLIED_KEY='DIVA_SYNC_APPLIED_V2';
-const SYNC_CURSOR_KEY='DIVA_SYNC_CURSOR_V2';
-
-function syncClone(x){return JSON.parse(JSON.stringify(x));}
-function syncArrayNames(){return ['stock','sales','customers','purchases','stockReturns','salesReturns','expenses','categories'];}
-function syncRecordKey(type,x){
- if(type==='stock') return String(x.key||x.id||[x.category,x.sku,x.color,x.size].join('|'));
- if(type==='sales') return String(x.billNo||x.id||x.date);
- if(type==='customers') return String(x.id||x.phone||x.name);
- if(type==='purchases') return String(x.id||[x.date,x.key,x.qty,x.invoice].join('|'));
- if(type==='stockReturns') return String(x.id||[x.date,x.key,x.qty,x.party].join('|'));
- if(type==='salesReturns') return String(x.id||[x.date,x.key,x.qty,x.customer].join('|'));
- if(type==='expenses') return String(x.id||[x.date,x.amount,x.note].join('|'));
- return String(x);
-}
-function syncRead(key, fallback){
- try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(e){return fallback}
-}
-function syncWrite(key,val){localStorage.setItem(key,JSON.stringify(val));}
-function syncApplied(){return syncRead(SYNC_APPLIED_KEY,[]);}
-function syncRemember(id){
- let a=syncApplied(); if(a.includes(id))return;
- a.push(id); if(a.length>5000)a=a.slice(-4000); syncWrite(SYNC_APPLIED_KEY,a);
-}
-function syncOpId(){return cloudDevice()+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
-function syncBaselineNow(){syncBaseline=syncClone(db);syncWrite(SYNC_BASELINE_KEY,syncBaseline);}
-function syncOpsFromDiff(prev,next){
- const ops=[];
- for(const type of syncArrayNames()){
-   const pa=Array.isArray(prev?.[type])?prev[type]:[];
-   const na=Array.isArray(next?.[type])?next[type]:[];
-   const pm=new Map(pa.map(x=>[syncRecordKey(type,x),x]));
-   const nm=new Map(na.map(x=>[syncRecordKey(type,x),x]));
-   for(const [k,x] of nm){
-     if(!pm.has(k)){ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});continue}
-     const old=pm.get(k);
-     if(JSON.stringify(old)===JSON.stringify(x))continue;
-     if(type==='stock'){
-       const oq=Number(old.qty||0), nq=Number(x.qty||0);
-       const oldMeta=syncClone(old); delete oldMeta.qty;
-       const newMeta=syncClone(x); delete newMeta.qty;
-       if(JSON.stringify(oldMeta)===JSON.stringify(newMeta) && oq!==nq){
-         ops.push({kind:'stockDelta',entity:'stock',key:k,delta:nq-oq,meta:newMeta});
-       }else{
-         ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
-       }
-     }else{
-       ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
-     }
-   }
-   for(const [k,x] of pm) if(!nm.has(k)) ops.push({kind:'delete',entity:type,key:k});
- }
- return ops;
-}
-function syncApplyOp(op){
- const type=op.entity;
- if(type==='categories'){
-   db.categories=Array.isArray(db.categories)?db.categories:[];
-   if(op.kind==='set' && !db.categories.includes(op.key))db.categories.push(op.key);
-   if(op.kind==='delete')db.categories=db.categories.filter(x=>x!==op.key);
-   return;
- }
- db[type]=Array.isArray(db[type])?db[type]:[];
- const arr=db[type], idx=arr.findIndex(x=>syncRecordKey(type,x)===String(op.key));
- if(op.kind==='delete'){if(idx>=0)arr.splice(idx,1);return;}
- if(op.kind==='stockDelta'){
-   if(idx<0){db.stock.push({...syncClone(op.meta),qty:Number(op.delta||0)});}
-   else arr[idx]={...arr[idx],...syncClone(op.meta),qty:Number(arr[idx].qty||0)+Number(op.delta||0)};
-   return;
- }
- if(op.kind==='set'){
-   if(idx>=0)arr[idx]=syncClone(op.payload); else arr.push(syncClone(op.payload));
- }
-}
-function syncBuildOpsForCurrent(){
- const prev=syncBaseline||syncRead(SYNC_BASELINE_KEY,null);
- if(!prev)return syncArrayNames().flatMap(type=>(Array.isArray(db[type])?db[type]:[]).map(x=>({kind:'set',entity:type,key:syncRecordKey(type,x),payload:syncClone(x)})));
- return syncOpsFromDiff(prev,db);
-}
-async function syncUploadOps(code,ops){
- if(!ops.length)return;
- const base=cloudDb.collection('cloudShops').doc(code).collection('changes');
- for(const op of ops){
-   const id=syncOpId();
-   await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});
-   syncRemember(id);
- }
-}
-async function syncPullAndMerge(code){
- const base=cloudDb.collection('cloudShops').doc(code).collection('changes');
- const snap=await base.get();
- const applied=new Set(syncApplied());
- const docs=snap.docs.map(d=>d.data()).filter(x=>x&&x.id&&!applied.has(x.id)).sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
- if(!docs.length)return 0;
- syncApplying=true;
- try{
-   for(const op of docs){syncApplyOp(op);syncRemember(op.id);}
-   saveLocalOnly();
- }finally{syncApplying=false;}
- return docs.length;
-}
-function saveLocalOnly(){localStorage.setItem(KEY,JSON.stringify(db));syncBaselineNow();}
 async function syncCloudNow(){
  if(cloudBusy)return;
  const code=cloudCode();
@@ -571,6 +460,7 @@ async function syncCloudNow(){
  cloudBusy=true;cloudUI('☁️ Changes sync ho rahe hain...');
  try{
    await initCloud();
+   syncWatchChanges();
    if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
    const ops=syncBuildOpsForCurrent();
    await syncUploadOps(code,ops);
