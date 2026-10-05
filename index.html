@@ -167,9 +167,19 @@ function renderStock(){
  const cats=[...new Set(db.categories.concat(db.stock.map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
  if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(cats.includes(old))cf.value=old;}
  if(!filter.length){el.innerHTML='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';return}
- el.innerHTML='<div class="tablewrap"><table><tr><th>Category</th><th>Product / SKU</th><th>Colour</th><th>Size</th><th>Available Qty</th><th>MRP</th><th>Selling</th><th>Barcode</th></tr>'+filter.map(x=>`<tr><td><span class="pill">${esc(x.category)}</span></td><td>${esc(x.name)}<br><small>${esc(x.sku)}</small></td><td>${esc(x.color)}</td><td>${esc(x.size)}</td><td><b>${x.qty}</b></td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.selling||0).toFixed(2)}</td><td><button class="gray" onclick="printLabelByKey('${esc(x.key)}')">🏷️ Print</button></td></tr>`).join("")+'</table></div>';
+ el.innerHTML='<div class="tablewrap"><table><tr><th>Category</th><th>Product / SKU</th><th>Colour</th><th>Size</th><th>Available Qty</th><th>MRP</th><th>Selling</th><th>Barcode</th><th>Action</th></tr>'+filter.map(x=>`<tr><td><span class="pill">${esc(x.category)}</span></td><td>${esc(x.name)}<br><small>${esc(x.sku)}</small></td><td>${esc(x.color)}</td><td>${esc(x.size)}</td><td><b>${x.qty}</b></td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.selling||0).toFixed(2)}</td><td><button class="gray" onclick="printLabelByKey('${esc(x.key)}')">🏷️ Print</button></td><td><button class="red" onclick="deleteStockRow('${esc(x.key)}')">🗑️ Delete</button></td></tr>`).join("")+'</table></div>';
 }
 
+function deleteStockRow(k){
+ const x=db.stock.find(a=>a.key===k);
+ if(!x){alert('Stock entry नहीं मिली.');return}
+ const ok=confirm('क्या यह Stock/Product entry delete करनी है?\\n\\n'+(x.name||'')+' | SKU: '+(x.sku||'')+' | '+(x.color||'')+' | Size: '+(x.size||'')+' | Qty: '+(x.qty||0));
+ if(!ok)return;
+ db.stock=db.stock.filter(a=>a.key!==k);
+ save();
+ renderStock();renderLabels();loadBillProducts();renderDashboard();
+ alert('✅ Selected stock entry delete हो गई.');
+}
 function addNewCategory(){
  const el=document.getElementById('pnewcat');
  const name=(el&&el.value||'').trim() || prompt('नई Category का नाम लिखें:');
