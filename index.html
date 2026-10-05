@@ -144,7 +144,7 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <button class="green" onclick="addSalesReturnToStock()">➕ ADD BACK TO STOCK</button></div>
 <div class="card"><h3>Sales Return History</h3><div id="salesReturnTable"></div></div></section>
 
-<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button></div><div style="margin-top:12px;padding:10px;border:1px solid #f57c00;border-radius:10px;background:#fff8ef">
+<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div style="margin-top:12px;padding:10px;border:1px solid #f57c00;border-radius:10px;background:#fff8ef">
 <label><input type="checkbox" id="autoPrintLabels" checked> Product add करते ही नई quantity के barcode automatic print करें</label>
 <button onclick="printCheckedLabelRows()" style="margin-left:8px">🖨️ Selected Rows Print</button>
 </div>
@@ -197,7 +197,7 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <div class="grid">
 <button type="button" onclick="connectBluetoothPrinter()">🔵 Add / Connect Bluetooth Printer</button>
 <button type="button" class="gray" onclick="disconnectBluetoothPrinter()">⛔ Disconnect</button>
-<button type="button" class="green" onclick="testBluetoothPrinter()">🧪 Test Print</button>
+<button type="button" class="green" onclick="testBluetoothPrinter()">🧪 Test Print</button><button type="button" onclick="printFirstBarcodeBluetooth()">🏷️ Print Barcode</button>
 </div>
 <div id="printerStatus" class="small" style="margin-top:10px">Printer अभी connect नहीं है.</div>
 <p class="small" style="margin-top:10px">नोट: यह browser से <b>BLE</b> printers के लिए है. पुराने Classic Bluetooth / SPP printers को Chrome web app सीधे control नहीं कर सकता; ऐसे printer में Android system print या manufacturer app की जरूरत पड़ सकती है.</p>
@@ -985,7 +985,6 @@ setTimeout(function(){
   });
   setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
 })();
-<script>
 (function(){
   let printerDevice=null, printerChar=null;
   const SERVICE_UUIDS=['000018f0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455','e7810a71-73ae-499d-8c15-faa9aef0c3f2'];
@@ -1044,6 +1043,49 @@ setTimeout(function(){
     try{if(printerDevice&&printerDevice.gatt.connected)printerDevice.gatt.disconnect()}catch(e){}
     printerChar=null;printerDevice=null;pstatus('Printer disconnect कर दिया गया.');
   };
+  function escposText(s){return new TextEncoder().encode(String(s||''));}
+  function escposBarcode(code){
+    const data=String(code||'').replace(/[\x00-\x1F]/g,'');
+    const body=new Uint8Array([123,66,...escposText(data)]);
+    return new Uint8Array([29,107,73,body.length,...body]);
+  }
+  function center(){return new Uint8Array([27,97,1]);}
+  function left(){return new Uint8Array([27,97,0]);}
+  function cut(){return new Uint8Array([29,86,66,0]);}
+  function joinBytes(parts){
+    let n=parts.reduce((s,a)=>s+a.length,0), out=new Uint8Array(n), p=0;
+    parts.forEach(a=>{out.set(a,p);p+=a.length});
+    return out;
+  }
+  async function bluetoothPrintLabel(x){
+    if(!printerChar)throw new Error('पहले Bluetooth printer connect करें');
+    const code=x.code||makeCode(x.category,x.sku,x.color,x.size);
+    const head=escposText('Diva Collection\n');
+    const name=escposText(String(x.name||'')+'\n');
+    const meta=escposText(String(x.sku||'')+' | '+String(x.color||'')+' | Size '+String(x.size||'')+'\n');
+    const prices=escposText('MRP Rs '+Number(x.mrp||0).toFixed(2)+'  Sell Rs '+Number(x.selling||0).toFixed(2)+'\n');
+    const codeText=escposText(String(code)+'\n\n');
+    await writeBytes(joinBytes([new Uint8Array([27,64]),center(),head,name,meta,escposBarcode(code),prices,codeText,cut()]));
+  }
+  window.printSelectedLabelsBluetooth=async function(){
+    if(!printerChar){alert('पहले 🖨️ PRINTER में Bluetooth printer connect करें.');return}
+    const q=(document.getElementById('labelSearch')?.value||'').toLowerCase();
+    const arr=db.stock.filter(x=>!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q)));
+    const selected=[];
+    arr.forEach(x=>{const e=document.getElementById('labelqty_'+x.key);const n=Math.floor(Number(e?.value||0));if(n>0)for(let i=0;i<Math.min(n,Number(x.qty)||0);i++)selected.push(x)});
+    if(!selected.length){alert('Labels page पर जिस product की barcode quantity चाहिए, उसकी Qty भरें.');return}
+    try{
+      pstatus('🏷️ '+selected.length+' barcode labels print हो रहे हैं...');
+      for(const x of selected)await bluetoothPrintLabel(x);
+      pstatus('✅ '+selected.length+' barcode labels print command भेज दिया गया.');
+    }catch(e){pstatus('❌ Barcode print failed: '+(e.message||e));alert('Barcode print नहीं हुआ: '+(e.message||e))}
+  };
+  window.printFirstBarcodeBluetooth=async function(){
+    if(!printerChar){alert('पहले Bluetooth printer connect करें.');return}
+    const x=(db.stock||[]).find(a=>Number(a.qty)>0);
+    if(!x){alert('Stock में product नहीं है.');return}
+    try{await bluetoothPrintLabel(x);pstatus('✅ Barcode printed: '+(x.name||x.sku))}catch(e){alert('Barcode print नहीं हुआ: '+(e.message||e))}
+  };
   window.testBluetoothPrinter=async function(){
     try{
       if(!printerChar){
@@ -1056,4 +1098,4 @@ setTimeout(function(){
     }catch(e){pstatus('❌ Print failed: '+(e.message||e));alert('Bluetooth print नहीं हुआ. Printer BLE/ESC-POS compatible होना चाहिए.');}
   };
 })();
-</script></script></body></html>
+</script></body></html>
