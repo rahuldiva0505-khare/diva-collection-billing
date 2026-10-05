@@ -413,33 +413,49 @@ function printAllLabels(){
 function fillFromCode(code){code=String(code||'').trim();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Camera access इस browser/page पर available नहीं है. App को HTTPS पर खोलें और Camera permission दें.');return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Camera access इस browser/page पर available नहीं है. HTTPS link से app खोलें और Camera permission दें.');return}
   let modal=document.getElementById('cameraScanner');
   if(!modal){
-    modal=document.createElement('div');modal.id='cameraScanner';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';
-    modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Barcode Scan</div><div style="position:relative;width:min(94vw,560px);height:58vh"><video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;background:#111;border:2px solid #fff;border-radius:12px"></video><div style="position:absolute;left:8%;right:8%;top:42%;height:2px;background:#f57c00;box-shadow:0 0 8px #f57c00"></div></div><div id="cameraMsg" style="color:#fff;margin:12px;text-align:center">Barcode की lines को orange line के बीच रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';
+    modal=document.createElement('div');modal.id='cameraScanner';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-sizing:border-box';
+    modal.innerHTML='<div style="color:#fff;font-size:19px;font-weight:bold;margin-bottom:6px">📷 Fast Barcode Scanner</div><div style="color:#ddd;font-size:12px;margin-bottom:7px">पूरा barcode frame में रखें • 15–30 cm • phone स्थिर रखें</div><div style="position:relative;width:min(97vw,640px);height:56vh"><video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;background:#111;border:2px solid #fff;border-radius:10px"></video><div style="position:absolute;left:3%;right:3%;top:40%;height:4px;background:#f57c00;box-shadow:0 0 10px #f57c00"></div></div><div id="cameraMsg" style="color:#fff;margin:8px;text-align:center">Black lines orange line के बीच रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 24px;border:0;border-radius:8px">✕ Close</button></div>';
     document.body.appendChild(modal);
   }else modal.style.display='flex';
   const video=document.getElementById('cameraVideo'),msg=document.getElementById('cameraMsg');
   try{
-    window.__scanStop=false;
-    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+    window.__scanStop=false; window.__zxingReader=null;
+    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
     video.srcObject=window.__scanStream; await video.play();
+    try{
+      const track=window.__scanStream.getVideoTracks()[0],caps=track.getCapabilities?track.getCapabilities():{};
+      if(caps.focusMode&&caps.focusMode.includes('continuous')) await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+      if(caps.zoom){const z=Math.min(caps.zoom.max,Math.max(caps.zoom.min,(caps.zoom.min+caps.zoom.max)/2));await track.applyConstraints({advanced:[{zoom:z}]})}
+    }catch(e){}
+    msg.textContent='⚡ Fast scanning…';
     if('BarcodeDetector' in window){
       let detector;
       try{detector=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']})}catch(e){detector=new BarcodeDetector()}
-      const loop=async()=>{if(window.__scanStop)return;try{const codes=await detector.detect(video);if(codes&&codes.length){const code=codes[0].rawValue;stopCameraScan();fillFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();
+      let busy=false,last='';
+      const loop=async()=>{
+        if(window.__scanStop)return;
+        if(!busy){busy=true;try{
+          const codes=await detector.detect(video);
+          if(codes&&codes.length){
+            const code=String(codes[0].rawValue||'').trim();
+            if(code&&code!==last){last=code;stopCameraScan();fillFromCode(code);return}
+          }
+        }catch(e){}busy=false}
+        setTimeout(()=>requestAnimationFrame(loop),60);
+      }; loop();
     }else if(window.ZXingBrowser){
-      msg.textContent='Barcode को line के बीच रखें…';
       try{
         window.__zxingReader=new ZXingBrowser.BrowserMultiFormatReader();
-        const result=await window.__zxingReader.decodeOnceFromVideoElement(video);
-        if(result&&result.text){stopCameraScan();fillFromCode(result.text)}
-      }catch(e){if(!window.__scanStop)msg.textContent='Barcode नहीं मिला. Barcode को camera में पास और सीधा रखें.'}
-    }else{
-      msg.textContent='Camera चालू है. इस browser में barcode decoder उपलब्ध नहीं है.';
-    }
-  }catch(e){stopCameraScan();alert('Camera permission नहीं मिली. Browser settings में Camera Allow करें. '+e.message)}
+        window.__zxingReader.decodeFromVideoDevice(null,video,(result,err)=>{
+          if(window.__scanStop)return;
+          if(result&&result.text){const code=String(result.text).trim();if(code){stopCameraScan();fillFromCode(code)}}
+        });
+      }catch(e){msg.textContent='Scanner start नहीं हुआ. Internet/Camera permission check करें.'}
+    }else msg.textContent='इस browser में barcode decoder उपलब्ध नहीं है.';
+  }catch(e){stopCameraScan();alert('Camera start नहीं हुआ. Camera permission Allow करें. '+e.message)}
 }
 function stopCameraScan(){window.__scanStop=true;try{if(window.__zxingReader)window.__zxingReader.reset()}catch(e){}if(window.__scanStream){window.__scanStream.getTracks().forEach(t=>t.stop());window.__scanStream=null}const m=document.getElementById('cameraScanner');if(m)m.style.display='none'}
 function renderSalesReturn(){
