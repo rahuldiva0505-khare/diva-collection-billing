@@ -510,6 +510,7 @@ async function syncUploadOps(code,ops){
  for(const op of ops){
    const id=syncOpId();
    await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});
+   syncRemember(id);
  }
 }
 async function syncPullAndMerge(code){
