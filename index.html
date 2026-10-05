@@ -9,16 +9,7 @@ main{max-width:1200px;margin:auto;padding:12px}.page{display:none}.page.active{d
 table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}.tablewrap{overflow:auto}.empty{text-align:center;padding:25px;color:#777}
 .big{font-size:18px;font-weight:bold}.stock0{color:#d93025;font-weight:bold}.pill{display:inline-block;background:#eee;padding:4px 8px;border-radius:20px;font-size:12px}
 .small{font-size:12px;color:#666}.danger{color:#d93025}.sizechips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.sizechip{display:inline-flex;align-items:center;gap:5px;background:#f1eefb;padding:8px 10px;border-radius:9px;border:1px solid #ddd}.matrix{overflow:auto;margin-top:10px}.matrix table{min-width:500px}.matrix input{min-width:90px}.scanbox{background:#f7f5ff;border:1px dashed #f57c00;padding:10px;border-radius:10px}.labelgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:8px}.labelcard{border:1px solid #ddd;border-radius:10px;padding:12px;margin:0 4px 12px;box-sizing:border-box;break-inside:avoid;page-break-inside:avoid}.danger{color:#d93025}.totalbox{text-align:right;font-size:20px;font-weight:bold}.colorbox{border:1px solid #ddd;border-radius:10px;padding:10px;margin-top:8px}.colorrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.colorrow label{font-size:12px;color:#666;display:block;margin-bottom:3px}
-<style>
-@media print{
-  @page{margin:8mm}
-  body{background:#fff!important}
-  .labelgrid{display:block!important;padding:0!important}
-  .labelcard{display:block!important;width:100%!important;margin:0 0 10mm!important;padding:5mm!important;border:1px solid #bbb!important;border-radius:0!important;box-sizing:border-box!important;break-inside:avoid!important;page-break-inside:avoid!important}
-  .barcode-real{margin:4mm 0 8mm!important;padding:0 0 4mm!important;height:1.55in!important;border-bottom:0!important;break-inside:avoid!important;page-break-inside:avoid!important}
-  .barcode-real svg{display:block!important;width:100%!important;height:1.38in!important}
-}
-</style></style>
+</style>
 <script>
 const CODE128_PATTERNS="212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112".split(" ");
 const EAN_L=[
@@ -65,9 +56,10 @@ function ean13Svg(value,opts={}){
  const total=quiet*2+95*module;
  const label=opts.label!==undefined?String(opts.label):original;
  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 112" width="100%" height="1.30in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/>'+rects.join('')+'<text x="'+(quiet+3*module).toFixed(2)+'" y="103" font-family="Arial,sans-serif" font-size="10" fill="#000">'+esc(label)+'</text></svg>';
- return '<div class="barcode-real" style="width:100%;height:1.30in;margin:0.04in 0;background:#fff;overflow:hidden">'+svg+'</div>';
+ return '<div class="barcode-real" style="width:100%;height:1.42in;margin:0.10in 0 0.16in;padding:0 0 0.10in;box-sizing:border-box;display:block;background:#fff;overflow:hidden;border-bottom:1px dashed #bbb">'+svg+'</div>';
 }
-function code128Svg(value,opts={}){ return ean13Svg(value,opts); }ipt src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
+function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
