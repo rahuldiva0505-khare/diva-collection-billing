@@ -20,7 +20,7 @@ function code128Svg(value,opts={}){
  let total=x+2; return `<svg class="barcode" viewBox="0 0 ${total.toFixed(2)} ${h+16}" preserveAspectRatio="none" role="img"><g fill="#000">${parts.join("")}</g><text x="${(total/2).toFixed(2)}" y="${h+12}" text-anchor="middle" font-family="Arial" font-size="9">${esc(value)}</text></svg>`;
 }
 </script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#b83b6e;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
@@ -258,24 +258,35 @@ function printAllLabels(){let arr=db.stock;if(!arr.length){alert('Stock खा�
 function fillFromCode(code){code=String(code||'').trim();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Camera access इस browser/page पर available नहीं है. App को HTTPS या localhost पर खोलें और Camera permission दें.');return}
   let modal=document.getElementById('cameraScanner');
   if(!modal){
     modal=document.createElement('div');modal.id='cameraScanner';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';
     modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Barcode Scan</div><video id="cameraVideo" autoplay playsinline muted style="width:min(92vw,520px);height:55vh;object-fit:cover;background:#111;border:2px solid #fff;border-radius:12px"></video><div id="cameraMsg" style="color:#fff;margin:12px;text-align:center">Barcode को camera के सामने रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';
     document.body.appendChild(modal);
   }else modal.style.display='flex';
-  const video=document.getElementById('cameraVideo'); const msg=document.getElementById('cameraMsg');
+  const video=document.getElementById('cameraVideo'),msg=document.getElementById('cameraMsg'); window.__scanStop=false;
   try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('Camera access उपलब्ध नहीं है');
     window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
     video.srcObject=window.__scanStream; await video.play();
-    if('BarcodeDetector' in window){
-      const detector=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']}); window.__scanStop=false;
-      const loop=async()=>{if(window.__scanStop)return;try{const codes=await detector.detect(video);if(codes.length){const code=codes[0].rawValue;stopCameraScan();fillFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();
-    }else{
-      msg.textContent='Camera चालू है, लेकिन इस browser में built-in barcode detector नहीं है. USB/Bluetooth barcode scanner या barcode value input इस्तेमाल करें.';
+    if(window.ZXingBrowser){
+      const reader=new ZXingBrowser.BrowserMultiFormatReader();
+      window.__zxingReader=reader;
+      msg.textContent='Barcode को frame के बीच रखें…';
+      await reader.decodeFromVideoElement(video,(result,err)=>{
+        if(window.__scanStop)return;
+        if(result){
+          const code=result.getText(); stopCameraScan(); fillFromCode(code);
+        }
+      });
+      return;
     }
-  }catch(e){stopCameraScan();alert('Camera permission नहीं मिली. Browser settings में Camera Allow करें. '+e.message)}
+    if('BarcodeDetector' in window){
+      const detector=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']});
+      const loop=async()=>{if(window.__scanStop)return;try{const codes=await detector.detect(video);if(codes.length){const code=codes[0].rawValue;stopCameraScan();fillFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();return;
+    }
+    msg.textContent='Auto scanner library load नहीं हुई. नीचे barcode value scan/input करें.';
+  }catch(e){stopCameraScan();alert('Barcode scanner शुरू नहीं हुआ. Camera permission Allow करें और internet चालू रखें. '+e.message)}
 }
 function stopCameraScan(){window.__scanStop=true;try{if(window.__zxingReader)window.__zxingReader.reset()}catch(e){}if(window.__scanStream){window.__scanStream.getTracks().forEach(t=>t.stop());window.__scanStream=null}const m=document.getElementById('cameraScanner');if(m)m.style.display='none'}
 function renderSalesReturn(){
