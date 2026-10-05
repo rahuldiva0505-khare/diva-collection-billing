@@ -64,7 +64,7 @@ function code128Svg(value,opts={}){
 <p class="small">यहीं से <b>नया Product add</b> करें या existing product में purchase quantity जोड़ें। Product add होते ही barcode बन जाएगा और यहीं से label print कर सकते हैं.</p>
 <div class="card" style="background:#fafafa"><h3>➕ Add New Product / Purchase Entry</h3>
 <div class="grid">
-<div style="display:flex;gap:6px;align-items:center"><select id="pcat"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)">
+<div style="display:flex;gap:6px;align-items:center"><select id="pcat"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
