@@ -21,7 +21,7 @@ function code128Svg(value,opts={}){
 }
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
-<header>🛍️ Diva Collection Billing Software<button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
+<header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#6c2bd9;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V1</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
 <button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('cloudSync')">☁️ CLOUD SYNC</button>
@@ -403,4 +403,4 @@ document.addEventListener("keydown",function(e){
 function openLaptopHelp(){alert("Laptop पर software Chrome/Edge में सीधे index.html खोलकर चल सकता है. USB/Bluetooth barcode scanner लगाकर Billing page पर barcode scan करें—code अपने आप product, colour और size भर देगा.");}
 
 renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();renderPurchase();renderDashboard();cloudUI();
-</script><script>if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script></body></html>
+</script><script>if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=cloud-v1').catch(()=>{}));}</script></body></html>
