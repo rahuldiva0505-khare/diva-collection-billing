@@ -12,12 +12,21 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:9px;bord
 </style>
 <script>
 const CODE128_PATTERNS="212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112".split(" ");
+function barcodeKey(code){
+ code=String(code||'').trim().toUpperCase();
+ let h1=0x811c9dc5,h2=0x9e3779b9;
+ for(let i=0;i<code.length;i++){let n=code.charCodeAt(i);h1=Math.imul(h1^n,16777619);h2=Math.imul(h2^(n+i*31),2246822519);}
+ h1^=h1>>>16;h2^=h2>>>16;
+ return 'D'+(h1>>>0).toString(36).toUpperCase().padStart(7,'0')+(h2>>>0).toString(36).toUpperCase().padStart(7,'0');
+}
 function code128Svg(value,opts={}){
- value=String(value||"").trim(); if(!value)return "";
+ value=String(value||'').trim(); if(!value)return "";
+ const original=value;
+ const encoded=(value.indexOf('DC|')===0)?barcodeKey(value):value;
  let vals=[104];
- for(let i=0;i<value.length;i++){let n=value.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
+ for(let i=0;i<encoded.length;i++){let n=encoded.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
  let sum=104;for(let i=1;i<vals.length;i++)sum+=vals[i]*i;vals.push(sum%103);vals.push(106);
- let x=22,barW=2.8,h=72,rects=[];
+ let x=28,barW=3.2,h=82,rects=[];
  for(const v of vals){
    const p=CODE128_PATTERNS[v];
    for(let k=0;k<p.length;k++){
@@ -26,11 +35,11 @@ function code128Svg(value,opts={}){
      x+=w;
    }
  }
- const total=x+22;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 94" width="100%" height="1.00in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" role="img" aria-label="Barcode '+esc(value)+'"><rect x="0" y="0" width="'+total.toFixed(2)+'" height="72" fill="#ffffff"/>'+rects.join('')+'<text x="'+(total/2).toFixed(2)+'" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#000000">'+esc(value)+'</text></svg>';
- return '<div class="barcode-real" style="width:100%;height:1.00in;margin:0.04in 0;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
-}
-</script>
+ const total=x+28;
+ const label=opts.label!==undefined?String(opts.label):original;
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 108" width="100%" height="1.25in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" role="img" aria-label="Barcode '+esc(original)+'"><rect x="0" y="0" width="'+total.toFixed(2)+'" height="82" fill="#ffffff"/>'+rects.join('')+'<text x="'+(total/2).toFixed(2)+'" y="104" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#000000">'+esc(label)+'</text></svg>';
+ return '<div class="barcode-real" style="width:100%;height:1.25in;margin:0.04in 0;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
+}</script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
@@ -410,7 +419,7 @@ function printAllLabels(){
  let cards=arr.map(x=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div class="small">'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+code128Svg(code)+'<div><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div>'}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close()
 }
-function fillFromCode(code){code=String(code||'').trim();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
+function fillFromCode(code){code=String(code||'').trim().toUpperCase();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x&&/^D[A-Z0-9]{10,16}$/.test(code)){x=db.stock.find(a=>barcodeKey(a.code)===code)}if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Camera access इस browser/page पर available नहीं है. HTTPS link से app खोलें और Camera permission दें.');return}
