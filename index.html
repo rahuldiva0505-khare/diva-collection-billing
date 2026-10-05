@@ -17,9 +17,18 @@ function code128Svg(value,opts={}){
  let vals=[104];
  for(let i=0;i<value.length;i++){let n=value.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
  let sum=104;for(let i=1;i<vals.length;i++)sum+=vals[i]*i;vals.push(sum%103);vals.push(106);
- let parts=[],modules=0;
- vals.forEach(v=>{const p=CODE128_PATTERNS[v];for(let k=0;k<p.length;k++){const n=Number(p[k]);modules+=n;if(k%2===0)parts.push('<i style="display:block;background:#000;flex:'+n+' 0 0;height:100%"></i>');else parts.push('<i style="display:block;background:#fff;flex:'+n+' 0 0;height:100%"></i>');}});
- return '<div class="barcode-real" style="display:block;width:100%;height:0.52in;background:#fff;padding:0 3%;box-sizing:border-box;overflow:hidden"><div style="display:flex;width:100%;height:78%;background:#fff;align-items:stretch">'+parts.join('')+'</div><div style="font:11px Arial,sans-serif;color:#000;text-align:center;line-height:22%;white-space:nowrap">'+esc(value)+'</div></div>';
+ let x=10,barW=2.4,h=62,rects=[];
+ for(const v of vals){
+   const p=CODE128_PATTERNS[v];
+   for(let k=0;k<p.length;k++){
+     const n=Number(p[k]),w=n*barW;
+     if(k%2===0)rects.push('<rect x="'+x.toFixed(2)+'" y="0" width="'+w.toFixed(2)+'" height="'+h+'" fill="#000000"/>');
+     x+=w;
+   }
+ }
+ const total=x+10;
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 82" width="100%" height="0.68in" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="Barcode '+esc(value)+'"><rect x="0" y="0" width="'+total.toFixed(2)+'" height="82" fill="#ffffff"/>'+rects.join('')+'<text x="'+(total/2).toFixed(2)+'" y="77" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#000000">'+esc(value)+'</text></svg>';
+ return '<div class="barcode-real" style="width:100%;height:0.68in;margin:0.03in 0;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
 }
 </script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
@@ -306,7 +315,7 @@ function labelPrintStyle(){
  const s=getLabelPrintSettings();
  const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
  const rows=Math.max(1,Math.floor((s.paperH+s.gapY)/(s.labelH+s.gapY)));
- return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}body{font-family:Arial;margin:0;padding:0;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:1px solid #222;padding:0.06in;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:100%;height:0.52in;margin:0.04in auto;background:#fff}.barcode-real i{display:block}.small{font-size:6px}.label h3{font-size:9px;margin:0.02in 0}.prices{font-size:8px;margin-top:0.03in}'};
+ return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}body{font-family:Arial;margin:0;padding:0;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:1px solid #222;padding:0.06in;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:100%;height:0.52in;margin:0.04in auto;background:#fff}.barcode-real{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:6px}.label h3{font-size:9px;margin:0.02in 0}.prices{font-size:8px;margin-top:0.03in}'};
 }
 function printAllSpecificLabels(arr){
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
