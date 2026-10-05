@@ -22,7 +22,7 @@ function code128Svg(value,opts={}){
  return '<div class="barcode-real" style="display:block;width:100%;height:0.52in;background:#fff;padding:0 3%;box-sizing:border-box;overflow:hidden"><div style="display:flex;width:100%;height:78%;background:#fff;align-items:stretch">'+parts.join('')+'</div><div style="font:11px Arial,sans-serif;color:#000;text-align:center;line-height:22%;white-space:nowrap">'+esc(value)+'</div></div>';
 }
 </script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
@@ -404,22 +404,31 @@ function printAllLabels(){
 function fillFromCode(code){code=String(code||'').trim();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Camera access इस browser/page पर available नहीं है. App को HTTPS या localhost पर खोलें और Camera permission दें.');return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Camera access इस browser/page पर available नहीं है. App को HTTPS पर खोलें और Camera permission दें.');return}
   let modal=document.getElementById('cameraScanner');
   if(!modal){
     modal=document.createElement('div');modal.id='cameraScanner';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';
-    modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Barcode Scan</div><video id="cameraVideo" autoplay playsinline muted style="width:min(92vw,520px);height:55vh;object-fit:cover;background:#111;border:2px solid #fff;border-radius:12px"></video><div id="cameraMsg" style="color:#fff;margin:12px;text-align:center">Barcode को camera के सामने रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';
+    modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Barcode Scan</div><div style="position:relative;width:min(94vw,560px);height:58vh"><video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;background:#111;border:2px solid #fff;border-radius:12px"></video><div style="position:absolute;left:8%;right:8%;top:42%;height:2px;background:#f57c00;box-shadow:0 0 8px #f57c00"></div></div><div id="cameraMsg" style="color:#fff;margin:12px;text-align:center">Barcode की lines को orange line के बीच रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';
     document.body.appendChild(modal);
   }else modal.style.display='flex';
-  const video=document.getElementById('cameraVideo'); const msg=document.getElementById('cameraMsg');
+  const video=document.getElementById('cameraVideo'),msg=document.getElementById('cameraMsg');
   try{
-    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+    window.__scanStop=false;
+    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
     video.srcObject=window.__scanStream; await video.play();
     if('BarcodeDetector' in window){
-      const detector=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']}); window.__scanStop=false;
-      const loop=async()=>{if(window.__scanStop)return;try{const codes=await detector.detect(video);if(codes.length){const code=codes[0].rawValue;stopCameraScan();fillFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();
+      let detector;
+      try{detector=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']})}catch(e){detector=new BarcodeDetector()}
+      const loop=async()=>{if(window.__scanStop)return;try{const codes=await detector.detect(video);if(codes&&codes.length){const code=codes[0].rawValue;stopCameraScan();fillFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();
+    }else if(window.ZXingBrowser){
+      msg.textContent='Barcode को line के बीच रखें…';
+      try{
+        window.__zxingReader=new ZXingBrowser.BrowserMultiFormatReader();
+        const result=await window.__zxingReader.decodeOnceFromVideoElement(video);
+        if(result&&result.text){stopCameraScan();fillFromCode(result.text)}
+      }catch(e){if(!window.__scanStop)msg.textContent='Barcode नहीं मिला. Barcode को camera में पास और सीधा रखें.'}
     }else{
-      msg.textContent='Camera चालू है, लेकिन इस browser में built-in barcode detector नहीं है. USB/Bluetooth barcode scanner या barcode value input इस्तेमाल करें.';
+      msg.textContent='Camera चालू है. इस browser में barcode decoder उपलब्ध नहीं है.';
     }
   }catch(e){stopCameraScan();alert('Camera permission नहीं मिली. Browser settings में Camera Allow करें. '+e.message)}
 }
