@@ -12,7 +12,17 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:9px;bord
 </style>
 <script>
 const CODE128_PATTERNS="212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112".split(" ");
-function code128Svg(value,opts={}){\n value=String(value||"").trim(); if(!value)return "";\n // Code 128-B: checksum + start/stop, with generous quiet zones and fixed bar geometry for thermal printers.\n let vals=[104]; for(let i=0;i<value.length;i++){let n=value.charCodeAt(i); if(n<32||n>126) n=32; vals.push(n-32);}\n let sum=104; for(let i=1;i<vals.length;i++)sum+=vals[i]*i; vals.push(sum%103); vals.push(106);\n const moduleW=1.6, barH=56, quiet=12; let x=quiet,parts=[];\n vals.forEach(v=>{const pat=CODE128_PATTERNS[v]; for(let k=0;k<pat.length;k++){const n=Number(pat[k])*moduleW; if(k%2===0)parts.push('<rect x="'+x.toFixed(2)+'" y="0" width="'+n.toFixed(2)+'" height="'+barH+'"/>'); x+=n;}});\n const total=x+quiet;\n return '<svg class="barcode" viewBox="0 0 '+total.toFixed(2)+' 72" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">'+parts.join('')+'</g><text x="'+(total/2).toFixed(2)+'" y="69" text-anchor="middle" font-family="Arial,sans-serif" font-size="10">'+esc(value)+'</text></svg>';\n}\n</script>
+function code128Svg(value,opts={}){
+ value=String(value||"").trim(); if(!value)return "";
+ let vals=[104];
+ for(let i=0;i<value.length;i++){let n=value.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
+ let sum=104;for(let i=1;i<vals.length;i++)sum+=vals[i]*i;vals.push(sum%103);vals.push(106);
+ const mw=2,barH=60,quiet=18;let x=quiet,bars=[];
+ vals.forEach(v=>{const p=CODE128_PATTERNS[v];for(let k=0;k<p.length;k++){const n=Number(p[k])*mw;if(k%2===0)bars.push('<rect x="'+x+'" y="0" width="'+n+'" height="'+barH+'" fill="#000"/>');x+=n;}});
+ const total=x+quiet;
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="'+total+'" height="76" viewBox="0 0 '+total+' 76" preserveAspectRatio="none" style="display:block;width:100%;height:0.52in;background:#fff;shape-rendering:crispEdges"><rect x="0" y="0" width="'+total+'" height="76" fill="#fff"/>'+bars.join('')+'<text x="'+(total/2)+'" y="73" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#000">'+esc(value)+'</text></svg>';
+}
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
