@@ -302,9 +302,8 @@ function labelPrintStyle(){
 function printAllSpecificLabels(arr){
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
- let cards=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div class="small">'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div><svg id="spbc'+i+'" class="barcode"></svg><div><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div>'}).join('');
- let scripts=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return "JsBarcode('#spbc"+i+"','"+esc(code)+"',{format:'CODE128',displayValue:true,fontSize:10,height:50,margin:2,width:1.4});"}).join('');
- w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script><script>'+scripts+'setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
+ let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div class="small">'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+code128Svg(code)+'<div><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div>'}).join('');
+ w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
 }
 function renderReturnOptions(){
  const sel=document.getElementById('returnStockKey'); if(!sel)return;
