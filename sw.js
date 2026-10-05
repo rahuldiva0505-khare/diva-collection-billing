@@ -1,5 +1,5 @@
 
-const CACHE = 'diva-billing-v30';
+const CACHE = 'diva-billing-v31';
 
 const CORE = [
   './',
