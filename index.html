@@ -17,10 +17,9 @@ function code128Svg(value,opts={}){
  let vals=[104];
  for(let i=0;i<value.length;i++){let n=value.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
  let sum=104;for(let i=1;i<vals.length;i++)sum+=vals[i]*i;vals.push(sum%103);vals.push(106);
- const mw=2,barH=60,quiet=18;let x=quiet,bars=[];
- vals.forEach(v=>{const p=CODE128_PATTERNS[v];for(let k=0;k<p.length;k++){const n=Number(p[k])*mw;if(k%2===0)bars.push('<rect x="'+x+'" y="0" width="'+n+'" height="'+barH+'" fill="#000"/>');x+=n;}});
- const total=x+quiet;
- return '<svg xmlns="http://www.w3.org/2000/svg" width="'+total+'" height="76" viewBox="0 0 '+total+' 76" preserveAspectRatio="none" style="display:block;width:100%;height:0.52in;background:#fff;shape-rendering:crispEdges"><rect x="0" y="0" width="'+total+'" height="76" fill="#fff"/>'+bars.join('')+'<text x="'+(total/2)+'" y="73" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#000">'+esc(value)+'</text></svg>';
+ let parts=[],modules=0;
+ vals.forEach(v=>{const p=CODE128_PATTERNS[v];for(let k=0;k<p.length;k++){const n=Number(p[k]);modules+=n;if(k%2===0)parts.push('<i style="display:block;background:#000;flex:'+n+' 0 0;height:100%"></i>');else parts.push('<i style="display:block;background:#fff;flex:'+n+' 0 0;height:100%"></i>');}});
+ return '<div class="barcode-real" style="display:block;width:100%;height:0.52in;background:#fff;padding:0 3%;box-sizing:border-box;overflow:hidden"><div style="display:flex;width:100%;height:78%;background:#fff;align-items:stretch">'+parts.join('')+'</div><div style="font:11px Arial,sans-serif;color:#000;text-align:center;line-height:22%;white-space:nowrap">'+esc(value)+'</div></div>';
 }
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
@@ -307,7 +306,7 @@ function labelPrintStyle(){
  const s=getLabelPrintSettings();
  const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
  const rows=Math.max(1,Math.floor((s.paperH+s.gapY)/(s.labelH+s.gapY)));
- return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}body{font-family:Arial;margin:0;padding:0;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:1px solid #222;padding:0.06in;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:calc(100% - 0.08in);height:'+Math.max(0.32,s.labelH*0.50)+'in;margin:0.04in auto;background:#fff}.barcode rect{fill:#000!important}.barcode text{fill:#000!important}.small{font-size:6px}.label h3{font-size:9px;margin:0.02in 0}.prices{font-size:8px;margin-top:0.03in}'};
+ return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}body{font-family:Arial;margin:0;padding:0;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:1px solid #222;padding:0.06in;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:100%;height:0.52in;margin:0.04in auto;background:#fff}.barcode-real i{display:block}.small{font-size:6px}.label h3{font-size:9px;margin:0.02in 0}.prices{font-size:8px;margin-top:0.03in}'};
 }
 function printAllSpecificLabels(arr){
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
