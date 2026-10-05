@@ -954,7 +954,7 @@ setTimeout(function(){
   }
   window.addEventListener('load',function(){
     ensureLockUI();addHeaderButtons();initMulti();
-    if(getPin())startAutoLock();
+    if(getPin())lockApp();
   });
   setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
 })();
