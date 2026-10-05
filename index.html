@@ -71,11 +71,11 @@ function code128Svg(value,opts={}){
 <input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No.">
 <div style="grid-column:1/-1" class="colorbox"><b>📏 Sizes — हर size अलग select करें</b>
 <div class="sizechips">
-<label class="sizechip"><input type="checkbox" class="psizecheck" value="M"> M</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="L"> L</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XL"> XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXL"> XXL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXXL"> XXXL</label>
+<label class="sizechip"><input type="checkbox" class="psizecheck" value="S"> S</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="M"> M</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="L"> L</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XL"> XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXL"> XXL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="3XL"> 3XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="4XL"> 4XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="5XL"> 5XL</label>
 </div><input id="pcustomSizes" placeholder="Custom sizes, comma separated (जैसे 28,30,32)">
-<div class="small" style="margin-top:10px"><b>🎨 Colours (1 से 3)</b></div>
+<div class="small" style="margin-top:10px"><b>🎨 Colours (कम से कम 4 options)</b></div>
 <div class="colorrow"><div><label>Colour 1</label><input id="pcolor1" placeholder="जैसे Teak Blue"></div><div><label>Colour 2 (optional)</label><input id="pcolor2" placeholder="दूसरा Colour"></div></div>
-<div class="colorrow"><div><label>Colour 3 (optional)</label><input id="pcolor3" placeholder="तीसरा Colour"></div><div><button type="button" class="gray" onclick="buildPurchaseMatrix()">🔄 Size/Colour Quantity Matrix</button></div></div>
+<div class="colorrow"><div><label>Colour 3</label><input id="pcolor3" placeholder="तीसरा Colour"></div><div><label>Colour 4</label><input id="pcolor4" placeholder="चौथा Colour"></div><div><button type="button" class="gray" onclick="buildPurchaseMatrix()">🔄 Size/Colour Quantity Matrix</button></div></div>
 <div id="purchaseMatrix" class="matrix small">पहले Size और Colour चुनकर Matrix बनाएं.</div></div></div>
 <button class="green" onclick="saveNewPurchaseProduct()">💾 SAVE PRODUCT + PURCHASE</button>
 <div id="newPurchaseResult" class="small" style="margin-top:8px"></div></div>
@@ -130,7 +130,7 @@ function renderCategories(){
  if(b){const bv=b.value;b.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");if(cats.includes(bv))b.value=bv;}
 }
 function selectedSizes(){let vals=[...document.querySelectorAll('.sizecheck:checked')].map(x=>x.value);let custom=(document.getElementById('customSizes').value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(vals.concat(custom))]}
-function selectedColors(){return [1,2,3].map(n=>document.getElementById('scolor'+n).value.trim()).filter(Boolean)}
+function selectedColors(){return [1,2,3,4].map(n=>document.getElementById('scolor'+n).value.trim()).filter(Boolean)}
 function buildStockMatrix(){
  let sizes=selectedSizes(),colors=selectedColors(),el=document.getElementById('stockMatrix');
  if(!sizes.length||!colors.length){el.innerHTML='<div class="empty">कम से कम 1 Size और 1 Colour चुनें.</div>';return}
@@ -151,7 +151,7 @@ function saveStock(){
  rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0}else db.stock.push({key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)})});
  save();clearStockForm();renderCategories();renderStock();renderLabels();alert(rows.length+' Size + Colour stock entries add हो गईं');
 }
-function clearStockForm(){['newcat','ssku','sname','customSizes','smrp','sselling','sdiscount','scost','scolor1','scolor2','scolor3'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.sizecheck').forEach(x=>x.checked=false);document.getElementById('stockMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('scat').value=''}
+function clearStockForm(){['newcat','ssku','sname','customSizes','smrp','sselling','sdiscount','scost','scolor1','scolor2','scolor3','scolor4'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.sizecheck').forEach(x=>x.checked=false);document.getElementById('stockMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('scat').value=''}
 function renderStock(){
  let el=document.getElementById("stockTable"); if(!el)return;
  const q=(document.getElementById('stockSearch')?.value||'').toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
@@ -162,7 +162,7 @@ function renderStock(){
  el.innerHTML='<div class="tablewrap"><table><tr><th>Category</th><th>Product / SKU</th><th>Colour</th><th>Size</th><th>Available Qty</th><th>MRP</th><th>Selling</th><th>Barcode</th></tr>'+filter.map(x=>`<tr><td><span class="pill">${esc(x.category)}</span></td><td>${esc(x.name)}<br><small>${esc(x.sku)}</small></td><td>${esc(x.color)}</td><td>${esc(x.size)}</td><td><b>${x.qty}</b></td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.selling||0).toFixed(2)}</td><td><button class="gray" onclick="printLabelByKey('${esc(x.key)}')">🏷️ Print</button></td></tr>`).join("")+'</table></div>';
 }
 function selectedPurchaseSizes(){let a=[...document.querySelectorAll('.psizecheck:checked')].map(x=>x.value),c=(document.getElementById('pcustomSizes')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(a.concat(c))]}
-function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)}
+function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)}
 function buildPurchaseMatrix(){
  let sizes=selectedPurchaseSizes(),colors=selectedPurchaseColors(),el=document.getElementById('purchaseMatrix');
  if(!sizes.length||!colors.length){el.innerHTML='<div class="empty">कम से कम 1 Size और 1 Colour चुनें.</div>';return}
