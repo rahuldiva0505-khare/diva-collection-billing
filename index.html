@@ -63,7 +63,7 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <header style="position:relative">🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button><span id="lockBtnsStatic" style="position:absolute;right:12px;bottom:8px;display:flex;gap:5px"><button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button></span></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
-<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('cloudSync')">☁️ CLOUD SYNC</button>
+<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button onclick="page('cloudSync')">☁️ CLOUD SYNC</button>
 </nav>
 <main>
 <section id="dashboard" class="page">
@@ -190,6 +190,18 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
   setTimeout(showJSCPrinterBox,300);
 })();
 </script>
+
+<section id="printer" class="page">
+<div class="card"><h2>🖨️ Bluetooth Printer</h2>
+<p class="small"><b>Mobile Chrome</b> से Bluetooth <b>BLE thermal printer</b> connect करें. Printer में Bluetooth ON रखें, फिर नीचे Connect दबाएँ.</p>
+<div class="grid">
+<button type="button" onclick="connectBluetoothPrinter()">🔵 Add / Connect Bluetooth Printer</button>
+<button type="button" class="gray" onclick="disconnectBluetoothPrinter()">⛔ Disconnect</button>
+<button type="button" class="green" onclick="testBluetoothPrinter()">🧪 Test Print</button>
+</div>
+<div id="printerStatus" class="small" style="margin-top:10px">Printer अभी connect नहीं है.</div>
+<p class="small" style="margin-top:10px">नोट: यह browser से <b>BLE</b> printers के लिए है. पुराने Classic Bluetooth / SPP printers को Chrome web app सीधे control नहीं कर सकता; ऐसे printer में Android system print या manufacturer app की जरूरत पड़ सकती है.</p>
+</div></section>
 
 <section id="cloudSync" class="page"><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Is purane billing version ka data Firebase Cloud me sync hoga. Isi Sync Code ko doosre phone/laptop par connect karke data la sakte hain.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" onclick="createCloudCode()">➕ New Sync Code</button><button onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" onclick="syncCloudNow()">🔄 Sync Now</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Offline-ready. Pehle Sync Code banayein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #f57c00;border-radius:10px;background:#fff8ef"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
 <div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
@@ -973,4 +985,75 @@ setTimeout(function(){
   });
   setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
 })();
-</script></body></html>
+<script>
+(function(){
+  let printerDevice=null, printerChar=null;
+  const SERVICE_UUIDS=['000018f0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455','e7810a71-73ae-499d-8c15-faa9aef0c3f2'];
+  function pstatus(t){const e=document.getElementById('printerStatus');if(e)e.textContent=t;}
+  function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+  async function findWritableCharacteristic(server){
+    const services=[];
+    try{for(const u of SERVICE_UUIDS){try{services.push(await server.getPrimaryService(u))}catch(e){}}}catch(e){}
+    for(const s of services){
+      const cs=await s.getCharacteristics();
+      const w=cs.find(x=>x.properties.writeWithoutResponse||x.properties.write);
+      if(w)return w;
+    }
+    const all=await server.getPrimaryServices();
+    for(const s of all){
+      const cs=await s.getCharacteristics();
+      const w=cs.find(x=>x.properties.writeWithoutResponse||x.properties.write);
+      if(w)return w;
+    }
+    return null;
+  }
+  async function writeBytes(bytes){
+    if(!printerChar)throw new Error('Printer connected नहीं है');
+    const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+    const chunk=printerChar.properties.writeWithoutResponse?180:20;
+    for(let i=0;i<data.length;i+=chunk){
+      const part=data.slice(i,i+chunk);
+      if(printerChar.properties.writeWithoutResponse) await printerChar.writeValueWithoutResponse(part);
+      else await printerChar.writeValue(part);
+      await sleep(15);
+    }
+  }
+  function escposTest(){
+    const enc=new TextEncoder();
+    const text='Diva Collection\nBluetooth Printer Test\n--------------------------\nPrinter Connected ✓\n\n';
+    const out=new Uint8Array([27,64,...enc.encode(text),27,100,3]);
+    return out;
+  }
+  window.connectBluetoothPrinter=async function(){
+    if(!navigator.bluetooth){alert('इस Chrome/browser में Bluetooth Web API available नहीं है. Android Chrome में HTTPS app खोलें.');return}
+    try{
+      pstatus('🔵 Bluetooth printer खोज रहे हैं...');
+      printerDevice=await navigator.bluetooth.requestDevice({
+        acceptAllDevices:true,
+        optionalServices:SERVICE_UUIDS
+      });
+      printerDevice.addEventListener('gattserverdisconnected',()=>{printerChar=null;pstatus('⚠️ Printer disconnect हो गया.')});
+      const server=await printerDevice.gatt.connect();
+      printerChar=await findWritableCharacteristic(server);
+      if(!printerChar)throw new Error('Writable printer characteristic नहीं मिली. यह printer browser BLE printing support नहीं कर रहा.');
+      pstatus('✅ Connected: '+(printerDevice.name||'Bluetooth Printer'));
+      localStorage.setItem('DIVA_BT_PRINTER_NAME',printerDevice.name||'Bluetooth Printer');
+    }catch(e){console.error(e);printerChar=null;pstatus('❌ Connect नहीं हुआ: '+(e.message||e));}
+  };
+  window.disconnectBluetoothPrinter=function(){
+    try{if(printerDevice&&printerDevice.gatt.connected)printerDevice.gatt.disconnect()}catch(e){}
+    printerChar=null;printerDevice=null;pstatus('Printer disconnect कर दिया गया.');
+  };
+  window.testBluetoothPrinter=async function(){
+    try{
+      if(!printerChar){
+        alert('पहले Add / Connect Bluetooth Printer दबाएँ.');
+        return;
+      }
+      pstatus('🖨️ Test print भेज रहे हैं...');
+      await writeBytes(escposTest());
+      pstatus('✅ Test print command भेज दिया गया.');
+    }catch(e){pstatus('❌ Print failed: '+(e.message||e));alert('Bluetooth print नहीं हुआ. Printer BLE/ESC-POS compatible होना चाहिए.');}
+  };
+})();
+</script></script></body></html>
