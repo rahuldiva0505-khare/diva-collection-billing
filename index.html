@@ -12,34 +12,53 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:9px;bord
 </style>
 <script>
 const CODE128_PATTERNS="212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112".split(" ");
+const EAN_L=[
+"0001101","0011001","0010011","0111101","0100011","0110001","0101111","0111011","0110111","0001011"];
+const EAN_G=[
+"0100111","0110011","0011011","0100001","0011101","0111001","0000101","0010001","0001001","0010111"];
+const EAN_R=[
+"1110010","1100110","1101100","1000010","1011100","1001110","1010000","1000100","1001000","1110100"];
+const EAN_PARITY=["LLLLLL","LLGLGG","LLGGLG","LLGGGL","LGLLGG","LGGLLG","LGGGLL","LGLGLG","LGLGGL","LGGLGL"];
 function barcodeKey(code){
  code=String(code||'').trim().toUpperCase();
- let h1=0x811c9dc5,h2=0x9e3779b9;
- for(let i=0;i<code.length;i++){let n=code.charCodeAt(i);h1=Math.imul(h1^n,16777619);h2=Math.imul(h2^(n+i*31),2246822519);}
- h1^=h1>>>16;h2^=h2>>>16;
- return 'D'+(h1>>>0).toString(36).toUpperCase().padStart(7,'0')+(h2>>>0).toString(36).toUpperCase().padStart(7,'0');
+ let h=2166136261>>>0;
+ for(let i=0;i<code.length;i++) h=Math.imul(h^code.charCodeAt(i),16777619);
+ h^=h>>>16;
+ return String(h>>>0).padStart(10,'0').slice(-10);
 }
-function code128Svg(value,opts={}){
- value=String(value||'').trim(); if(!value)return "";
- const original=value;
- const encoded=(value.indexOf('DC|')===0)?barcodeKey(value):value;
- let vals=[104];
- for(let i=0;i<encoded.length;i++){let n=encoded.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
- let sum=104;for(let i=1;i<vals.length;i++)sum+=vals[i]*i;vals.push(sum%103);vals.push(106);
- let x=28,barW=3.2,h=82,rects=[];
- for(const v of vals){
-   const p=CODE128_PATTERNS[v];
-   for(let k=0;k<p.length;k++){
-     const n=Number(p[k]),w=n*barW;
-     if(k%2===0)rects.push('<rect x="'+x.toFixed(2)+'" y="0" width="'+w.toFixed(2)+'" height="'+h+'" fill="#000000"/>');
-     x+=w;
+function ean13ForCode(code){
+ let d='590'+barcodeKey(code).slice(-9);
+ d=d.slice(0,12);
+ let sum=0;
+ for(let i=0;i<12;i++) sum+=(+d[i])*(i%2?3:1);
+ return d+((10-(sum%10))%10);
+}
+function ean13Svg(value,opts={}){
+ const original=String(value||'').trim();
+ if(!original)return "";
+ const digits=/^\\d{13}$/.test(original)?original:ean13ForCode(original);
+ const first=+digits[0],par=EAN_PARITY[first];
+ let bits='101';
+ for(let i=1;i<=6;i++) bits+=(par[i-1]==='L'?EAN_L[+digits[i]]:EAN_G[+digits[i]]);
+ bits+='01010';
+ for(let i=7;i<=12;i++) bits+=EAN_R[+digits[i]];
+ bits+='101';
+ const module=3.4,quiet=28;
+ let rects=[],runStart=-1;
+ for(let i=0;i<bits.length;i++){
+   if(bits[i]==='1'&&runStart<0)runStart=i;
+   if((bits[i]==='0'||i===bits.length-1)&&runStart>=0){
+     let end=(bits[i]==='1'&&i===bits.length-1)?i+1:i;
+     rects.push('<rect x="'+(quiet+runStart*module).toFixed(2)+'" y="0" width="'+((end-runStart)*module).toFixed(2)+'" height="86" fill="#000"/>');
+     runStart=-1;
    }
  }
- const total=x+28;
+ const total=quiet*2+95*module;
  const label=opts.label!==undefined?String(opts.label):original;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 108" width="100%" height="1.25in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" role="img" aria-label="Barcode '+esc(original)+'"><rect x="0" y="0" width="'+total.toFixed(2)+'" height="82" fill="#ffffff"/>'+rects.join('')+'<text x="'+(total/2).toFixed(2)+'" y="104" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#000000">'+esc(label)+'</text></svg>';
- return '<div class="barcode-real" style="width:100%;height:1.25in;margin:0.04in 0;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
-}</script>
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 112" width="100%" height="1.30in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/>'+rects.join('')+'<text x="'+(quiet+3*module).toFixed(2)+'" y="103" font-family="Arial,sans-serif" font-size="10" fill="#000">'+esc(label)+'</text></svg>';
+ return '<div class="barcode-real" style="width:100%;height:1.30in;margin:0.04in 0;background:#fff;overflow:hidden">'+svg+'</div>';
+}
+function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
@@ -419,7 +438,7 @@ function printAllLabels(){
  let cards=arr.map(x=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div class="small">'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+code128Svg(code)+'<div><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div>'}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close()
 }
-function fillFromCode(code){code=String(code||'').trim().toUpperCase();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x&&/^D[A-Z0-9]{10,16}$/.test(code)){x=db.stock.find(a=>barcodeKey(a.code)===code)}if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
+function fillFromCode(code){code=String(code||'').trim().toUpperCase();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x&&/^\\d{13}$/.test(code)){x=db.stock.find(a=>ean13ForCode(a.code)===code)}if(!x&&/^D[A-Z0-9]{10,16}$/.test(code)){x=db.stock.find(a=>barcodeKey(a.code)===code)}if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Camera access इस browser/page पर available नहीं है. HTTPS link से app खोलें और Camera permission दें.');return}
