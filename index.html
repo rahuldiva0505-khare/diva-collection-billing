@@ -20,7 +20,7 @@ function code128Svg(value,opts={}){
  let total=x+2; return `<svg class="barcode" viewBox="0 0 ${total.toFixed(2)} ${h+16}" preserveAspectRatio="none" role="img"><g fill="#000">${parts.join("")}</g><text x="${(total/2).toFixed(2)}" y="${h+12}" text-anchor="middle" font-family="Arial" font-size="9">${esc(value)}</text></svg>`;
 }
 </script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><style>:root{--pink:#b52b73;--pink2:#8e326b;--gold:#d5a54a}header{background:linear-gradient(135deg,var(--pink2),var(--pink))!important}nav button,.green{background:var(--pink2)!important}.card{border-color:#f0c7dc!important}</style><script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script></head><body>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#6c2bd9;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
@@ -68,7 +68,7 @@ function code128Svg(value,opts={}){
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
-<input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No."><input id="phsn" placeholder="HSN Code"><input id="psac" placeholder="SAC Code"><input id="puqc" placeholder="UQC (PCS/SET/etc.)" value="PCS"><input id="pgst" type="number" min="0" step="0.01" placeholder="GST %">
+<input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No.">
 <div style="grid-column:1/-1" class="colorbox"><b>📏 Sizes — हर size अलग select करें</b>
 <div class="sizechips">
 <label class="sizechip"><input type="checkbox" class="psizecheck" value="M"> M</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="L"> L</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XL"> XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXL"> XXL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXXL"> XXXL</label>
@@ -107,7 +107,7 @@ function code128Svg(value,opts={}){
 <section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Selected Quantities</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button></div><div id="labelsList" class="labelgrid" style="margin-top:12px"></div></div></section>
 
 <section id="cloudSync" class="page"><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Is purane billing version ka data Firebase Cloud me sync hoga. Isi Sync Code ko doosre phone/laptop par connect karke data la sakte hain.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" onclick="createCloudCode()">➕ New Sync Code</button><button onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" onclick="syncCloudNow()">🔄 Sync Now</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Offline-ready. Pehle Sync Code banayein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2>
-<div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><select id="expenseCategory"><option>Shop Rent</option><option>Salary</option><option>Electricity</option><option>Internet</option><option>Transport</option><option>Marketing</option><option>Packaging</option><option>Maintenance</option><option>Other</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
+<div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
 <div id="report" style="margin-top:12px"></div></div></section>
 </main>
 <script>
@@ -199,21 +199,69 @@ function saveNewPurchaseProduct(){
  ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; preparePurchaseSku();
 
 }
-const _saveNewPurchaseProductOriginal=saveNewPurchaseProduct;
-saveNewPurchaseProduct=function(){
- const before=new Set((db.stock||[]).map(x=>x.key));
- _saveNewPurchaseProductOriginal();
- const hsn=document.getElementById('phsn')?.value.trim()||'', sac=document.getElementById('psac')?.value.trim()||'', uqc=document.getElementById('puqc')?.value.trim()||'PCS', gst=Number(document.getElementById('pgst')?.value)||0;
- (db.stock||[]).forEach(x=>{if(!before.has(x.key)||!x.hsn){x.hsn=hsn;x.sac=sac;x.uqc=uqc;x.gst=gst;}});
- (db.purchases||[]).slice(-20).forEach(x=>{if(!x.hsn)x.hsn=hsn;if(!x.sac)x.sac=sac;if(!x.uqc)x.uqc=uqc;if(!x.gst)x.gst=gst;});
- save();
- ['phsn','psac','puqc','pgst'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='puqc'?'PCS':''});
-}
 function printAllSpecificLabels(arr){
  let w=window.open('','_blank','width=800,height=900');if(!w){alert('Print window blocked है.');return}
  let cards=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return `<div class="label"><b>Diva Collection</b><div>${esc(x.name)}</div><div class="small">${esc(x.sku)} | ${esc(x.color)} | Size ${esc(x.size)}</div><svg id="spbc${i}" class="barcode"></svg><div><b>MRP ₹${Number(x.mrp||0).toFixed(2)}</b> &nbsp; <b>Sell ₹${Number(x.selling||0).toFixed(2)}</b></div><div class="small">${esc(code)}</div></div>`}).join('');
  let scripts=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return `JsBarcode('#spbc${i}','${esc(code)}',{format:'CODE128',displayValue:true,fontSize:10,height:50,margin:4,width:1.4});`}).join('');
- w.document.write(`<!doctype html><html><head><title>Diva Barcode Labels</title><style>@page{size:50.8mm 25.4mm;margin:0}body{font-family:Arial;display:flex;flex-wrap:wrap;margin:0}.label{width:50.8mm;height:25.4mm;text-align:center;border:1px solid #222;padding:1.5mm;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{width:46mm;height:11mm}.small{font-size:6px}</style></head><body>${cards}<script>${scripts}setTimeout(()=>window.print(),600)<\/script></body></html>`);w.document.close();
+ w.document.write(`<!doctype html><html><head><title>Diva Barcode Labels</title><style>@page{size:50.8mm 25.4mm;margin:0}body{font-family:Arial;display:flex;flex-wrap:wrap;margin:0}.label{width:50.8mm;height:25.4mm;text-align:center;border:1px solid #222;padding:1.5mm;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{width:46mm;height:11mm}.small{font-size:6px}</style></head><body>${cards}<script>${scripts}setTimeout(()=>window.print(),600)<\/script><script>
+(function(){
+function addEnhancements(){
+ var report=document.getElementById("report");
+ var amount=document.getElementById("expenseAmount");
+ if(amount && !document.getElementById("expenseCategory")){
+   var s=document.createElement("select");s.id="expenseCategory";s.style.padding="10px";s.style.borderRadius="8px";
+   ["Shop Rent","Salary","Electricity","Internet","Transport","Marketing","Packaging","Maintenance","Other"].forEach(function(x){var o=document.createElement("option");o.value=x;o.textContent=x;s.appendChild(o)});
+   amount.parentNode.insertBefore(s,amount);
+ }
+ var pinvoice=document.getElementById("pinvoice");
+ if(pinvoice && !document.getElementById("phsn")){
+   var box=pinvoice.parentNode;
+   ["phsn","psac","puqc","pgst"].forEach(function(id){
+     var e=document.createElement("input");e.id=id;e.className=pinvoice.className;e.style.marginTop="6px";
+     e.placeholder=id==="phsn"?"HSN Code":id==="psac"?"SAC Code":id==="puqc"?"UQC (PCS/SET/etc.)":"GST %";
+     if(id==="pgst")e.type="number";
+     if(id==="puqc")e.value="PCS";
+     box.appendChild(e);
+   });
+ }
+}
+var oldAdd=window.addExpense;
+window.addExpense=function(){
+ var cat=document.getElementById("expenseCategory");
+ var before=(db.expenses||[]).length;
+ oldAdd();
+ if((db.expenses||[]).length>before){
+   db.expenses[db.expenses.length-1].category=cat?cat.value:"Other";
+   save();
+   if(typeof renderReport==="function")renderReport();
+ }
+};
+var oldProduct=window.saveNewPurchaseProduct;
+window.saveNewPurchaseProduct=function(){
+ addEnhancements();
+ var h=document.getElementById("phsn"),s=document.getElementById("psac"),u=document.getElementById("puqc"),g=document.getElementById("pgst");
+ var vals={hsn:h?h.value.trim():"",sac:s?s.value.trim():"",uqc:u?(u.value.trim()||"PCS"):"PCS",gst:g?Number(g.value)||0:0};
+ var before=(db.stock||[]).map(function(x){return x.key});
+ oldProduct();
+ (db.stock||[]).forEach(function(x){if(before.indexOf(x.key)<0){x.hsn=vals.hsn;x.sac=vals.sac;x.uqc=vals.uqc;x.gst=vals.gst;}});
+ (db.purchases||[]).slice(-50).forEach(function(x){if(!x.hsn)x.hsn=vals.hsn;if(!x.sac)x.sac=vals.sac;if(!x.uqc)x.uqc=vals.uqc;if(!x.gst)x.gst=vals.gst;});
+ save();
+};
+var oldReport=window.renderReport;
+window.renderReport=function(){
+ oldReport();
+ var el=document.getElementById("report");
+ if(!el)return;
+ var period=document.getElementById("reportPeriod")?document.getElementById("reportPeriod").value:"day";
+ var ex=(db.expenses||[]).filter(function(e){return typeof inPeriod==="function"&&inPeriod(e.date,period)});
+ var cats=["Shop Rent","Salary","Electricity","Internet","Transport","Marketing","Packaging","Maintenance","Other"];
+ var rows=cats.map(function(cat){var total=ex.filter(function(e){return (e.category||"Other")===cat}).reduce(function(a,e){return a+Number(e.amount||0)},0);return "<tr><td>"+cat+"</td><td>₹"+total.toFixed(2)+"</td></tr>"}).join("");
+ var h=document.createElement("div");h.className="card";h.innerHTML="<h3>Expense Category Totals</h3><div class='tablewrap'><table><tr><th>Category</th><th>Total</th></tr>"+rows+"</table></div>";
+ el.appendChild(h);
+};
+addEnhancements();
+})();
+</script></body></html>`);w.document.close();
 }
 function renderReturnOptions(){
  const sel=document.getElementById('returnStockKey'); if(!sel)return;
@@ -416,9 +464,9 @@ function renderDashboard(){
  if(r)r.innerHTML=sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Mobile</th><th>Total</th></tr>'+sales.slice(-10).reverse().map(b=>`<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo)}</td><td>${esc(b.customer||'Walk-in')}</td><td>${esc(b.phone||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td></tr>`).join('')+'</table></div>':'<div class="empty">अभी कोई bill नहीं है.</div>';
 }
 
-function addExpense(){let amount=Number(document.getElementById("expenseAmount").value)||0,note=document.getElementById("expenseNote").value.trim(),category=document.getElementById("expenseCategory")?.value||"Other";if(amount<=0){alert("Expense amount भरें");return}db.expenses=db.expenses||[];db.expenses.push({id:"EXP-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),date:new Date().toISOString(),amount,note,category});save();document.getElementById("expenseAmount").value="";document.getElementById("expenseNote").value="";renderReport();alert("Expense save हो गया")}db.expenses=db.expenses||[];db.expenses.push({date:new Date().toISOString(),amount,note});save();document.getElementById("expenseAmount").value="";document.getElementById("expenseNote").value="";renderReport();alert("Expense save हो गया")}
+function addExpense(){let amount=Number(document.getElementById("expenseAmount").value)||0,note=document.getElementById("expenseNote").value.trim();if(amount<=0){alert("Expense amount भरें");return}db.expenses=db.expenses||[];db.expenses.push({date:new Date().toISOString(),amount,note});save();document.getElementById("expenseAmount").value="";document.getElementById("expenseNote").value="";renderReport();alert("Expense save हो गया")}
 function inPeriod(date,period){let d=new Date(date),n=new Date();if(period==="day")return d.toDateString()===n.toDateString();if(period==="month")return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth();if(period==="year")return d.getFullYear()===n.getFullYear();return true}
-function renderReport(){db.expenses=db.expenses||[];let period=document.getElementById("reportPeriod")?.value||"day",sales=db.sales.filter(x=>inPeriod(x.date,period)),expenses=db.expenses.filter(x=>inPeriod(x.date,period));let revenue=sales.reduce((s,b)=>s+Number(b.total||0),0),cost=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0),gross=revenue-cost,exp=expenses.reduce((s,e)=>s+Number(e.amount||0),0),net=gross-exp,units=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.qty||0),0),0);document.getElementById("report").innerHTML=`<div class="grid"><div class="card"><div class="small">Bills</div><div class="big">${sales.length}</div></div><div class="card"><div class="small">Items Sold</div><div class="big">${units}</div></div><div class="card"><div class="small">Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div><div class="card"><div class="small">Cost of Goods</div><div class="big">₹${cost.toFixed(2)}</div></div><div class="card"><div class="small">Gross Profit</div><div class="big">₹${gross.toFixed(2)}</div></div><div class="card"><div class="small">Expenses</div><div class="big">₹${exp.toFixed(2)}</div></div><div class="card"><div class="small">Net Profit</div><div class="big">₹${net.toFixed(2)}</div></div></div><h3>Expense Category Totals</h3><div class="tablewrap"><table><tr><th>Category</th><th>Total</th></tr><tr><td>Shop Rent</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Shop Rent").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Salary</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Salary").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Electricity</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Electricity").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Internet</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Internet").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Transport</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Transport").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Marketing</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Marketing").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Packaging</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Packaging").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Maintenance</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Maintenance").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr><tr><td>Other</td><td>₹${expenses.filter(e=>(e.category||"Other")==="Other").reduce((s,e)=>s+Number(e.amount||0),0).toFixed(2)}</td></tr></table></div><h3>Sales Details</h3>${sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Sales</th><th>Cost</th><th>Gross Profit</th></tr>'+sales.map((b,i)=>{let c=b.items.reduce((a,x)=>a+Number(x.cost||0)*Number(x.qty||0),0),g=Number(b.total||0)-c;return `<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo||String(i+1))}</td><td>${esc(b.customer||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td><td>₹${c.toFixed(2)}</td><td>₹${g.toFixed(2)}</td></tr>`}).join('')+'</table></div>':'<div class="empty">इस period में कोई sale नहीं है.</div>'}`}
+function renderReport(){db.expenses=db.expenses||[];let period=document.getElementById("reportPeriod")?.value||"day",sales=db.sales.filter(x=>inPeriod(x.date,period)),expenses=db.expenses.filter(x=>inPeriod(x.date,period));let revenue=sales.reduce((s,b)=>s+Number(b.total||0),0),cost=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0),gross=revenue-cost,exp=expenses.reduce((s,e)=>s+Number(e.amount||0),0),net=gross-exp,units=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.qty||0),0),0);document.getElementById("report").innerHTML=`<div class="grid"><div class="card"><div class="small">Bills</div><div class="big">${sales.length}</div></div><div class="card"><div class="small">Items Sold</div><div class="big">${units}</div></div><div class="card"><div class="small">Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div><div class="card"><div class="small">Cost of Goods</div><div class="big">₹${cost.toFixed(2)}</div></div><div class="card"><div class="small">Gross Profit</div><div class="big">₹${gross.toFixed(2)}</div></div><div class="card"><div class="small">Expenses</div><div class="big">₹${exp.toFixed(2)}</div></div><div class="card"><div class="small">Net Profit</div><div class="big">₹${net.toFixed(2)}</div></div></div><h3>Sales Details</h3>${sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Sales</th><th>Cost</th><th>Gross Profit</th></tr>'+sales.map((b,i)=>{let c=b.items.reduce((a,x)=>a+Number(x.cost||0)*Number(x.qty||0),0),g=Number(b.total||0)-c;return `<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo||String(i+1))}</td><td>${esc(b.customer||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td><td>₹${c.toFixed(2)}</td><td>₹${g.toFixed(2)}</td></tr>`}).join('')+'</table></div>':'<div class="empty">इस period में कोई sale नहीं है.</div>'}`}
 const FIREBASE_CONFIG={apiKey:"AIzaSyBORF42SXYvSvOAqjdVU3fOWg51XB08T4I",authDomain:"diva-collection-billing.firebaseapp.com",projectId:"diva-collection-billing",storageBucket:"diva-collection-billing.firebasestorage.app",messagingSenderId:"91025120704",appId:"1:91025120704:web:e4555e479de2e2b495bc25",measurementId:"G-X9EGSNMD1R"};
 let cloudApp=null,cloudAuth=null,cloudDb=null,cloudUser=null,cloudBusy=false;
 function cloudDevice(){let x=localStorage.getItem('DIVA_CLOUD_DEVICE');if(!x){x=crypto.randomUUID();localStorage.setItem('DIVA_CLOUD_DEVICE',x)}return x}
@@ -594,4 +642,4 @@ document.addEventListener("keydown",function(e){
 function openLaptopHelp(){alert("Laptop पर software Chrome/Edge में सीधे index.html खोलकर चल सकता है. USB/Bluetooth barcode scanner लगाकर Billing page पर barcode scan करें—code अपने आप product, colour और size भर देगा.");}
 
 renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();renderPurchase();renderDashboard();cloudUI();
-</script></body></html>
+</script><script>if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(x){x.unregister()})}).catch(function(){})}</script></body></html>
