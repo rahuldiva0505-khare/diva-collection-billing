@@ -107,6 +107,20 @@ function code128Svg(value,opts={}){
 <section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button></div><div style="margin-top:12px;padding:10px;border:1px solid #f57c00;border-radius:10px;background:#fff8ef">
 <label><input type="checkbox" id="autoPrintLabels" checked> Product add करते ही नई quantity के barcode automatic print करें</label>
 <button onclick="printCheckedLabelRows()" style="margin-left:8px">🖨️ Selected Rows Print</button>
+</div>
+<div class="card" style="margin-top:10px;background:#fff8ef">
+<h3>🖨️ Printer / Label Paper Setting</h3>
+<div class="grid">
+<label>Paper Width (inch)<input id="lpPaperW" type="number" min="1" step="0.1" value="4"></label>
+<label>Paper Height (inch)<input id="lpPaperH" type="number" min="1" step="0.1" value="6"></label>
+<label>Label Width (inch)<input id="lpLabelW" type="number" min="0.5" step="0.1" value="2"></label>
+<label>Label Height (inch)<input id="lpLabelH" type="number" min="0.5" step="0.1" value="1"></label>
+<label>Horizontal Gap (inch)<input id="lpGapX" type="number" min="0" step="0.05" value="0"></label>
+<label>Vertical Gap (inch)<input id="lpGapY" type="number" min="0" step="0.05" value="0"></label>
+</div>
+<div id="lpLayoutInfo" class="small" style="margin-top:8px"></div>
+<button class="green" onclick="saveLabelPrintSettings()">💾 Save Printer Setting</button>
+<button class="gray" onclick="loadLabelPrintSettings();updateLabelLayoutInfo()">↻ Reset / Load Setting</button>
 </div><div id="labelsList" class="labelgrid" style="margin-top:12px"></div></div></section>
 
 <section id="cloudSync" class="page"><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Is purane billing version ka data Firebase Cloud me sync hoga. Isi Sync Code ko doosre phone/laptop par connect karke data la sakte hain.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" onclick="createCloudCode()">➕ New Sync Code</button><button onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" onclick="syncCloudNow()">🔄 Sync Now</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Offline-ready. Pehle Sync Code banayein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #f57c00;border-radius:10px;background:#fff8ef"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
@@ -234,12 +248,66 @@ function saveNewPurchaseProduct(){
  ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; preparePurchaseSku();
 
 }
-function printAllSpecificLabels(arr){
- let w=window.open('','_blank','width=800,height=900');if(!w){alert('Print window blocked है.');return}
- let cards=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return `<div class="label"><b>Diva Collection</b><div>${esc(x.name)}</div><div class="small">${esc(x.sku)} | ${esc(x.color)} | Size ${esc(x.size)}</div><svg id="spbc${i}" class="barcode"></svg><div><b>MRP ₹${Number(x.mrp||0).toFixed(2)}</b> &nbsp; <b>Sell ₹${Number(x.selling||0).toFixed(2)}</b></div><div class="small">${esc(code)}</div></div>`}).join('');
- let scripts=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return `JsBarcode('#spbc${i}','${esc(code)}',{format:'CODE128',displayValue:true,fontSize:10,height:50,margin:4,width:1.4});`}).join('');
- w.document.write(`<!doctype html><html><head><title>Diva Barcode Labels</title><style>@page{size:50.8mm 25.4mm;margin:0}body{font-family:Arial;display:flex;flex-wrap:wrap;margin:0}.label{width:50.8mm;height:25.4mm;text-align:center;border:1px solid #222;padding:1.5mm;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{width:46mm;height:11mm}.small{font-size:6px}</style></head><body>${cards}<script>${scripts}setTimeout(()=>window.print(),600)<\/script></body></html>`);w.document.close();
+function getLabelPrintSettings(){
+ const d={paperW:4,paperH:6,labelW:2,labelH:1,gapX:0,gapY:0};
+ try{const s=JSON.parse(localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS')||'{}');Object.assign(d,s)}catch(e){}
+ return d;
 }
+function updateLabelLayoutInfo(){
+ const ids=['lpPaperW','lpPaperH','lpLabelW','lpLabelH','lpGapX','lpGapY'];
+ const v={};ids.forEach(id=>{const e=document.getElementById(id);if(e)v[id]=Number(e.value)||0});
+ const cols=Math.max(1,Math.floor((v.lpPaperW+v.lpGapX)/(v.lpLabelW+v.lpGapX)));
+ const rows=Math.max(1,Math.floor((v.lpPaperH+v.lpGapY)/(v.lpLabelH+v.lpGapY)));
+ const el=document.getElementById('lpLayoutInfo');if(el)el.innerHTML='📐 Automatic layout: <b>'+cols+' Columns × '+rows+' Rows</b> = '+(cols*rows)+' labels per paper.';
+}
+function loadLabelPrintSettings(){
+ const s=getLabelPrintSettings();
+ const map={lpPaperW:s.paperW,lpPaperH:s.paperH,lpLabelW:s.labelW,lpLabelH:s.labelH,lpGapX:s.gapX,lpGapY:s.gapY};
+ Object.keys(map).forEach(id=>{const e=document.getElementById(id);if(e)e.value=map[id]});
+ updateLabelLayoutInfo();
+}
+function saveLabelPrintSettings(){
+ const get=id=>Math.max(0.01,Number(document.getElementById(id)?.value)||0);
+ const s={paperW:get('lpPaperW'),paperH:get('lpPaperH'),labelW:get('lpLabelW'),labelH:get('lpLabelH'),gapX:Math.max(0,Number(document.getElementById('lpGapX')?.value)||0),gapY:Math.max(0,Number(document.getElementById('lpGapY')?.value)||0)};
+ localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));
+ updateLabelLayoutInfo(); alert('✅ Printer / Label paper setting save हो गई. अब barcode उसी paper के Row + Column के हिसाब से print होंगे.');
+}
+function labelPrintStyle(){
+ const s=getLabelPrintSettings();
+ const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
+ const rows=Math.max(1,Math.floor((s.paperH+s.gapY)/(s.labelH+s.gapY)));
+ return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}body{font-family:Arial;margin:0;padding:0;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:1px solid #222;padding:0.06in;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:calc(100% - 0.08in);height:'+Math.max(0.2,s.labelH*0.42)+'in;margin:0.04in auto}.small{font-size:6px}.label h3{font-size:9px;margin:0.02in 0}.prices{font-size:8px;margin-top:0.03in}'};
+}
+function printAllSpecificLabels(arr){
+ let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
+ const lp=labelPrintStyle();
+ let cards=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div class="small">'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div><svg id="spbc'+i+'" class="barcode"></svg><div><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div>'}).join('');
+ let scripts=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return "JsBarcode('#spbc"+i+"','"+esc(code)+"',{format:'CODE128',displayValue:true,fontSize:10,height:50,margin:2,width:1.4});"}).join('');
+ w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script><script>'+scripts+'setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
+}
+function renderReturnOptions(){
+ const sel=document.getElementById('returnStockKey'); if(!sel)return;
+ const old=sel.value;
+ sel.innerHTML='<option value="">Select Product / Colour / Size</option>'+db.stock.map(x=>'<option value="'+esc(x.key)+'">'+esc(x.name)+' — '+esc(x.sku)+' / '+esc(x.color)+' / Size '+esc(x.size)+' (Stock '+x.qty+')</option>').join('');
+ if([...sel.options].some(o=>o.value===old))sel.value=old;
+ loadReturnStock();
+}
+function loadReturnStock(){
+ const key=document.getElementById('returnStockKey')?.value; const x=db.stock.find(a=>a.key===key);
+ document.getElementById('returnStockInfo').textContent=x?'Available Stock: '+x.qty+' | '+x.name+' | '+x.color+' | Size '+x.size:'';
+}
+function renderStockReturns(){
+ renderReturnOptions(); const el=document.getElementById('stockReturnTable'); if(!el)return; const arr=db.stockReturns||[];
+ if(!arr.length){el.innerHTML='<div class="empty">अभी कोई stock return नहीं है.</div>';return}
+ el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th><th>Supplier / Party</th><th>Reason</th></tr>'+arr.slice().reverse().map(r=>'<tr><td>'+new Date(r.date).toLocaleString()+'</td><td>'+esc(r.name)+'<br><small>'+esc(r.sku)+'</small></td><td>'+esc(r.color)+'</td><td>'+esc(r.size)+'</td><td>'+r.qty+'</td><td>'+esc(r.party||'')+'</td><td>'+esc(r.reason||'')+'</td></tr>').join('')+'</table></div>';
+}
+function saveStockReturn(){
+ const key=document.getElementById('returnStockKey').value, qty=Number(document.getElementById('returnQty').value)||0; const x=db.stock.find(a=>a.key===key);
+ if(!x){alert('Product / Size / Colour select करें');return} if(qty<=0){alert('Return quantity भरें');return} if(qty>x.qty){alert('Return quantity available stock से ज्यादा है');return}
+ x.qty-=qty; db.stockReturns.push({date:new Date().toISOString(),key,xid:x.id||'',name:x.name,sku:x.sku,color:x.color,size:x.size,qty,party:document.getElementById('returnParty').value.trim(),reason:document.getElementById('returnReason').value.trim()}); save();
+ document.getElementById('returnQty').value='';document.getElementById('returnParty').value='';document.getElementById('returnReason').value=''; renderStockReturns(); renderStock(); alert('Stock return save हो गया और stock से quantity कम हो गई.');
+}
+function delStock(i){if(confirm("Stock entry delete करें?")){db.stock.splice(i,1);save();renderStock()}}
 function renderReturnOptions(){
  const sel=document.getElementById('returnStockKey'); if(!sel)return;
  const old=sel.value;
@@ -290,8 +358,20 @@ function printLabelQtyByKey(k){let x=db.stock.find(a=>a.key===k);if(!x)return;le
 function printQuickLabels(){let arr=db.stock.filter(x=>Number(x.qty)>0);if(!arr.length){alert('Stock खाली है');return}let s=prompt('कितने barcode print करने हैं? 4 या 6 लिखें:', '4');if(s===null)return;let n=Math.floor(Number(s));if(n!==4&&n!==6){alert('कृपया केवल 4 या 6 चुनें.');return}let selected=arr.filter(x=>{let e=document.getElementById('labelqty_'+x.key);return e&&Number(e.value)>0});if(selected.length){let flat=[];selected.forEach(x=>{let e=document.getElementById('labelqty_'+x.key);let q=Math.min(n,Math.floor(Number(e.value)||0),Number(x.qty)||0);for(let i=0;i<q;i++)flat.push(x)});if(flat.length){printAllSpecificLabels(flat);return}}let flat=[];for(let i=0;i<n;i++)flat.push(arr[i%arr.length]);printAllSpecificLabels(flat)}
 function printSelectedLabelQuantities(){let q=(document.getElementById('labelSearch')?.value||'').toLowerCase();let arr=db.stock.filter(x=>!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q)));let selected=[];arr.forEach(x=>{let el=document.getElementById('labelqty_'+x.key);if(el){let n=Math.floor(Number(el.value||0));if(n>0)selected.push({x,n})}});if(!selected.length){alert('जिस stock के labels चाहिए उसकी Qty भरें.');return}let flat=[];selected.forEach(o=>{for(let i=0;i<o.n;i++)flat.push(o.x)});printAllSpecificLabels(flat)}
 function printLabelsRepeated(x,n){let arr=[];for(let i=0;i<n;i++)arr.push(x);printAllSpecificLabels(arr)}
-function printLabelObj(x){let code=x.code||makeCode(x.category,x.sku,x.color,x.size);let w=window.open('','_blank','width=500,height=700');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}let svg=code128Svg(code);w.document.write(`<!doctype html><html><head><title>Barcode Label ${esc(code)}</title><style>@page{size:50.8mm 25.4mm;margin:0}body{font-family:Arial;text-align:center;margin:0}.label{box-sizing:border-box;width:50.8mm;height:25.4mm;border:1px solid #222;padding:1.5mm;margin:0;overflow:hidden}.label h3{font-size:9px;margin:0.5mm 0}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;margin:1mm auto 0;width:46mm;height:11mm}.small{font-size:6px;color:#555}.prices{font-size:8px;margin-top:1mm}</style></head><body><div class="label"><b>Diva Collection</b><h3>${esc(x.name)}</h3><div>${esc(x.sku)} | ${esc(x.color)} | Size ${esc(x.size)}</div>${svg}<div class="prices"><b>MRP ₹${Number(x.mrp||0).toFixed(2)}</b> &nbsp; <b>Sell ₹${Number(x.selling||0).toFixed(2)}</b></div><div class="small">${esc(code)}</div></div><script>setTimeout(()=>window.print(),400)<\/script></body></html>`);w.document.close()}
-function printAllLabels(){let arr=db.stock;if(!arr.length){alert('Stock खाली है');return}let w=window.open('','_blank','width=800,height=900');if(!w){alert('Print window blocked है.');return}let cards=arr.map(x=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return `<div class="label"><b>Diva Collection</b><div>${esc(x.name)}</div><div class="small">${esc(x.sku)} | ${esc(x.color)} | Size ${esc(x.size)}</div>${code128Svg(code)}<div><b>MRP ₹${Number(x.mrp||0).toFixed(2)}</b> &nbsp; <b>Sell ₹${Number(x.selling||0).toFixed(2)}</b></div><div class="small">${esc(code)}</div></div>`}).join('');w.document.write(`<!doctype html><html><head><title>Diva Barcode Labels</title><style>@page{size:50.8mm 25.4mm;margin:0}body{font-family:Arial;display:flex;flex-wrap:wrap;gap:0;margin:0}.label{width:50.8mm;height:25.4mm;text-align:center;border:1px solid #222;padding:1.5mm;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:46mm;height:11mm;margin:1mm auto}.small{font-size:6px}</style></head><body>${cards}<script>setTimeout(()=>window.print(),600)<\/script></body></html>`);w.document.close()}
+function printLabelObj(x){
+ let code=x.code||makeCode(x.category,x.sku,x.color,x.size),w=window.open('','_blank','width=900,height=900');
+ if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
+ const lp=labelPrintStyle();
+ const svg=code128Svg(code);
+ w.document.write('<!doctype html><html><head><title>Barcode Label '+esc(code)+'</title><style>'+lp.css+'</style></head><body><div class="label"><b>Diva Collection</b><h3>'+esc(x.name)+'</h3><div>'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+svg+'<div class="prices"><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div><script>setTimeout(()=>window.print(),500)<\/script></body></html>');w.document.close()
+}
+function printAllLabels(){
+ let arr=db.stock;if(!arr.length){alert('Stock खाली है');return}
+ let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
+ const lp=labelPrintStyle();
+ let cards=arr.map(x=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div class="small">'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+code128Svg(code)+'<div><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div>'}).join('');
+ w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close()
+}
 function fillFromCode(code){code=String(code||'').trim();if(!code)return false;let x=db.stock.find(a=>a.code===code);if(!x){let p=parseCode(code);x=db.stock.find(a=>a.category===p.category&&a.sku===p.sku&&a.color===p.color&&a.size===p.size)}if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true}
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
@@ -679,5 +759,11 @@ window.renderReport=function(){
  var gh=document.createElement("div");gh.className="card";gh.id="gstReportCard";gh.innerHTML="<h3>🧾 GST REPORT</h3><p class='small'>GST selling price में included मानकर taxable value निकाली गई है. HSN और GST % Product/Purchase entry से लिए जाते हैं.</p><div class='grid'><div class='card'><div class='small'>Taxable Sales</div><div class='big'>₹"+gt.taxable.toFixed(2)+"</div></div><div class='card'><div class='small'>CGST</div><div class='big'>₹"+(gt.tax/2).toFixed(2)+"</div></div><div class='card'><div class='small'>SGST</div><div class='big'>₹"+(gt.tax/2).toFixed(2)+"</div></div><div class='card'><div class='small'>Total GST</div><div class='big'>₹"+gt.tax.toFixed(2)+"</div></div></div>"+(gr?"<h4>HSN / GST-wise Details</h4><div class='tablewrap'><table><tr><th>HSN</th><th>GST %</th><th>Qty</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>Total GST</th></tr>"+gr+"</table></div>":"<div class='empty'>इस period में GST वाली कोई sale नहीं है. Product/Purchase में GST % भरें.</div>");el.appendChild(gh);
 };
 addEnhancements();
+setTimeout(function(){
+ loadLabelPrintSettings();
+ ['lpPaperW','lpPaperH','lpLabelW','lpLabelH','lpGapX','lpGapY'].forEach(function(id){
+  var e=document.getElementById(id);if(e)e.addEventListener('input',updateLabelLayoutInfo);
+ });
+},0);
 })();
 </script></body></html>
