@@ -874,6 +874,20 @@ setTimeout(function(){
     document.getElementById('unlockPin').onkeydown=e=>{if(e.key==='Enter')unlockApp()};
   }
   function getPin(){return String(localStorage.getItem(LOCK_KEY)||'')}
+  function setupPinOnFirstLaunch(){
+    ensureLockUI();
+    const o=document.getElementById('appLockOverlay');
+    o.style.display='flex';
+    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔐 Diva Billing App Lock</h2><p class="small">पहली बार app खोल रहे हैं। पहले 4–6 digit PIN बनाएं। बिना PIN के app नहीं खुलेगा.</p><input id="newLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="नया PIN (4–6 digits)" style="text-align:center;font-size:22px;letter-spacing:6px"><input id="confirmLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN दोबारा डालें" style="text-align:center;font-size:22px;letter-spacing:6px;margin-top:10px"><button id="saveFirstPin" style="margin-top:12px;width:100%">🔓 PIN Save करके App खोलें</button><div id="firstPinMsg" class="small danger" style="margin-top:8px"></div></div>';
+    document.getElementById('saveFirstPin').onclick=function(){
+      const p=document.getElementById('newLockPin').value.trim(), q=document.getElementById('confirmLockPin').value.trim();
+      if(!/^\d{4,6}$/.test(p)){document.getElementById('firstPinMsg').textContent='❌ PIN 4 से 6 digits का होना चाहिए.';return}
+      if(p!==q){document.getElementById('firstPinMsg').textContent='❌ दोनों PIN समान नहीं हैं.';return}
+      localStorage.setItem(LOCK_KEY,p);
+      o.style.display='none';
+      startAutoLock();
+    };
+  }
   function lockApp(){
     ensureLockUI();
     document.getElementById('appLockOverlay').style.display='flex';
@@ -954,7 +968,7 @@ setTimeout(function(){
   }
   window.addEventListener('load',function(){
     ensureLockUI();addHeaderButtons();initMulti();
-    if(getPin())lockApp();
+    if(getPin())lockApp(); else setupPinOnFirstLaunch();
   });
   setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
 })();
