@@ -148,8 +148,13 @@ function saveStock(){
  let matrix=[...document.querySelectorAll('.matrixqty')]; if(!matrix.length){buildStockMatrix(); matrix=[...document.querySelectorAll('.matrixqty')];} let rows=matrix.map(i=>({size:i.dataset.size,color:i.dataset.color,qty:Number(i.value)||0})).filter(x=>x.qty>0);
  if(!rows.length){alert('कम से कम एक Size + Colour की Quantity भरें');return}
  if(newcat&&!db.categories.includes(newcat))db.categories.push(newcat);
- rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0}else db.stock.push({key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)})});
- save();clearStockForm();renderCategories();renderStock();renderLabels();alert(rows.length+' Size + Colour stock entries add हो गईं');
+ let addedLabelItems=[];
+ rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0;addedLabelItems.push({x,q})}else{let nx={key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)};db.stock.push(nx);addedLabelItems.push({x:nx,q})}});
+ save();clearStockForm();renderCategories();renderStock();renderLabels();
+ // Product add होते ही जितनी नई quantity है उतने barcode labels print के लिए तैयार करें.
+ const labelCopies=[];addedLabelItems.forEach(o=>{for(let i=0;i<o.q;i++)labelCopies.push(o.x)});
+ if(labelCopies.length) setTimeout(()=>printAllSpecificLabels(labelCopies),150);
+ alert(rows.length+' Size + Colour stock entries add हो गईं. '+labelCopies.length+' barcode labels print के लिए भेजे जा रहे हैं.');
 }
 function clearStockForm(){['newcat','ssku','sname','customSizes','smrp','sselling','sdiscount','scost','scolor1','scolor2','scolor3','scolor4'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.sizecheck').forEach(x=>x.checked=false);document.getElementById('stockMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('scat').value=''}
 function renderStock(){
