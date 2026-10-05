@@ -60,7 +60,7 @@ function ean13Svg(value,opts={}){
 }
 function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
-<header>🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button></header>
+<header style="position:relative">🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#f57c00;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button><span id="lockBtnsStatic" style="position:absolute;right:12px;bottom:8px;display:flex;gap:5px"><button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button></span></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
 <button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('cloudSync')">☁️ CLOUD SYNC</button>
@@ -72,6 +72,7 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
 
 <section id="billing" class="page active">
+<div id="multiBillBox" class="card" style="background:#fff8ef"><h3>🧾 Multiple Bills</h3><div class="small">एक साथ कई customers के bills खुले रखें और किसी भी bill पर वापस जाएँ.</div><div id="draftTabs" style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0"></div><button type="button" class="green" onclick="newParallelBill()">➕ New Bill</button> <button type="button" class="gray" onclick="saveParallelBill()">💾 Save Draft</button> <button type="button" onclick="closeParallelBill()">✕ Close Bill</button></div>
 <div class="card"><h2>Billing</h2><div class="grid"><input id="cust" placeholder="Customer Name"><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="Customer Mobile No. (10 digits)"></div></div>
 <div class="card"><h3>Add Item</h3><div class="scanbox"><b>🔎 Barcode Scan</b><div class="small">USB/Bluetooth barcode scanner से scan करें या नीचे barcode value डालें. Scan होते ही product, colour और size auto-fill होगा.</div><div class="grid" style="margin-top:8px"><input id="scanCode" placeholder="Scan Barcode value here" onkeydown="handleScanKey(event)"><button type="button" onclick="startCameraScan()">📷 Camera Scan</button></div><div id="scanStatus" class="small"></div></div><br><div class="grid">
 <select id="bcat" onchange="loadBillProducts()"><option value="">All Categories</option></select>
@@ -930,11 +931,7 @@ setTimeout(function(){
   function renderDraftBar(){
     const billing=document.getElementById('billing'); if(!billing)return;
     let box=document.getElementById('multiBillBox');
-    if(!box){
-      box=document.createElement('div');box.id='multiBillBox';box.className='card';box.style.background='#fff8ef';
-      billing.insertBefore(box,billing.children[0]);
-    }
-    box.innerHTML='<h3>🧾 Multiple Bills</h3><div class="small">एक साथ कई customers के bills खुले रखें और किसी भी bill पर वापस जाएँ.</div><div id="draftTabs" style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0"></div><button type="button" class="green" onclick="newParallelBill()">➕ New Bill</button> <button type="button" class="gray" onclick="saveParallelBill()">💾 Save Draft</button> <button type="button" onclick="closeParallelBill()">✕ Close Bill</button>';
+    if(!box)return;
     const tabs=document.getElementById('draftTabs');
     tabs.innerHTML=drafts.map((d,i)=>'<button type="button" class="'+(i===activeDraft?'':'gray')+'" onclick="switchParallelBill('+i+')">Bill '+(i+1)+(d.customer?' — '+esc(d.customer):'')+'</button>').join('');
   }
@@ -947,10 +944,8 @@ setTimeout(function(){
     renderDraftBar();
   };
   function addHeaderButtons(){
-    const h=document.querySelector('header');if(!h||document.getElementById('lockBtns'))return;
-    const b=document.createElement('span');b.id='lockBtns';b.style='float:right;display:flex;gap:5px';
-    b.innerHTML='<button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button>';
-    h.appendChild(b);
+    const h=document.querySelector('header');if(!h)return;
+    if(document.getElementById('lockBtnsStatic'))return;
   }
   function initMulti(){
     if(!drafts.length)drafts=[{customer:'',phone:'',cart:[]}];
