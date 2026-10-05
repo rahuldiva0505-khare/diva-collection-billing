@@ -203,65 +203,7 @@ function printAllSpecificLabels(arr){
  let w=window.open('','_blank','width=800,height=900');if(!w){alert('Print window blocked है.');return}
  let cards=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return `<div class="label"><b>Diva Collection</b><div>${esc(x.name)}</div><div class="small">${esc(x.sku)} | ${esc(x.color)} | Size ${esc(x.size)}</div><svg id="spbc${i}" class="barcode"></svg><div><b>MRP ₹${Number(x.mrp||0).toFixed(2)}</b> &nbsp; <b>Sell ₹${Number(x.selling||0).toFixed(2)}</b></div><div class="small">${esc(code)}</div></div>`}).join('');
  let scripts=arr.map((x,i)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return `JsBarcode('#spbc${i}','${esc(code)}',{format:'CODE128',displayValue:true,fontSize:10,height:50,margin:4,width:1.4});`}).join('');
- w.document.write(`<!doctype html><html><head><title>Diva Barcode Labels</title><style>@page{size:50.8mm 25.4mm;margin:0}body{font-family:Arial;display:flex;flex-wrap:wrap;margin:0}.label{width:50.8mm;height:25.4mm;text-align:center;border:1px solid #222;padding:1.5mm;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{width:46mm;height:11mm}.small{font-size:6px}</style></head><body>${cards}<script>${scripts}setTimeout(()=>window.print(),600)<\/script><script>
-(function(){
-function addEnhancements(){
- var report=document.getElementById("report");
- var amount=document.getElementById("expenseAmount");
- if(amount && !document.getElementById("expenseCategory")){
-   var s=document.createElement("select");s.id="expenseCategory";s.style.padding="10px";s.style.borderRadius="8px";
-   ["Shop Rent","Salary","Electricity","Internet","Transport","Marketing","Packaging","Maintenance","Other"].forEach(function(x){var o=document.createElement("option");o.value=x;o.textContent=x;s.appendChild(o)});
-   amount.parentNode.insertBefore(s,amount);
- }
- var pinvoice=document.getElementById("pinvoice");
- if(pinvoice && !document.getElementById("phsn")){
-   var box=pinvoice.parentNode;
-   ["phsn","psac","puqc","pgst"].forEach(function(id){
-     var e=document.createElement("input");e.id=id;e.className=pinvoice.className;e.style.marginTop="6px";
-     e.placeholder=id==="phsn"?"HSN Code":id==="psac"?"SAC Code":id==="puqc"?"UQC (PCS/SET/etc.)":"GST %";
-     if(id==="pgst")e.type="number";
-     if(id==="puqc")e.value="PCS";
-     box.appendChild(e);
-   });
- }
-}
-var oldAdd=window.addExpense;
-window.addExpense=function(){
- var cat=document.getElementById("expenseCategory");
- var before=(db.expenses||[]).length;
- oldAdd();
- if((db.expenses||[]).length>before){
-   db.expenses[db.expenses.length-1].category=cat?cat.value:"Other";
-   save();
-   if(typeof renderReport==="function")renderReport();
- }
-};
-var oldProduct=window.saveNewPurchaseProduct;
-window.saveNewPurchaseProduct=function(){
- addEnhancements();
- var h=document.getElementById("phsn"),s=document.getElementById("psac"),u=document.getElementById("puqc"),g=document.getElementById("pgst");
- var vals={hsn:h?h.value.trim():"",sac:s?s.value.trim():"",uqc:u?(u.value.trim()||"PCS"):"PCS",gst:g?Number(g.value)||0:0};
- var before=(db.stock||[]).map(function(x){return x.key});
- oldProduct();
- (db.stock||[]).forEach(function(x){if(before.indexOf(x.key)<0){x.hsn=vals.hsn;x.sac=vals.sac;x.uqc=vals.uqc;x.gst=vals.gst;}});
- (db.purchases||[]).slice(-50).forEach(function(x){if(!x.hsn)x.hsn=vals.hsn;if(!x.sac)x.sac=vals.sac;if(!x.uqc)x.uqc=vals.uqc;if(!x.gst)x.gst=vals.gst;});
- save();
-};
-var oldReport=window.renderReport;
-window.renderReport=function(){
- oldReport();
- var el=document.getElementById("report");
- if(!el)return;
- var period=document.getElementById("reportPeriod")?document.getElementById("reportPeriod").value:"day";
- var ex=(db.expenses||[]).filter(function(e){return typeof inPeriod==="function"&&inPeriod(e.date,period)});
- var cats=["Shop Rent","Salary","Electricity","Internet","Transport","Marketing","Packaging","Maintenance","Other"];
- var rows=cats.map(function(cat){var total=ex.filter(function(e){return (e.category||"Other")===cat}).reduce(function(a,e){return a+Number(e.amount||0)},0);return "<tr><td>"+cat+"</td><td>₹"+total.toFixed(2)+"</td></tr>"}).join("");
- var h=document.createElement("div");h.className="card";h.innerHTML="<h3>Expense Category Totals</h3><div class='tablewrap'><table><tr><th>Category</th><th>Total</th></tr>"+rows+"</table></div>";
- el.appendChild(h);
-};
-addEnhancements();
-})();
-</script></body></html>`);w.document.close();
+ w.document.write(`<!doctype html><html><head><title>Diva Barcode Labels</title><style>@page{size:50.8mm 25.4mm;margin:0}body{font-family:Arial;display:flex;flex-wrap:wrap;margin:0}.label{width:50.8mm;height:25.4mm;text-align:center;border:1px solid #222;padding:1.5mm;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{width:46mm;height:11mm}.small{font-size:6px}</style></head><body>${cards}<script>${scripts}setTimeout(()=>window.print(),600)<\/script></body></html>`);w.document.close();
 }
 function renderReturnOptions(){
  const sel=document.getElementById('returnStockKey'); if(!sel)return;
@@ -642,4 +584,48 @@ document.addEventListener("keydown",function(e){
 function openLaptopHelp(){alert("Laptop पर software Chrome/Edge में सीधे index.html खोलकर चल सकता है. USB/Bluetooth barcode scanner लगाकर Billing page पर barcode scan करें—code अपने आप product, colour और size भर देगा.");}
 
 renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();renderPurchase();renderDashboard();cloudUI();
-</script><script>if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(x){x.unregister()})}).catch(function(){})}</script></body></html>
+</script><script>if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=cloud-v2').catch(()=>{}));}</script><script>
+(function(){
+function addEnhancements(){
+ var amount=document.getElementById("expenseAmount");
+ if(amount && !document.getElementById("expenseCategory")){
+  var s=document.createElement("select");s.id="expenseCategory";s.style.padding="10px";s.style.borderRadius="8px";
+  ["Shop Rent","Salary","Electricity","Internet","Transport","Marketing","Packaging","Maintenance","Other"].forEach(function(x){var o=document.createElement("option");o.value=x;o.textContent=x;s.appendChild(o)});
+  amount.parentNode.insertBefore(s,amount);
+ }
+ var pinvoice=document.getElementById("pinvoice");
+ if(pinvoice && !document.getElementById("phsn")){
+  var box=pinvoice.parentNode;
+  [["phsn","HSN Code"],["psac","SAC Code"],["puqc","UQC (PCS/SET/etc.)"],["pgst","GST %"]].forEach(function(a){var e=document.createElement("input");e.id=a[0];e.className=pinvoice.className;e.placeholder=a[1];if(a[0]==="pgst")e.type="number";if(a[0]==="puqc")e.value="PCS";box.appendChild(e)});
+ }
+}
+var oldAdd=window.addExpense;
+window.addExpense=function(){
+ var cat=document.getElementById("expenseCategory"),before=(db.expenses||[]).length;
+ oldAdd();
+ if((db.expenses||[]).length>before){db.expenses[db.expenses.length-1].category=cat?cat.value:"Other";save();if(typeof renderReport==="function")renderReport();}
+};
+var oldProduct=window.saveNewPurchaseProduct;
+window.saveNewPurchaseProduct=function(){
+ addEnhancements();
+ var h=document.getElementById("phsn"),s=document.getElementById("psac"),u=document.getElementById("puqc"),g=document.getElementById("pgst");
+ var vals={hsn:h?h.value.trim():"",sac:s?s.value.trim():"",uqc:u?(u.value.trim()||"PCS"):"PCS",gst:g?Number(g.value)||0:0};
+ var before=(db.stock||[]).map(function(x){return x.key});
+ oldProduct();
+ (db.stock||[]).forEach(function(x){if(before.indexOf(x.key)<0){x.hsn=vals.hsn;x.sac=vals.sac;x.uqc=vals.uqc;x.gst=vals.gst;}});
+ (db.purchases||[]).slice(-50).forEach(function(x){if(!x.hsn)x.hsn=vals.hsn;if(!x.sac)x.sac=vals.sac;if(!x.uqc)x.uqc=vals.uqc;if(!x.gst)x.gst=vals.gst;});
+ save();
+};
+var oldReport=window.renderReport;
+window.renderReport=function(){
+ oldReport();
+ var el=document.getElementById("report");if(!el)return;
+ var period=document.getElementById("reportPeriod")?document.getElementById("reportPeriod").value:"day";
+ var ex=(db.expenses||[]).filter(function(e){return typeof inPeriod==="function"&&inPeriod(e.date,period)});
+ var cats=["Shop Rent","Salary","Electricity","Internet","Transport","Marketing","Packaging","Maintenance","Other"];
+ var rows=cats.map(function(cat){var total=ex.filter(function(e){return (e.category||"Other")===cat}).reduce(function(a,e){return a+Number(e.amount||0)},0);return "<tr><td>"+cat+"</td><td>₹"+total.toFixed(2)+"</td></tr>"}).join("");
+ var h=document.createElement("div");h.className="card";h.innerHTML="<h3>Expense Category Totals</h3><div class='tablewrap'><table><tr><th>Category</th><th>Total</th></tr>"+rows+"</table></div>";el.appendChild(h);
+};
+addEnhancements();
+})();
+</script></body></html>
