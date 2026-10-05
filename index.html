@@ -182,7 +182,7 @@ function deleteStockRow(k){
    const pk=norm(p.key), ps=norm(p.sku), pc=norm(p.color), pz=norm(p.size);
    return !(pk===stockKey || (ps===sku && pc===color && pz===size));
  });
- save();
+ localStorage.setItem(KEY,JSON.stringify(db));
  renderStock();renderLabels();loadBillProducts();renderPurchase();renderDashboard();
  alert('✅ Stock और उसकी सभी linked Purchase entries delete हो गईं.');
 }
