@@ -662,6 +662,7 @@ window.renderReport=function(){
  var cats=["Shop Rent","Salary","Electricity","Internet","Transport","Marketing","Packaging","Maintenance","Other"];
  var rows=cats.map(function(cat){var total=ex.filter(function(e){return (e.category||"Other")===cat}).reduce(function(a,e){return a+Number(e.amount||0)},0);return "<tr><td>"+cat+"</td><td>₹"+total.toFixed(2)+"</td></tr>"}).join("");
  var h=document.createElement("div");h.className="card";h.innerHTML="<h3>Expense Category Totals</h3><div class='tablewrap'><table><tr><th>Category</th><th>Total</th></tr>"+rows+"</table></div>";el.appendChild(h);
+ var sales=(db.sales||[]).filter(function(x){return typeof inPeriod==="function"&&inPeriod(x.date,period)});
  var gstRows={};
  sales.forEach(function(b){
   (b.items||[]).forEach(function(it){
