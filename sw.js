@@ -1,5 +1,5 @@
 
-const CACHE = 'diva-billing-v31';
+const CACHE = 'diva-billing-v32';
 
 const CORE = [
   './',
@@ -32,18 +32,26 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      return cached || fetch(event.request).then(response => {
+  const req = event.request;
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req, {cache:'no-store'}).then(response => {
         if (response.ok) {
           const copy = response.clone();
-          caches.open(CACHE).then(cache =>
-            cache.put(event.request, copy)
-          );
+          caches.open(CACHE).then(cache => cache.put('./index.html', copy));
         }
         return response;
-      }).catch(() => caches.match('./index.html'));
-    })
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+  event.respondWith(
+    fetch(req).then(response => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache => cache.put(req, copy));
+      }
+      return response;
+    }).catch(() => caches.match(req).then(cached => cached || caches.match('./index.html')))
   );
 });
