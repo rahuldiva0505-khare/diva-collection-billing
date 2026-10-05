@@ -176,8 +176,15 @@ function deleteStockRow(k){
  const ok=confirm('क्या यह Stock/Product entry delete करनी है?\\n\\n'+(x.name||'')+' | SKU: '+(x.sku||'')+' | '+(x.color||'')+' | Size: '+(x.size||'')+' | Qty: '+(x.qty||0));
  if(!ok)return;
  db.stock=db.stock.filter(a=>a.key!==k);
- // Stock row हटाने के साथ उसी Size + Colour + SKU की purchase entries भी हटाएं.
- if(Array.isArray(db.purchases)) db.purchases=db.purchases.filter(p=>String(p.key||'')!==String(k));
+ // Stock row हटाने के साथ linked purchase entries भी हटाएं.
+ if(Array.isArray(db.purchases)){
+   const norm=v=>String(v??'').trim().toLowerCase();
+   db.purchases=db.purchases.filter(p=>{
+     const sameKey=norm(p.key)===norm(k);
+     const sameItem=norm(p.sku)===norm(x.sku)&&norm(p.color)===norm(x.color)&&norm(p.size)===norm(x.size);
+     return !(sameKey||sameItem);
+   });
+ }
  save();
  renderStock();renderLabels();loadBillProducts();renderPurchase();renderDashboard();
  alert('✅ Selected stock entry और उसकी Purchase entry delete हो गई.');
