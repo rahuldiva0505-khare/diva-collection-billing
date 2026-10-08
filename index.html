@@ -643,12 +643,11 @@ async function syncCloudNow(){if(cloudBusy)return;const code=cloudCode();if(!cod
 async function createCloudCode(){const code=randomCloudCode();localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');cloudUI('New Sync Code ready: '+code);await syncCloudNow()}
 async function connectCloudCode(){const code=document.getElementById('cloudCode').value.trim().toUpperCase();if(!code){cloudUI('Sync Code dalo.');return}localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');await syncCloudNow()}
 function refreshCloudApp(){renderCategories();loadBillProducts();renderStock();renderCart();renderPurchase();renderDashboard();renderBillHistory();renderCustomers();renderReport();renderLabels();renderStockReturns();renderSalesReturn()}
-/* DIVA CLOUD SYNC V2 — offline outbox + merge-safe stock deltas */
+/* DIVA CLOUD SYNC V3 — cloud-first initial pull + safe two-way merge */
 let syncApplying=false;
 let syncBaseline=null;
-const SYNC_BASELINE_KEY='DIVA_SYNC_BASELINE_V2';
-const SYNC_APPLIED_KEY='DIVA_SYNC_APPLIED_V2';
-const SYNC_CURSOR_KEY='DIVA_SYNC_CURSOR_V2';
+const SYNC_BASELINE_KEY='DIVA_SYNC_BASELINE_V3';
+const SYNC_APPLIED_KEY='DIVA_SYNC_APPLIED_V3';
 
 function syncClone(x){return JSON.parse(JSON.stringify(x));}
 function syncArrayNames(){return ['stock','sales','customers','purchases','stockReturns','salesReturns','expenses','categories'];}
@@ -662,64 +661,52 @@ function syncRecordKey(type,x){
  if(type==='expenses') return String(x.id||[x.date,x.amount,x.note].join('|'));
  return String(x);
 }
-function syncRead(key, fallback){
- try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(e){return fallback}
-}
+function syncRead(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(e){return fallback}}
 function syncWrite(key,val){localStorage.setItem(key,JSON.stringify(val));}
 function syncApplied(){return syncRead(SYNC_APPLIED_KEY,[]);}
-function syncRemember(id){
- let a=syncApplied(); if(a.includes(id))return;
- a.push(id); if(a.length>5000)a=a.slice(-4000); syncWrite(SYNC_APPLIED_KEY,a);
-}
+function syncRemember(id){let a=syncApplied();if(a.includes(id))return;a.push(id);if(a.length>10000)a=a.slice(-8000);syncWrite(SYNC_APPLIED_KEY,a);}
 function syncOpId(){return cloudDevice()+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
 function syncBaselineNow(){syncBaseline=syncClone(db);syncWrite(SYNC_BASELINE_KEY,syncBaseline);}
+function syncHasLocalData(){
+ return syncArrayNames().some(type=>Array.isArray(db[type])&&db[type].length>0);
+}
 function syncOpsFromDiff(prev,next){
  const ops=[];
  for(const type of syncArrayNames()){
-   const pa=Array.isArray(prev?.[type])?prev[type]:[];
-   const na=Array.isArray(next?.[type])?next[type]:[];
-   const pm=new Map(pa.map(x=>[syncRecordKey(type,x),x]));
-   const nm=new Map(na.map(x=>[syncRecordKey(type,x),x]));
-   for(const [k,x] of nm){
-     if(!pm.has(k)){ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});continue}
-     const old=pm.get(k);
-     if(JSON.stringify(old)===JSON.stringify(x))continue;
-     if(type==='stock'){
-       const oq=Number(old.qty||0), nq=Number(x.qty||0);
-       const oldMeta=syncClone(old); delete oldMeta.qty;
-       const newMeta=syncClone(x); delete newMeta.qty;
-       if(JSON.stringify(oldMeta)===JSON.stringify(newMeta) && oq!==nq){
-         ops.push({kind:'stockDelta',entity:'stock',key:k,delta:nq-oq,meta:newMeta});
-       }else{
-         ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
-       }
-     }else{
-       ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
-     }
-   }
-   for(const [k,x] of pm) if(!nm.has(k)) ops.push({kind:'delete',entity:type,key:k});
+  const pa=Array.isArray(prev?.[type])?prev[type]:[],na=Array.isArray(next?.[type])?next[type]:[];
+  const pm=new Map(pa.map(x=>[syncRecordKey(type,x),x])),nm=new Map(na.map(x=>[syncRecordKey(type,x),x]));
+  for(const [k,x] of nm){
+   if(!pm.has(k)){ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});continue}
+   const old=pm.get(k);
+   if(JSON.stringify(old)===JSON.stringify(x))continue;
+   if(type==='stock'){
+    const oq=Number(old.qty||0),nq=Number(x.qty||0),om=syncClone(old),nm2=syncClone(x);
+    delete om.qty;delete nm2.qty;
+    if(JSON.stringify(om)===JSON.stringify(nm2)&&oq!==nq)ops.push({kind:'stockDelta',entity:'stock',key:k,delta:nq-oq,meta:nm2});
+    else ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
+   }else ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
+  }
+  for(const [k] of pm)if(!nm.has(k))ops.push({kind:'delete',entity:type,key:k});
  }
  return ops;
 }
 function syncApplyOp(op){
  const type=op.entity;
  if(type==='categories'){
-   db.categories=Array.isArray(db.categories)?db.categories:[];
-   if(op.kind==='set' && !db.categories.includes(op.key))db.categories.push(op.key);
-   if(op.kind==='delete')db.categories=db.categories.filter(x=>x!==op.key);
-   return;
+  db.categories=Array.isArray(db.categories)?db.categories:[];
+  if(op.kind==='set'&&!db.categories.includes(op.key))db.categories.push(op.key);
+  if(op.kind==='delete')db.categories=db.categories.filter(x=>x!==op.key);
+  return;
  }
  db[type]=Array.isArray(db[type])?db[type]:[];
- const arr=db[type], idx=arr.findIndex(x=>syncRecordKey(type,x)===String(op.key));
+ const arr=db[type],idx=arr.findIndex(x=>syncRecordKey(type,x)===String(op.key));
  if(op.kind==='delete'){if(idx>=0)arr.splice(idx,1);return;}
  if(op.kind==='stockDelta'){
-   if(idx<0){db.stock.push({...syncClone(op.meta),qty:Number(op.delta||0)});}
-   else arr[idx]={...arr[idx],...syncClone(op.meta),qty:Number(arr[idx].qty||0)+Number(op.delta||0)};
-   return;
+  if(idx<0)db.stock.push({...syncClone(op.meta),qty:Number(op.delta||0)});
+  else arr[idx]={...arr[idx],...syncClone(op.meta),qty:Number(arr[idx].qty||0)+Number(op.delta||0)};
+  return;
  }
- if(op.kind==='set'){
-   if(idx>=0)arr[idx]=syncClone(op.payload); else arr.push(syncClone(op.payload));
- }
+ if(op.kind==='set'){if(idx>=0)arr[idx]=syncClone(op.payload);else arr.push(syncClone(op.payload));}
 }
 function syncBuildOpsForCurrent(){
  const prev=syncBaseline||syncRead(SYNC_BASELINE_KEY,null);
@@ -727,12 +714,11 @@ function syncBuildOpsForCurrent(){
  return syncOpsFromDiff(prev,db);
 }
 async function syncUploadOps(code,ops){
- if(!ops.length)return;
+ if(!ops.length)return 0;
  const base=cloudDb.collection('cloudShops').doc(code).collection('changes');
- for(const op of ops){
-   const id=syncOpId();
-   await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});
- }
+ let n=0;
+ for(const op of ops){const id=syncOpId();await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});n++;}
+ return n;
 }
 async function syncPullAndMerge(code){
  const base=cloudDb.collection('cloudShops').doc(code).collection('changes');
@@ -741,46 +727,68 @@ async function syncPullAndMerge(code){
  const docs=snap.docs.map(d=>d.data()).filter(x=>x&&x.id&&!applied.has(x.id)).sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
  if(!docs.length)return 0;
  syncApplying=true;
- try{
-   for(const op of docs){syncApplyOp(op);syncRemember(op.id);}
-   saveLocalOnly();
- }finally{syncApplying=false;}
+ try{for(const op of docs){syncApplyOp(op);syncRemember(op.id);}}
+ finally{syncApplying=false;}
  return docs.length;
 }
 function saveLocalOnly(){localStorage.setItem(KEY,JSON.stringify(db));syncBaselineNow();}
+async function initCloud(){
+ if(!cloudApp)cloudApp=firebase.initializeApp(FIREBASE_CONFIG);
+ if(!cloudAuth)cloudAuth=firebase.auth();
+ if(!cloudDb)cloudDb=firebase.firestore();
+ try{if(cloudDb.enablePersistence)await cloudDb.enablePersistence({synchronizeTabs:true}).catch(()=>{});}catch(e){}
+ if(!cloudAuth.currentUser)await cloudAuth.signInAnonymously();
+ cloudUser=cloudAuth.currentUser;
+}
 async function syncCloudNow(){
  if(cloudBusy)return;
  const code=cloudCode();
- if(!code){cloudUI('Pehle New Sync Code ya existing Sync Code connect karein.');return}
- if(!navigator.onLine){cloudUI('📴 Offline — data phone/laptop me save hai. Internet aate hi auto sync hoga.');return}
- cloudBusy=true;cloudUI('☁️ Changes sync ho rahe hain...');
+ if(!code){cloudUI('Pehle New Sync Code ya existing Sync Code connect karein.');return;}
+ if(!navigator.onLine){cloudUI('📴 Offline — local data safe hai. Internet aate hi sync hoga.');return;}
+ cloudBusy=true;cloudUI('☁️ Cloud se data check ho raha hai...');
  try{
-   await initCloud();
-   if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
-   const ops=syncBuildOpsForCurrent();
-   await syncUploadOps(code,ops);
-   syncBaselineNow();
+  await initCloud();
+  if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
+
+  /* FIRST CONNECTION: an empty/new device must pull laptop data before uploading anything. */
+  if(!syncBaseline&&!syncHasLocalData()){
    const pulled=await syncPullAndMerge(code);
+   if(pulled>0){
+    saveLocalOnly();
+    refreshCloudApp();
+    cloudUI('✅ Purana cloud stock mobile me aa gaya — '+pulled+' change(s).');
+    cloudBusy=false;
+    return;
+   }
    syncBaselineNow();
-   localStorage.setItem(SYNC_CURSOR_KEY,String(Date.now()));
-   cloudUI('✅ Auto Sync ready — '+(ops.length+pulled)+' change(s) synced. Laptop + mobile connected.');
-   refreshCloudApp();
- }catch(e){console.error(e);cloudUI('⚠️ Sync failed. Local data सुरक्षित है; internet वापस आने पर retry होगा.')}
- finally{cloudBusy=false}
+  }
+
+  const ops=syncBuildOpsForCurrent();
+  const uploaded=await syncUploadOps(code,ops);
+  if(uploaded)syncBaselineNow();
+
+  const pulled=await syncPullAndMerge(code);
+  syncBaselineNow();
+  saveLocalOnly();
+  refreshCloudApp();
+  cloudUI('✅ Cloud Sync ON — '+uploaded+' upload, '+pulled+' download. Laptop + mobile connected.');
+ }catch(e){
+  console.error('DIVA CLOUD SYNC ERROR',e);
+  cloudUI('⚠️ Cloud Sync failed: '+(e&&e.message?e.message:'Firebase error'));
+ }finally{cloudBusy=false;}
 }
 async function createCloudCode(){
  const code=randomCloudCode();
  localStorage.setItem('DIVA_CLOUD_CODE',code);
  localStorage.removeItem(SYNC_BASELINE_KEY);
- syncBaseline=null;
  localStorage.setItem(SYNC_APPLIED_KEY,'[]');
+ syncBaseline=null;
  cloudUI('New Sync Code ready: '+code);
  if(navigator.onLine)await syncCloudNow();
- else cloudUI('📴 Code saved. Internet आते ही first cloud sync होगा: '+code);
 }
 async function connectCloudCode(){
  const code=document.getElementById('cloudCode').value.trim().toUpperCase();
- if(!code){cloudUI('Sync Code dalo.');return}
+ if(!code){cloudUI('Sync Code dalo.');return;}
  localStorage.setItem('DIVA_CLOUD_CODE',code);
  if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
  await syncCloudNow();
