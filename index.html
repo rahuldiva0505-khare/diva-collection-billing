@@ -384,22 +384,14 @@ function saveLabelPrintSettings(){
  updateLabelLayoutInfo(); alert('✅ Printer / Label paper setting save हो गई. अब barcode उसी paper के Row + Column के हिसाब से print होंगे.');
 }
 function labelPrintStyle(){
- const s=getLabelPrintSettings();
- const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
- const rows=Math.max(1,Math.floor((s.paperH+s.gapY)/(s.labelH+s.gapY)));
- const css='@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}html,body{margin:0;padding:0}body{font-family:Arial,sans-serif;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{position:relative;width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:0.5px solid #222;padding:0.03in 0.05in;box-sizing:border-box;overflow:hidden;break-inside:avoid;page-break-inside:avoid}.label .prices{position:absolute;top:0.035in;left:0.04in;right:0.04in;font-size:11px!important;line-height:1!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{display:block;position:absolute;top:0.20in;left:0.04in;right:0.04in;font-size:9px;line-height:1;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:0.31in;left:0.05in;right:0.05in;font-size:8px;line-height:1.05;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:0.42in;left:0.05in;right:0.05in;font-size:7px;line-height:1;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:0.53in;left:0.05in;width:calc(100% - 0.10in)!important;height:0.66in!important;margin:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
+ const s=getLabelPrintSettings(); const cols=1,rows=1;
+ const css='@page{size:'+s.labelW+'in '+s.labelH+'in;margin:0}html,body{margin:0!important;padding:0!important;width:'+s.labelW+'in;min-height:0;overflow:visible}body{font-family:Arial,sans-serif;display:block}.label{position:relative;width:'+s.labelW+'in;height:'+s.labelH+'in;margin:0;padding:0;box-sizing:border-box;overflow:hidden;break-after:page;page-break-after:always;text-align:center}.label:last-child{break-after:auto;page-break-after:auto}.label .prices{position:absolute;top:0.03in;left:0.04in;right:0.04in;height:0.12in;font-size:9px!important;line-height:0.12in!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:0.18in;left:0;right:0;height:0.12in;font-size:9px;line-height:0.12in;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:0.32in;left:0.05in;right:0.05in;font-size:8px;line-height:0.10in;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:0.44in;left:0.05in;right:0.05in;font-size:7px;line-height:0.09in;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:0.55in;left:0.05in;width:calc(100% - 0.10in)!important;height:0.62in!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
  return {s,cols,rows,css};
-}
-function printAllSpecificLabels(arr){
- if(window.AndroidPrinter){
-   if(!arr||!arr.length){alert('Print quantity 0 है');return}
-   arr.forEach((x,i)=>setTimeout(()=>AndroidPrinter.printLabel(JSON.stringify(x)),i*250));
-   alert('✅ '+arr.length+' label direct printer को भेजे गए।');
-   return;
- }
+}function printAllSpecificLabels(arr){
+ if(window.AndroidPrinter){if(!arr||!arr.length){alert('Print quantity 0 है');return}arr.forEach((x,i)=>setTimeout(()=>AndroidPrinter.printLabel(JSON.stringify(x)),i*250));alert('✅ '+arr.length+' label direct printer को भेजे गए।');return}
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
- let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>DC</b><div>'+esc(x.name)+'</div><div>'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'<div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div></div>';}).join('');
+ let cards=arr.map((x)=>{let code=makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+esc(x.name)+'</div><div class="meta">'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'</div>';}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
 }
 function renderReturnOptions(){
