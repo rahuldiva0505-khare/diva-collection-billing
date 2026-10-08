@@ -368,9 +368,15 @@ function labelPrintStyle(){
  return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}html,body{margin:0;padding:0}body{font-family:Arial,sans-serif;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:0.5px solid #222;padding:0.025in 0.035in;box-sizing:border-box;overflow:hidden;break-inside:avoid;page-break-inside:avoid}.label>b{display:block;font-size:7px;line-height:1;margin:0 0 0.015in;white-space:nowrap;overflow:hidden}.label>div{font-size:7px;line-height:1.05;margin:0;white-space:nowrap;overflow:hidden;text-overflow:clip}.label h3{font-size:8px;line-height:1;margin:0.01in 0;white-space:nowrap;overflow:hidden}.barcode{display:block;width:100%;height:0.40in;margin:0.01in auto;background:#fff}.barcode-real{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;width:100%!important;height:0.34in!important;margin:0.005in auto!important;overflow:hidden}.barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}.prices{font-size:7px!important;line-height:1!important;margin-top:0.01in!important;font-weight:800;white-space:nowrap}'};
 }
 function printAllSpecificLabels(arr){
+ if(window.AndroidPrinter){
+   if(!arr||!arr.length){alert('Print quantity 0 है');return}
+   arr.forEach((x,i)=>setTimeout(()=>AndroidPrinter.printLabel(JSON.stringify(x)),i*250));
+   alert('✅ '+arr.length+' label direct printer को भेजे गए।');
+   return;
+ }
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
- let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div style="font-size:6px;color:#222;font-weight:800">'+esc(x.sku)+' | <span style="font-weight:900">Colour: '+esc(x.color)+'</span> | <span style="font-weight:900">Size: '+esc(x.size)+'</span></div>'+code128Svg(code)+'<div style="font-size:6px;font-weight:800;margin-top:2px">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><div class="small">'+esc(code)+'</div></div>'}).join('');
+ let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div>'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'<div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div></div>'}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
 }
 function renderReturnOptions(){
@@ -483,17 +489,24 @@ document.addEventListener('DOMContentLoaded',initNewStockBarcodeDate);
 function printSelectedLabelQuantities(){let q=(document.getElementById('labelSearch')?.value||'').toLowerCase();let arr=db.stock.filter(x=>!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q)));let selected=[];arr.forEach(x=>{let el=document.getElementById('labelqty_'+x.key);if(el){let n=Math.floor(Number(el.value||0));if(n>0)selected.push({x,n})}});if(!selected.length){alert('जिस stock के labels चाहिए उसकी Qty भरें.');return}let flat=[];selected.forEach(o=>{for(let i=0;i<o.n;i++)flat.push(o.x)});printAllSpecificLabels(flat)}
 function printLabelsRepeated(x,n){let arr=[];for(let i=0;i<n;i++)arr.push(x);printAllSpecificLabels(arr)}
 function printLabelObj(x){
+ if(window.AndroidPrinter){
+   try{ AndroidPrinter.printLabel(JSON.stringify(x)); return; }catch(e){ console.error(e); }
+ }
  let code=x.code||makeCode(x.category,x.sku,x.color,x.size),w=window.open('','_blank','width=900,height=900');
  if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
- const lp=labelPrintStyle();
- const svg=code128Svg(code);
- w.document.write('<!doctype html><html><head><title>Barcode Label '+esc(code)+'</title><style>'+lp.css+'</style></head><body><div class="label"><b>Diva Collection</b><h3>'+esc(x.name)+'</h3><div>'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+svg+'<div class="prices"><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div><script>setTimeout(()=>window.print(),500)<\/script></body></html>');w.document.close()
+ const lp=labelPrintStyle(),svg=code128Svg(code);
+ w.document.write('<!doctype html><html><head><title>Barcode Label '+esc(code)+'</title><style>'+lp.css+'</style></head><body><div class="label"><b>Diva Collection</b><h3>'+esc(x.name)+'</h3><div>'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+svg+'<div class="prices"><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div></div><script>setTimeout(()=>window.print(),500)<\/script></body></html>');w.document.close()
 }
 function printAllLabels(){
  let arr=db.stock;if(!arr.length){alert('Stock खाली है');return}
+ if(window.AndroidPrinter){
+   arr.forEach((x,i)=>setTimeout(()=>AndroidPrinter.printLabel(JSON.stringify(x)),i*250));
+   alert('✅ '+arr.length+' labels direct printer को भेजे गए।');
+   return;
+ }
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
- let cards=arr.map(x=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div style="font-size:6px;color:#222;font-weight:800">'+esc(x.sku)+' | <span style="font-weight:900">Colour: '+esc(x.color)+'</span> | <span style="font-weight:900">Size: '+esc(x.size)+'</span></div>'+code128Svg(code)+'<div style="font-size:6px;font-weight:800;margin-top:2px">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><div class="small">'+esc(code)+'</div></div>'}).join('');
+ let cards=arr.map(x=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div>'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'<div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div></div>'}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close()
 }
 function fillFromCode(code){
@@ -1222,5 +1235,17 @@ setTimeout(function(){
       pstatus('✅ Test print command भेज दिया गया.');
     }catch(e){pstatus('❌ Print failed: '+(e.message||e));alert('Bluetooth print नहीं हुआ. Printer BLE/ESC-POS compatible होना चाहिए.');}
   };
+})();
+</script><script>
+(function(){
+  function nativePrinterCard(){
+    if(!window.AndroidPrinter)return;
+    var old=document.getElementById('nativePrinterCard'); if(old)return;
+    var d=document.createElement('div'); d.id='nativePrinterCard'; d.className='card';
+    d.innerHTML='<h3>🖨️ JSC-9280 Direct Bluetooth</h3><p class="small">Diva Billing से सीधे POS-9280/JSC-9280 पर print होगा — दूसरा print app नहीं खुलेगा.</p><button type="button" onclick="AndroidPrinter.connectPrinter()">🔵 Connect JSC-9280</button><button type="button" class="gray" onclick="AndroidPrinter.disconnectPrinter()">⛔ Disconnect</button>';
+    document.body.insertBefore(d,document.body.firstChild);
+  }
+  setTimeout(nativePrinterCard,900);
+  document.addEventListener('DOMContentLoaded',nativePrinterCard);
 })();
 </script></body></html>
