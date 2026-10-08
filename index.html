@@ -49,16 +49,318 @@ function ean13Svg(value,opts={}){
    if(bits[i]==='1'&&runStart<0)runStart=i;
    if((bits[i]==='0'||i===bits.length-1)&&runStart>=0){
      let end=(bits[i]==='1'&&i===bits.length-1)?i+1:i;
-     rects.push('<rect x="'+(quiet+runStart*module).toFixed(2)+'" y="0" width="'+((end-runStart)*module).toFixed(2)+'" height="72" fill="#000"/>');
+     rects.push('<rect x="'+(quiet+runStart*module).toFixed(2)+'" y="0" width="'+((end-runStart)*module).toFixed(2)+'" height="86" fill="#000"/>');
      runStart=-1;
    }
  }
  const total=quiet*2+95*module;
  const label=opts.label!==undefined?String(opts.label):original;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 92" width="100%" height=".30in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/>'+rects.join('')+'<text x="'+(quiet+3*module).toFixed(2)+'" y="88" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#000">'+esc(label)+'</text></svg>';
- return '<div class="barcode-real" style="width:100%;height:.30in;margin:0;padding:0;box-sizing:border-box;display:block;background:#fff;overflow:hidden;border:0">'+svg+'</div>';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 112" width="100%" height="1.30in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/>'+rects.join('')+'<text x="'+(quiet+3*module).toFixed(2)+'" y="103" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#000">'+esc(label)+'</text></svg>';
+ return '<div class="barcode-real" style="width:100%;height:1.42in;margin:-0.02in 0 0.16in;padding:0 0 0.10in;box-sizing:border-box;display:block;background:#fff;overflow:hidden;border-bottom:1px dashed #bbb">'+svg+'</div>';
+}
+function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
+<header style="position:relative">🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#e91e63;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button><span id="lockBtnsStatic" style="position:absolute;right:12px;bottom:8px;display:flex;gap:5px"><button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button></span></header>
+<nav>
+<button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
+<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button onclick="page('cloudSync')">☁️ CLOUD SYNC</button>
+</nav>
+<main>
+<section id="dashboard" class="page">
+<div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div></div>
+<div class="card"><h3>⚡ Quick Actions</h3><div class="grid"><button onclick="page('billing')">🧾 New Bill</button><button onclick="page('purchase')">📥 Purchase / Stock Add</button><button onclick="page('salesReturn')">🔄 Sales Return</button><button onclick="page('stockReturn')">↩️ Stock Return</button><button onclick="page('labels')">🏷️ Barcode Labels</button><button onclick="page('reports')">📊 Reports</button></div></div>
+<div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
+
+<section id="billing" class="page active">
+<div id="multiBillBox" class="card" style="background:#fff0f6"><h3>🧾 Multiple Bills</h3><div class="small">एक साथ कई customers के bills खुले रखें और किसी भी bill पर वापस जाएँ.</div><div id="draftTabs" style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0"></div><button type="button" class="green" onclick="newParallelBill()">➕ New Bill</button> <button type="button" class="gray" onclick="saveParallelBill()">💾 Save Draft</button> <button type="button" onclick="closeParallelBill()">✕ Close Bill</button></div>
+<div class="card"><h2>Billing</h2><div class="grid"><input id="cust" placeholder="Customer Name"><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="Customer Mobile No. (10 digits)"></div></div>
+<div class="card"><h3>Add Item</h3><div class="scanbox"><b>🔎 Barcode Scan</b><div class="small">USB/Bluetooth barcode scanner से scan करें या नीचे barcode value डालें. Scan होते ही product, colour और size auto-fill होगा.</div><div class="grid" style="margin-top:8px"><input id="scanCode" placeholder="Scan Barcode value here" onkeydown="handleScanKey(event)"><button type="button" onclick="startCameraScan()">📷 Camera Scan</button></div><div id="scanStatus" class="small"></div></div><br><div class="grid">
+<select id="bcat" onchange="loadBillProducts()"><option value="">All Categories</option></select>
+<select id="bproduct" onchange="loadBillProductDetails()"><option value="">Select Product / SKU</option></select>
+<select id="bsize"><option value="">Select Size</option></select>
+<input id="bqty" type="number" min="1" value="1" placeholder="Qty">
+<input id="brate" type="number" min="0" placeholder="Selling Price">
+<input id="bdiscount" type="number" min="0" placeholder="Discount ₹">
+</div><div id="binfo" class="small" style="margin-top:8px"></div><br><button onclick="addItem()">➕ Add Item</button></div>
+<div class="card"><h3>Current Bill</h3><div id="cart"></div><div class="totalbox">Total ₹<span id="total">0</span></div><div style="margin-top:12px"><label><b>💳 Payment Mode</b></label><select id="paymentMode" style="margin-top:6px"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI / Online</option><option value="Card">💳 Card</option></select></div><br>
+<button onclick="completeSale()">💾 Complete Sale</button> <button class="green" onclick="printCurrentBill()">🖨️ Print Bill</button></div></section>
+
+<section id="billHistory" class="page">
+<div class="card"><h2>📚 पुरानी Bill History</h2><p class="small">पुराने bills यहाँ सुरक्षित रहेंगे। Bill No., customer name या mobile से खोजें और किसी भी पुराने bill को फिर से print करें.</p>
+<div class="grid"><input id="billHistorySearch" placeholder="Search Bill No / Customer / Mobile" oninput="renderBillHistory()"><select id="billHistoryPeriod" onchange="renderBillHistory()"><option value="all">All Time</option><option value="day">Today</option><option value="month">This Month</option><option value="year">This Year</option></select><button class="gray" onclick="renderBillHistory()">🔄 Refresh</button></div></div>
+<div class="card"><div id="billHistoryTable"></div></div></section>
+
+<section id="customers" class="page">
+<div class="card"><h2>👤 Customers</h2><p class="small">Bill complete karte hi customer ka naam aur mobile number yahan automatically save/update hoga.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button></div></div>
+<div class="card"><div id="customerTable"></div></div>
+</section>
+
+<section id="stock" class="page">
+<div class="card"><h2>📦 CURRENT STOCK</h2><p>यहाँ केवल <b>वर्तमान उपलब्ध stock</b> दिखेगा। नया माल जोड़ने के लिए <b>Purchase / Stock Add</b> इस्तेमाल करें.</p>
+<div class="grid"><input id="stockSearch" placeholder="Search Product / SKU / Colour / Size" oninput="renderStock()"><select id="stockCatFilter" onchange="renderStock()"><option value="">All Categories</option></select></div></div>
+<div class="card"><h3>Current Stock</h3><div id="stockTable"></div></div></section>
+
+<section id="purchase" class="page"><div class="card"><h2>📥 PURCHASE / STOCK ADD</h2>
+<p class="small">यहीं से <b>नया Product add</b> करें या existing product में purchase quantity जोड़ें। Product add होते ही barcode बन जाएगा और यहीं से label print कर सकते हैं.</p>
+<div class="card" style="background:#fafafa"><h3>➕ Add New Product / Purchase Entry</h3>
+<div class="grid">
+<div style="display:flex;gap:6px;align-items:center"><select id="pcat"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)">
+<div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
+<input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
+<input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
+<input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No."><input id="pgst" type="number" min="0" max="100" step="0.01" placeholder="GST % (जैसे 5, 12, 18)">
+<div style="grid-column:1/-1" class="colorbox"><b>📏 Sizes — हर size अलग select करें</b>
+<div class="sizechips">
+<label class="sizechip"><input type="checkbox" class="psizecheck" value="S"> S</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="M"> M</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="L"> L</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XL"> XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXL"> XXL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="3XL"> 3XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="4XL"> 4XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="5XL"> 5XL</label>
+</div><input id="pcustomSizes" placeholder="Custom sizes, comma separated (जैसे 28,30,32)">
+<div class="small" style="margin-top:10px"><b>🎨 Colours (कम से कम 4 options)</b></div>
+<div class="colorrow"><div><label>Colour 1</label><input id="pcolor1" placeholder="जैसे Teak Blue"></div><div><label>Colour 2 (optional)</label><input id="pcolor2" placeholder="दूसरा Colour"></div></div>
+<div class="colorrow"><div><label>Colour 3</label><input id="pcolor3" placeholder="तीसरा Colour"></div><div><label>Colour 4</label><input id="pcolor4" placeholder="चौथा Colour"></div><div><button type="button" class="gray" onclick="buildPurchaseMatrix()">🔄 Size/Colour Quantity Matrix</button></div></div>
+<div id="purchaseMatrix" class="matrix small">पहले Size और Colour चुनकर Matrix बनाएं.</div></div></div>
+<button class="green" onclick="saveNewPurchaseProduct()">💾 SAVE PRODUCT + PURCHASE</button>
+<div id="newPurchaseResult" class="small" style="margin-top:8px"></div></div>
+<div class="card"><h3>📦 Existing Product में Purchase जोड़ें</h3>
+<div class="grid"><select id="purchaseStockKey" onchange="loadPurchaseStock()"><option value="">Select Product / Colour / Size</option></select><input id="purchaseQty" type="number" min="1" placeholder="Purchase Quantity"><input id="purchaseCost" type="number" min="0" placeholder="Purchase Cost / Unit ₹"><input id="purchaseSupplier" placeholder="Supplier / Party Name"><input id="purchaseInvoice" placeholder="Invoice No."></div>
+<div id="purchaseStockInfo" class="small" style="margin-top:8px"></div><button class="green" onclick="savePurchase()">💾 SAVE PURCHASE & ADD STOCK</button></div>
+<div class="card" style="background:#fff0f6;border:1px solid #e91e63">
+<h3>🏷️ Date-wise New Stock Barcode Print</h3>
+<p class="small">जिस तारीख को नया stock purchase/add किया गया था, सिर्फ उसी तारीख की नई purchase quantity के barcode print करें। पुराने stock को इसमें शामिल नहीं किया जाएगा.</p>
+<div class="grid">
+<label>Date<input id="newStockBarcodeDate" type="date"></label>
+<button class="green" type="button" onclick="printNewStockBarcodesByDate()">🖨️ Print उस Date का New Stock Barcode</button>
+</div>
+<div id="newStockBarcodeInfo" class="small" style="margin-top:8px"></div>
+</div>
+<div class="card"><h3>📋 Purchase History</h3><div id="purchaseTable"></div></div></section>
+
+<section id="stockReturn" class="page"><div class="card"><h2>↩️ Stock Return</h2>
+<p class="small">Supplier को माल वापस करने पर यहाँ से stock quantity घटाएँ. Return की अलग entry/report सुरक्षित रहेगी.</p>
+<div class="grid">
+<select id="returnStockKey" onchange="loadReturnStock()"><option value="">Select Product / Colour / Size</option></select>
+<input id="returnQty" type="number" min="1" placeholder="Return Quantity">
+<input id="returnReason" placeholder="Return Reason">
+<input id="returnParty" placeholder="Supplier / Party Name">
+</div>
+<div id="returnStockInfo" class="small" style="margin-top:8px"></div>
+<button class="red" onclick="saveStockReturn()">↩️ RETURN STOCK</button></div>
+<div class="card"><h3>Stock Return History</h3><div id="stockReturnTable"></div></div></section>
+
+<section id="salesReturn" class="page"><div class="card"><h2>🔄 Sales Return / Stock में वापस जोड़ें</h2>
+<p class="small">Customer से वापस आया माल barcode scan करके उसी Colour + Size में stock में वापस जोड़ें.</p>
+<div class="scanbox"><b>📷 Barcode Scan</b><div class="grid" style="margin-top:8px"><input id="srScanCode" placeholder="Barcode scan करें" onkeydown="handleSalesReturnScan(event)"><button type="button" onclick="startSalesReturnCameraScan()">📷 Camera Scan</button></div><div id="srScanStatus" class="small"></div></div>
+<div class="grid" style="margin-top:12px"><select id="srStockKey" onchange="loadSalesReturnStock()"><option value="">Select Product / Colour / Size</option></select><input id="srQty" type="number" min="1" placeholder="Return Quantity"><input id="srReason" placeholder="Return Reason"><input id="srCustomer" placeholder="Customer Name / Mobile"></div>
+<div id="srStockInfo" class="small" style="margin-top:8px"></div>
+<button class="green" onclick="addSalesReturnToStock()">➕ ADD BACK TO STOCK</button></div>
+<div class="card"><h3>Sales Return History</h3><div id="salesReturnTable"></div></div></section>
+
+<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div style="margin-top:12px;padding:10px;border:1px solid #e91e63;border-radius:10px;background:#fff0f6">
+<label><input type="checkbox" id="autoPrintLabels" checked> Product add करते ही नई quantity के barcode automatic print करें</label>
+<button onclick="printCheckedLabelRows()" style="margin-left:8px">🖨️ Selected Rows Print</button>
+</div>
+<div class="card" style="margin-top:10px;background:#fff0f6">
+<h3>🖨️ Printer / Label Paper Setting</h3>
+<div class="grid">
+<label>Paper Width (inch)<input id="lpPaperW" type="number" min="1" step="0.1" value="4"></label>
+<label>Paper Height (inch)<input id="lpPaperH" type="number" min="1" step="0.1" value="6"></label>
+<label>Label Width (inch)<input id="lpLabelW" type="number" min="0.5" step="0.1" value="2"></label>
+<label>Label Height (inch)<input id="lpLabelH" type="number" min="0.5" step="0.1" value="1"></label>
+<label>Horizontal Gap (inch)<input id="lpGapX" type="number" min="0" step="0.05" value="0"></label>
+<label>Vertical Gap (inch)<input id="lpGapY" type="number" min="0" step="0.05" value="0"></label>
+</div>
+<div id="lpLayoutInfo" class="small" style="margin-top:8px"></div>
+<button class="green" onclick="saveLabelPrintSettings()">💾 Save Printer Setting</button>
+<button class="gray" onclick="loadLabelPrintSettings();updateLabelLayoutInfo()">↻ Reset / Load Setting</button>
+</div><div id="labelsList" class="labelgrid" style="margin-top:12px"></div></div></section>
+
+<!-- JSC-9280 direct printer controls -->
+<script>
+(function(){
+  function printerSettings(){return {pw:Number(document.getElementById('lpPaperW')?.value||4),ph:Number(document.getElementById('lpPaperH')?.value||6),lw:Number(document.getElementById('lpLabelW')?.value||2),lh:Number(document.getElementById('lpLabelH')?.value||1),gx:Number(document.getElementById('lpGapX')?.value||0),gy:Number(document.getElementById('lpGapY')?.value||0)}}
+  window.connectJSC9280=function(){
+    if(!('serial' in navigator)){alert('इस browser में Web Serial available नहीं है. Laptop पर Chrome/Edge इस्तेमाल करें.');return}
+    navigator.serial.requestPort().then(function(p){window.jsc9280Port=p;return p.open({baudRate:9600});}).then(function(){localStorage.setItem('DIVA_JSC9280_CONNECTED','1');var e=document.getElementById('jscStatus');if(e)e.textContent='✅ JSC-9280 Connected (USB)';}).catch(function(e){console.error(e);alert('Printer connect नहीं हुआ. USB printer select करें और permission Allow करें.');});
+  };
+  window.disconnectJSC9280=function(){try{if(window.jsc9280Port)window.jsc9280Port.close()}catch(e){} window.jsc9280Port=null;localStorage.removeItem('DIVA_JSC9280_CONNECTED');var e=document.getElementById('jscStatus');if(e)e.textContent='Printer disconnected';};
+  window.testJSC9280=function(){
+    var s=printerSettings();
+    var w=window.open('','_blank','width=600,height=600');
+    if(!w){alert('Popup blocked है. Browser में popup Allow करें.');return}
+    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div></body></html>');
+    w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
+  };
+  window.showJSCPrinterBox=function(){
+    var labels=document.querySelector('#labels .card');if(!labels)return;
+    if(document.getElementById('jscPrinterBox'))return;
+    var d=document.createElement('div');d.id='jscPrinterBox';d.className='card';d.style.background='#fff0f6';d.innerHTML='<h3>🖨️ JSC-9280 Thermal Printer</h3><p class="small">JSC-9280 आपके Windows driver के साथ browser Print से print करेगा. अलग printing app की जरूरत नहीं.</p><button class="green" onclick="connectJSC9280()">🔌 Connect JSC-9280 USB</button> <button class="gray" onclick="disconnectJSC9280()">Disconnect</button> <button onclick="testJSC9280()">🧪 Test Print</button><div id="jscStatus" class="small" style="margin-top:8px">'+(localStorage.getItem('DIVA_JSC9280_CONNECTED')?'Printer permission saved — reconnect करने के लिए Connect दबाएँ.':'Not connected')+'</div><p class="small" style="margin-top:8px">Label size नीचे बदल सकते हैं: 4×6 sheet या 2×1 inch roll. Columns/rows अपने-आप adjust होंगे.</p>';
+    labels.insertBefore(d,labels.children[2]||null);
+  };
+  var oldPage=window.page;
+  window.page=function(id){oldPage(id);if(id==='labels')setTimeout(showJSCPrinterBox,0);};
+  setTimeout(showJSCPrinterBox,300);
+})();
+</script>
+
+<section id="printer" class="page">
+<div class="card"><h2>🖨️ Bluetooth Printer</h2>
+<p class="small"><b>Mobile Chrome</b> से Bluetooth <b>BLE thermal printer</b> connect करें. Printer में Bluetooth ON रखें, फिर नीचे Connect दबाएँ.</p>
+<div class="grid">
+<button type="button" onclick="connectBluetoothPrinter()">🔵 Add / Connect Bluetooth Printer</button>
+<button type="button" class="gray" onclick="disconnectBluetoothPrinter()">⛔ Disconnect</button>
+<button type="button" class="green" onclick="testBluetoothPrinter()">🧪 Test Print</button><button type="button" onclick="printFirstBarcodeBluetooth()">🏷️ Print Barcode</button>
+</div>
+<div id="printerStatus" class="small" style="margin-top:10px">Printer अभी connect नहीं है.</div>
+<p class="small" style="margin-top:10px">नोट: यह browser से <b>BLE</b> printers के लिए है. पुराने Classic Bluetooth / SPP printers को Chrome web app सीधे control नहीं कर सकता; ऐसे printer में Android system print या manufacturer app की जरूरत पड़ सकती है.</p>
+</div></section>
+
+<section id="cloudSync" class="page"><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Is purane billing version ka data Firebase Cloud me sync hoga. Isi Sync Code ko doosre phone/laptop par connect karke data la sakte hain.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" onclick="createCloudCode()">➕ New Sync Code</button><button onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" onclick="syncCloudNow()">🔄 Sync Now</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Offline-ready. Pehle Sync Code banayein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #e91e63;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
+<div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
+<div id="report" style="margin-top:12px"></div></div></section>
+</main>
+<script>
+const KEY="DIVA_V5_DATA";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"stock":[],"sales":[],"categories":["Suits","Kurtis","Lehenga","Saree","Dresses","Other"]}');
+if(!Array.isArray(db.categories))db.categories=[]; db.categories=[...new Set(db.categories.concat(["Saree","Silk Saree","Cotton Saree","Designer Saree","Ready-Made Saree","Lehenga Choli","Bridal Lehenga","Crop Top Lehenga","Sharara Set","Gharara Set","Anarkali Suit","Straight Suit","Palazzo Suit","Pant Suit","Peplum Set","Indo-Western","Ready-Made Suit","Three-Piece Suit","Kurti","Kurta Set","Long Kurti","Short Kurti","A-Line Kurti","Straight Kurti","Shirt Kurti","Kaftan","Kaftan Suit","Angrakha Suit","Afghani Suit","Aliya Set","Nayera Set","Dhoti Set","Gown","Party Wear Gown","Maxi Dress","Midi Dress","Mini Dress","Frock","Dress","Jumpsuit","Co-Ord Set","Top","T-Shirt","Shirt","Crop Top","Blouse","Tunics","Jeans","Jeggings","Trousers","Pants","Palazzo","Leggings","Track Pants","Skirt","Shorts","Dupatta","Stole","Shrug","Jacket","Cardigan","Sweater","Sweatshirt","Night Suit","Nightwear","Maternity Wear","Abaya","Hijab","Modest Wear","Innerwear","Heels","Platform Heels","High Heels","Block Heels","Wedges","Kitten Heels","Sandals","Flats","Jutti","Mojari","Slippers","Shoes","Sneakers","Boots","Sports Shoes","Handbags","Sling Bags","Clutches","Wallets","Belts","Sunglasses","Watches","Jewellery","Earrings","Necklace","Bracelet","Bangles","Rings","Anklets","Hair Accessories","Makeup","Skincare","Beauty Accessories","Home & Kitchen","Other"]))];
+if(!Array.isArray(db.stock))db.stock=[]; if(!Array.isArray(db.sales))db.sales=[]; if(!Array.isArray(db.expenses))db.expenses=[]; if(!Array.isArray(db.stockReturns))db.stockReturns=[]; if(!Array.isArray(db.purchases))db.purchases=[]; if(!Array.isArray(db.salesReturns))db.salesReturns=[];
+db.stock=db.stock.map(x=>({...x,category:x.category||"Other",mrp:Number(x.mrp)||0,selling:Number(x.selling||x.rate)||0,discount:Number(x.discount)||0,cost:Number(x.cost)||0,code:x.code||makeCode(x.category||'Other',x.sku||x.name||'ITEM',x.color||'',x.size||'')}));
+let cart=[];
+function makeCode(cat,sku,color,size){return ['DC',cat,sku,color,size].map(v=>String(v||'').trim().replace(/\s+/g,'-')).filter(Boolean).join('|').toUpperCase()}
+function parseCode(code){let parts=String(code||'').split('|');return {category:parts[1]||'',sku:parts[2]||'',color:parts[3]||'',size:parts[4]||''}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
+function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
+function renderCategories(){
+ const pc=document.getElementById('pcat'); if(pc){const old=pc.value;pc.innerHTML='<option value="">Select Category</option>'+db.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(db.categories.includes(old))pc.value=old;}
+ let cats=[...new Set(db.categories.concat(db.stock.map(x=>x.category).filter(Boolean)))];
+ db.categories=cats;
+ let b=document.getElementById("bcat");
+ if(b){const bv=b.value;b.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");if(cats.includes(bv))b.value=bv;}
+}
+function selectedSizes(){let vals=[...document.querySelectorAll('.sizecheck:checked')].map(x=>x.value);let custom=(document.getElementById('customSizes').value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(vals.concat(custom))]}
+function selectedColors(){return [1,2,3,4].map(n=>document.getElementById('scolor'+n).value.trim()).filter(Boolean)}
+function buildStockMatrix(){
+ let sizes=selectedSizes(),colors=selectedColors(),el=document.getElementById('stockMatrix');
+ if(!sizes.length||!colors.length){el.innerHTML='<div class="empty">कम से कम 1 Size और 1 Colour चुनें.</div>';return}
+ let html='<table><tr><th>Size</th>'+colors.map(c=>'<th>'+esc(c)+' Qty</th>').join('')+'</tr>';
+ sizes.forEach(sz=>{html+='<tr><td><b>'+esc(sz)+'</b></td>';colors.forEach(c=>{html+='<td><input class="matrixqty" data-size="'+esc(sz)+'" data-color="'+esc(c)+'" type="number" min="0" placeholder="Qty"></td>'});html+='</tr>'});
+ el.innerHTML=html+'</table>';
+}
+function saveStock(){
+ let newcat=document.getElementById('newcat').value.trim(),cat=newcat||document.getElementById('scat').value.trim();
+ let sku=document.getElementById('ssku').value.trim(),name=document.getElementById('sname').value.trim()||sku;
+ let sizes=selectedSizes(),colors=selectedColors();
+ let cost=Number(document.getElementById('scost').value)||0,mrp=Number(document.getElementById('smrp').value)||0,selling=Number(document.getElementById('sselling').value)||0,discount=Number(document.getElementById('sdiscount').value)||0;
+ if(!cat||!sizes.length||!colors.length){alert('Category, कम से कम 1 Size और 1 Colour भरें');return}
+ if(selling<=0){alert('Selling Price भरें');return}
+ let matrix=[...document.querySelectorAll('.matrixqty')]; if(!matrix.length){buildStockMatrix(); matrix=[...document.querySelectorAll('.matrixqty')];} let rows=matrix.map(i=>({size:i.dataset.size,color:i.dataset.color,qty:Number(i.value)||0})).filter(x=>x.qty>0);
+ if(!rows.length){alert('कम से कम एक Size + Colour की Quantity भरें');return}
+ if(newcat&&!db.categories.includes(newcat))db.categories.push(newcat);
+ let addedLabelItems=[];
+ rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0;addedLabelItems.push({x,q})}else{let nx={key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)};db.stock.push(nx);addedLabelItems.push({x:nx,q})}});
+ save();clearStockForm();renderCategories();renderStock();renderLabels();
+ // Product add होते ही जितनी नई quantity है उतने barcode labels print के लिए तैयार करें.
+ const labelCopies=[];addedLabelItems.forEach(o=>{for(let i=0;i<o.q;i++)labelCopies.push(o.x)});
+ if(labelCopies.length && document.getElementById('autoPrintLabels')?.checked) setTimeout(()=>printAllSpecificLabels(labelCopies),150);
+ alert(rows.length+' Size + Colour stock entries add हो गईं. '+labelCopies.length+' barcode labels print के लिए भेजे जा रहे हैं.');
+}
+function clearStockForm(){['newcat','ssku','sname','customSizes','smrp','sselling','sdiscount','scost','scolor1','scolor2','scolor3','scolor4'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.sizecheck').forEach(x=>x.checked=false);document.getElementById('stockMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('scat').value=''}
+function renderStock(){
+ let el=document.getElementById("stockTable"); if(!el)return;
+ const q=(document.getElementById('stockSearch')?.value||'').toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
+ const filter=db.stock.filter(x=>Number(x.qty)>0&&(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
+ const cats=[...new Set(db.categories.concat(db.stock.map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
+ if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(cats.includes(old))cf.value=old;}
+ if(!filter.length){el.innerHTML='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';return}
+ el.innerHTML='<div class="tablewrap"><table><tr><th>Category</th><th>Product / SKU</th><th>Colour</th><th>Size</th><th>Available Qty</th><th>MRP</th><th>Selling</th><th>Barcode</th><th>Action</th></tr>'+filter.map(x=>`<tr><td><span class="pill">${esc(x.category)}</span></td><td>${esc(x.name)}<br><small>${esc(x.sku)}</small></td><td>${esc(x.color)}</td><td>${esc(x.size)}</td><td><b>${x.qty}</b></td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.selling||0).toFixed(2)}</td><td><button class="gray" onclick="printLabelByKey('${esc(x.key)}')">🏷️ Print</button></td><td><button class="red" onclick="deleteStockRow('${esc(x.key)}')">🗑️ Delete</button></td></tr>`).join("")+'</table></div>';
 }
 
+function deleteStockRow(k){
+ const x=db.stock.find(a=>String(a.key)===String(k));
+ if(!x){alert('Stock entry नहीं मिली.');return}
+ const ok=confirm('क्या यह Stock/Product entry delete करनी है?\\n\\n'+(x.name||'')+' | SKU: '+(x.sku||'')+' | '+(x.color||'')+' | Size: '+(x.size||'')+' | Qty: '+(x.qty||0));
+ if(!ok)return;
+ const norm=v=>String(v??'').trim().toLowerCase();
+ const sku=norm(x.sku), color=norm(x.color), size=norm(x.size), stockKey=norm(x.key);
+ db.stock=(db.stock||[]).filter(a=>norm(a.key)!==stockKey);
+ db.purchases=(db.purchases||[]).filter(p=>{
+   const pk=norm(p.key), ps=norm(p.sku), pc=norm(p.color), pz=norm(p.size);
+   return !(pk===stockKey || (ps===sku && pc===color && pz===size));
+ });
+ localStorage.setItem(KEY,JSON.stringify(db));
+ renderStock();renderLabels();loadBillProducts();renderPurchase();renderDashboard();
+ alert('✅ Stock और उसकी सभी linked Purchase entries delete हो गईं.');
+}
+function addNewCategory(){
+ const el=document.getElementById('pnewcat');
+ const name=(el&&el.value||'').trim() || prompt('नई Category का नाम लिखें:');
+ if(!name)return;
+ if(!Array.isArray(db.categories))db.categories=[];
+ if(db.categories.some(x=>String(x).trim().toLowerCase()===name.toLowerCase())){alert('यह Category पहले से मौजूद है.');return;}
+ db.categories.push(name); save(); renderCategories();
+ const pc=document.getElementById('pcat'); if(pc)pc.value=name;
+ if(el)el.value=''; alert('✅ नई Category add हो गई: '+name);
+}
+function selectedPurchaseSizes(){let a=[...document.querySelectorAll('.psizecheck:checked')].map(x=>x.value),c=(document.getElementById('pcustomSizes')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(a.concat(c))]}
+function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)}
+function buildPurchaseMatrix(){
+ let sizes=selectedPurchaseSizes(),colors=selectedPurchaseColors(),el=document.getElementById('purchaseMatrix');
+ if(!sizes.length||!colors.length){el.innerHTML='<div class="empty">कम से कम 1 Size और 1 Colour चुनें.</div>';return}
+ let html='<table><tr><th>Size</th>'+colors.map(c=>'<th>'+esc(c)+' Qty</th>').join('')+'</tr>';
+ sizes.forEach(sz=>{html+='<tr><td><b>'+esc(sz)+'</b></td>';colors.forEach(c=>{html+='<td><input class="purchasematrixqty" data-size="'+esc(sz)+'" data-color="'+esc(c)+'" type="number" min="0" placeholder="Qty"></td>'});html+='</tr>'});el.innerHTML=html+'</table>';
+}
+function clearPurchaseProductForm(){
+ ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
+}
+function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); (db.purchases||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); let stored=Number(localStorage.getItem('DIVA_NEXT_SKU_NO')||0); max=Math.max(max,stored-1); let n=max+1; while(seen.includes(n)) n++; return 'DIVA-'+n;}
+function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
+
+function saveNewPurchaseProduct(){
+ const newcat=document.getElementById('pnewcat').value.trim();
+ const cat=newcat || document.getElementById('pcat').value.trim();
+ const sku=nextDivaSku();
+ const skuEl=document.getElementById('psku'); if(skuEl) skuEl.value=sku;
+ const name=document.getElementById('pname').value.trim() || sku;
+ const sizes=selectedPurchaseSizes();
+ const colors=selectedPurchaseColors();
+ const cost=Number(document.getElementById('pcost').value)||0;
+ const mrp=Number(document.getElementById('pmrp').value)||0;
+ const selling=Number(document.getElementById('pselling').value)||0;
+ const discount=Number(document.getElementById('pdiscount').value)||0;
+ if(!cat){alert('Category select करें या नई Category भरें');return}if(!name){alert('Product Name भरें');return}if(!sizes.length){alert('कम से कम 1 Size select करें');return}if(!colors.length){alert('कम से कम 1 Colour भरें');return}if(selling<=0){alert('Selling Price भरें');return}
+ let matrix=[...document.querySelectorAll('.purchasematrixqty')];if(!matrix.length){buildPurchaseMatrix();matrix=[...document.querySelectorAll('.purchasematrixqty')]}
+ let rows=matrix.map(i=>({size:i.dataset.size,color:i.dataset.color,qty:Number(i.value)||0})).filter(x=>x.qty>0);if(!rows.length){alert('कम से कम एक Size + Colour की Quantity भरें');return}
+ if(newcat&&!db.categories.includes(newcat))db.categories.push(newcat);let added=[];
+ rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0}else{x={key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)};db.stock.push(x)}db.purchases=db.purchases||[];db.purchases.push({date:new Date().toISOString(),key:k,name:x.name,sku:x.sku,color:x.color,size:x.size,qty:q,cost:cost||x.cost||0,supplier:document.getElementById('psupplier').value.trim(),invoice:document.getElementById('pinvoice').value.trim()});added.push(x)});
+ save();
+ const m=sku.match(/^DIVA-(\d+)$/i); if(m) localStorage.setItem('DIVA_NEXT_SKU_NO',String(Number(m[1])+1));
+ renderCategories(); renderStock(); renderPurchase(); renderLabels();
+ document.getElementById('newPurchaseResult').innerHTML='<b>✅ Product purchase saved.</b> '+added.length+' entries added. Barcode labels ready हैं.';
+ ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; preparePurchaseSku();
+
+}
+function getLabelPrintSettings(){
+ const d={paperW:4,paperH:6,labelW:2,labelH:1,gapX:0,gapY:0};
+ try{const s=JSON.parse(localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS')||'{}');Object.assign(d,s)}catch(e){}
+ return d;
+}
+function updateLabelLayoutInfo(){
+ const ids=['lpPaperW','lpPaperH','lpLabelW','lpLabelH','lpGapX','lpGapY'];
+ const v={};ids.forEach(id=>{const e=document.getElementById(id);if(e)v[id]=Number(e.value)||0});
+ const cols=Math.max(1,Math.floor((v.lpPaperW+v.lpGapX)/(v.lpLabelW+v.lpGapX)));
+ const rows=Math.max(1,Math.floor((v.lpPaperH+v.lpGapY)/(v.lpLabelH+v.lpGapY)));
+ const el=document.getElementById('lpLayoutInfo');if(el)el.innerHTML='📐 Automatic layout: <b>'+cols+' Columns × '+rows+' Rows</b> = '+(cols*rows)+' labels per paper.';
+}
+function loadLabelPrintSettings(){
+ const s=getLabelPrintSettings();
+ const map={lpPaperW:s.paperW,lpPaperH:s.paperH,lpLabelW:s.labelW,lpLabelH:s.labelH,lpGapX:s.gapX,lpGapY:s.gapY};
+ Object.keys(map).forEach(id=>{const e=document.getElementById(id);if(e)e.value=map[id]});
+ updateLabelLayoutInfo();
+}
+function saveLabelPrintSettings(){
+ const get=id=>Math.max(0.01,Number(document.getElementById(id)?.value)||0);
+ const s={paperW:get('lpPaperW'),paperH:get('lpPaperH'),labelW:get('lpLabelW'),labelH:get('lpLabelH'),gapX:Math.max(0,Number(document.getElementById('lpGapX')?.value)||0),gapY:Math.max(0,Number(document.getElementById('lpGapY')?.value)||0)};
+ localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));
+ updateLabelLayoutInfo(); alert('✅ Printer / Label paper setting save हो गई. अब barcode उसी paper के Row + Column के हिसाब से print होंगे.');
+}
 function labelPrintStyle(){
  const s=getLabelPrintSettings();
  const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
