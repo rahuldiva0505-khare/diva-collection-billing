@@ -41,32 +41,28 @@ function ean13ForCode(code){
  for(let i=0;i<12;i++) sum+=(+d[i])*(i%2?3:1);
  return d+((10-(sum%10))%10);
 }
-function ean13Svg(value,opts={}){
- const original=String(value||'').trim();
- if(!original)return "";
- const digits=/^\d{13}$/.test(original)?original:ean13ForCode(original);
- const first=+digits[0],par=EAN_PARITY[first];
- let bits='101';
- for(let i=1;i<=6;i++) bits+=(par[i-1]==='L'?EAN_L[+digits[i]]:EAN_G[+digits[i]]);
- bits+='01010';
- for(let i=7;i<=12;i++) bits+=EAN_R[+digits[i]];
- bits+='101';
- const module=3.4,quiet=28;
- let rects=[],runStart=-1;
- for(let i=0;i<bits.length;i++){
-   if(bits[i]==='1'&&runStart<0)runStart=i;
-   if((bits[i]==='0'||i===bits.length-1)&&runStart>=0){
-     let end=(bits[i]==='1'&&i===bits.length-1)?i+1:i;
-     rects.push('<rect x="'+(quiet+runStart*module).toFixed(2)+'" y="0" width="'+((end-runStart)*module).toFixed(2)+'" height="86" fill="#000"/>');
-     runStart=-1;
+function code128Svg(value,opts={}){
+ value=String(value||'').trim(); if(!value)return "";
+ const original=value;
+ const encoded=(value.indexOf('DC|')===0)?barcodeKey(value):value;
+ let vals=[104];
+ for(let i=0;i<encoded.length;i++){let n=encoded.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
+ let sum=104;for(let i=1;i<vals.length;i++)sum+=vals[i]*i;vals.push(sum%103);vals.push(106);
+ let x=28,barW=3.2,h=82,rects=[];
+ for(const v of vals){
+   const p=CODE128_PATTERNS[v];
+   for(let k=0;k<p.length;k++){
+     const n=Number(p[k]),w=n*barW;
+     if(k%2===0)rects.push('<rect x="'+x.toFixed(2)+'" y="0" width="'+w.toFixed(2)+'" height="'+h+'" fill="#000000"/>');
+     x+=w;
    }
  }
- const total=quiet*2+95*module;
+ const total=x+28;
  const label=opts.label!==undefined?String(opts.label):original;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 112" width="100%" height="0.42in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/>'+rects.join('')+'<text x="'+(quiet+3*module).toFixed(2)+'" y="103" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#000">'+esc(label)+'</text></svg>';
- return '<div class="barcode-real" style="width:100%;height:0.34in;margin:0.01in auto 0;padding:0;box-sizing:border-box;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 108" width="100%" height="1.25in" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" role="img" aria-label="Barcode '+esc(original)+'"><rect x="0" y="0" width="'+total.toFixed(2)+'" height="82" fill="#ffffff"/>'+rects.join('')+'<text x="'+(total/2).toFixed(2)+'" y="104" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#000000">'+esc(label)+'</text></svg>';
+ return '<div class="barcode-real" style="width:100%;height:1.25in;margin:0.04in 0;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
 }
-function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
+</script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header style="position:relative">🛍️ Diva Collection Billing Software <span style="font-size:12px;background:#fff;color:#e91e63;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2 • BARCODE V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button><span id="lockBtnsStatic" style="position:absolute;right:12px;bottom:8px;display:flex;gap:5px"><button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button></span></header>
 <nav>
