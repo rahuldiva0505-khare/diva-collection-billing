@@ -177,9 +177,7 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
     var s=printerSettings();
     var w=window.open('','_blank','width=600,height=600');
     if(!w){alert('Popup blocked है. Browser में popup Allow करें.');return}
-    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div><script>
-
-</script></body></html>');
+    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div><script>setTimeout(function(){window.print();},700);<\/script></body></html>');
     w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
   };
   window.showJSCPrinterBox=function(){
