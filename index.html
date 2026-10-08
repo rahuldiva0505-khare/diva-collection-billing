@@ -122,6 +122,15 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <div class="card"><h3>📦 Existing Product में Purchase जोड़ें</h3>
 <div class="grid"><select id="purchaseStockKey" onchange="loadPurchaseStock()"><option value="">Select Product / Colour / Size</option></select><input id="purchaseQty" type="number" min="1" placeholder="Purchase Quantity"><input id="purchaseCost" type="number" min="0" placeholder="Purchase Cost / Unit ₹"><input id="purchaseSupplier" placeholder="Supplier / Party Name"><input id="purchaseInvoice" placeholder="Invoice No."></div>
 <div id="purchaseStockInfo" class="small" style="margin-top:8px"></div><button class="green" onclick="savePurchase()">💾 SAVE PURCHASE & ADD STOCK</button></div>
+<div class="card" style="background:#fff0f6;border:1px solid #e91e63">
+<h3>🏷️ Date-wise New Stock Barcode Print</h3>
+<p class="small">जिस तारीख को नया stock purchase/add किया गया था, सिर्फ उसी तारीख की नई purchase quantity के barcode print करें। पुराने stock को इसमें शामिल नहीं किया जाएगा.</p>
+<div class="grid">
+<label>Date<input id="newStockBarcodeDate" type="date"></label>
+<button class="green" type="button" onclick="printNewStockBarcodesByDate()">🖨️ Print उस Date का New Stock Barcode</button>
+</div>
+<div id="newStockBarcodeInfo" class="small" style="margin-top:8px"></div>
+</div>
 <div class="card"><h3>📋 Purchase History</h3><div id="purchaseTable"></div></div></section>
 
 <section id="stockReturn" class="page"><div class="card"><h2>↩️ Stock Return</h2>
@@ -435,6 +444,42 @@ function printLabel(i){printLabelObj(db.stock[i])}
 function printLabelByKey(k){let x=db.stock.find(a=>a.key===k);if(x)printLabelObj(x)}
 function printLabelQtyByKey(k){let x=db.stock.find(a=>a.key===k);if(!x)return;let q=getLabelPrintQty(k);if(!q){alert('Stock available नहीं है.');return}printLabelsRepeated(x,q)}
 function printQuickLabels(){let arr=db.stock.filter(x=>Number(x.qty)>0);if(!arr.length){alert('Stock खाली है');return}let s=prompt('कितने barcode print करने हैं? 4 या 6 लिखें:', '4');if(s===null)return;let n=Math.floor(Number(s));if(n!==4&&n!==6){alert('कृपया केवल 4 या 6 चुनें.');return}let selected=arr.filter(x=>{let e=document.getElementById('labelqty_'+x.key);return e&&Number(e.value)>0});if(selected.length){let flat=[];selected.forEach(x=>{let e=document.getElementById('labelqty_'+x.key);let q=Math.min(n,Math.floor(Number(e.value)||0),Number(x.qty)||0);for(let i=0;i<q;i++)flat.push(x)});if(flat.length){printAllSpecificLabels(flat);return}}let flat=[];for(let i=0;i<n;i++)flat.push(arr[i%arr.length]);printAllSpecificLabels(flat)}
+function localPurchaseDateKey(v){
+ const d=v instanceof Date?v:new Date(v);
+ if(isNaN(d.getTime()))return '';
+ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+ return y+'-'+m+'-'+day;
+}
+function initNewStockBarcodeDate(){
+ const e=document.getElementById('newStockBarcodeDate');
+ if(e&&!e.value)e.value=localPurchaseDateKey(new Date());
+}
+function printNewStockBarcodesByDate(){
+ const input=document.getElementById('newStockBarcodeDate');
+ const dateKey=input&&input.value?input.value:localPurchaseDateKey(new Date());
+ const purchases=(db.purchases||[]).filter(p=>localPurchaseDateKey(p.date)===dateKey);
+ const flat=[];
+ purchases.forEach(p=>{
+   let x=(db.stock||[]).find(s=>String(s.key||'').trim().toLowerCase()===String(p.key||'').trim().toLowerCase());
+   if(!x)x=(db.stock||[]).find(s=>String(s.sku||'').trim().toLowerCase()===String(p.sku||'').trim().toLowerCase()&&String(s.color||'').trim().toLowerCase()===String(p.color||'').trim().toLowerCase()&&String(s.size||'').trim().toLowerCase()===String(p.size||'').trim().toLowerCase());
+   const n=Math.max(0,Math.floor(Number(p.qty)||0));
+   if(x&&n)for(let i=0;i<n;i++)flat.push(x);
+ });
+ const info=document.getElementById('newStockBarcodeInfo');
+ if(!purchases.length){
+   if(info)info.textContent='इस तारीख को कोई नया stock purchase/add entry नहीं मिली.';
+   alert('इस तारीख को नया stock add नहीं हुआ है.');
+   return;
+ }
+ if(!flat.length){
+   if(info)info.textContent='Purchase entry मिली, लेकिन product stock में नहीं मिला.';
+   alert('इस तारीख के new stock barcode नहीं मिले.');
+   return;
+ }
+ if(info)info.textContent='✅ '+flat.length+' नए stock pieces के barcode print के लिए तैयार हैं.';
+ printAllSpecificLabels(flat);
+}
+document.addEventListener('DOMContentLoaded',initNewStockBarcodeDate);
 function printSelectedLabelQuantities(){let q=(document.getElementById('labelSearch')?.value||'').toLowerCase();let arr=db.stock.filter(x=>!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q)));let selected=[];arr.forEach(x=>{let el=document.getElementById('labelqty_'+x.key);if(el){let n=Math.floor(Number(el.value||0));if(n>0)selected.push({x,n})}});if(!selected.length){alert('जिस stock के labels चाहिए उसकी Qty भरें.');return}let flat=[];selected.forEach(o=>{for(let i=0;i<o.n;i++)flat.push(o.x)});printAllSpecificLabels(flat)}
 function printLabelsRepeated(x,n){let arr=[];for(let i=0;i<n;i++)arr.push(x);printAllSpecificLabels(arr)}
 function printLabelObj(x){
