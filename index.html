@@ -226,7 +226,16 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 </main>
 <script>
 const KEY="DIVA_V5_DATA";
-let db=JSON.parse(localStorage.getItem(KEY)||'{"stock":[],"sales":[],"categories":["Suits","Kurtis","Lehenga","Saree","Dresses","Other"]}');
+let db;
+try{
+  const raw=localStorage.getItem(KEY);
+  db=raw?JSON.parse(raw):{stock:[],sales:[],categories:["Suits","Kurtis","Lehenga","Saree","Dresses","Other"]};
+  if(!db||typeof db!=="object"||Array.isArray(db))throw new Error("Invalid billing data");
+}catch(e){
+  console.warn("Diva Billing data reset:",e);
+  db={stock:[],sales:[],categories:["Suits","Kurtis","Lehenga","Saree","Dresses","Other"]};
+  try{localStorage.setItem(KEY,JSON.stringify(db))}catch(_){}
+}
 if(!Array.isArray(db.categories))db.categories=[]; db.categories=[...new Set(db.categories.concat(["Saree","Silk Saree","Cotton Saree","Designer Saree","Ready-Made Saree","Lehenga Choli","Bridal Lehenga","Crop Top Lehenga","Sharara Set","Gharara Set","Anarkali Suit","Straight Suit","Palazzo Suit","Pant Suit","Peplum Set","Indo-Western","Ready-Made Suit","Three-Piece Suit","Kurti","Kurta Set","Long Kurti","Short Kurti","A-Line Kurti","Straight Kurti","Shirt Kurti","Kaftan","Kaftan Suit","Angrakha Suit","Afghani Suit","Aliya Set","Nayera Set","Dhoti Set","Gown","Party Wear Gown","Maxi Dress","Midi Dress","Mini Dress","Frock","Dress","Jumpsuit","Co-Ord Set","Top","T-Shirt","Shirt","Crop Top","Blouse","Tunics","Jeans","Jeggings","Trousers","Pants","Palazzo","Leggings","Track Pants","Skirt","Shorts","Dupatta","Stole","Shrug","Jacket","Cardigan","Sweater","Sweatshirt","Night Suit","Nightwear","Maternity Wear","Abaya","Hijab","Modest Wear","Innerwear","Heels","Platform Heels","High Heels","Block Heels","Wedges","Kitten Heels","Sandals","Flats","Jutti","Mojari","Slippers","Shoes","Sneakers","Boots","Sports Shoes","Handbags","Sling Bags","Clutches","Wallets","Belts","Sunglasses","Watches","Jewellery","Earrings","Necklace","Bracelet","Bangles","Rings","Anklets","Hair Accessories","Makeup","Skincare","Beauty Accessories","Home & Kitchen","Other"]))];
 if(!Array.isArray(db.stock))db.stock=[]; if(!Array.isArray(db.sales))db.sales=[]; if(!Array.isArray(db.expenses))db.expenses=[]; if(!Array.isArray(db.stockReturns))db.stockReturns=[]; if(!Array.isArray(db.purchases))db.purchases=[]; if(!Array.isArray(db.salesReturns))db.salesReturns=[];
 db.stock=db.stock.map(x=>({...x,category:x.category||"Other",mrp:Number(x.mrp)||0,selling:Number(x.selling||x.rate)||0,discount:Number(x.discount)||0,cost:Number(x.cost)||0,code:x.code||makeCode(x.category||'Other',x.sku||x.name||'ITEM',x.color||'',x.size||'')}));
