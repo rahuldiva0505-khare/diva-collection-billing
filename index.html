@@ -805,6 +805,29 @@ async function syncPullAndMerge(code){
  finally{syncApplying=false;}
  return docs.length;
 }
+async function syncPullLegacySnapshot(code){
+ try{
+  const ref=cloudDb.collection('cloudShops').doc(code);
+  const snap=await ref.get();
+  if(!snap.exists)return false;
+  const remote=snap.data()||{};
+  if(!remote.data||typeof remote.data!=='object')return false;
+  const r=remote.data;
+  if(!Array.isArray(r.stock))r.stock=[];
+  if(!Array.isArray(r.sales))r.sales=[];
+  if(!Array.isArray(r.expenses))r.expenses=[];
+  if(!Array.isArray(r.stockReturns))r.stockReturns=[];
+  if(!Array.isArray(r.purchases))r.purchases=[];
+  if(!Array.isArray(r.salesReturns))r.salesReturns=[];
+  if(!Array.isArray(r.categories))r.categories=[];
+  db=r;
+  saveLocalOnly();
+  if(remote.updatedAt)localStorage.setItem('DIVA_CLOUD_STAMP',String(remote.updatedAt));
+  syncBaselineNow();
+  refreshCloudApp();
+  return true;
+ }catch(e){console.error('DIVA LEGACY CLOUD PULL ERROR',e);return false;}
+}
 function saveLocalOnly(){localStorage.setItem(KEY,JSON.stringify(db));syncBaselineNow();}
 async function initCloud(){
  if(!cloudApp)cloudApp=firebase.initializeApp(FIREBASE_CONFIG);
@@ -831,6 +854,13 @@ async function syncCloudNow(){
     saveLocalOnly();
     refreshCloudApp();
     cloudUI('✅ Purana cloud stock mobile me aa gaya — '+pulled+' change(s).');
+    cloudBusy=false;
+    return;
+   }
+   /* LEGACY FALLBACK: older Diva versions stored the complete snapshot in cloudShops/{code}. */
+   const legacyPulled=await syncPullLegacySnapshot(code);
+   if(legacyPulled){
+    cloudUI('✅ Purana cloud stock mobile me aa gaya — legacy cloud data restored.');
     cloudBusy=false;
     return;
    }
