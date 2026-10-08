@@ -365,7 +365,7 @@ function labelPrintStyle(){
  const s=getLabelPrintSettings();
  const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
  const rows=Math.max(1,Math.floor((s.paperH+s.gapY)/(s.labelH+s.gapY)));
- return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}body{font-family:Arial;margin:0;padding:0;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:1px solid #222;padding:0.06in;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:100%;height:0.52in;margin:0.04in auto;background:#fff}.barcode-real{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;height:.47in!important;margin:.01in 0 .01in!important;padding:0!important;overflow:hidden}.barcode-real svg{display:block;width:100%;height:.47in!important;shape-rendering:crispEdges}.small{font-size:6px}.label h3{font-size:9px;margin:.01in 0}.prices{font-size:8.5px!important;font-weight:900;line-height:1.15;margin-top:.01in!important;display:block!important;visibility:visible!important;white-space:nowrap}'};
+ return {s,cols,rows,css:'@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}body{font-family:Arial;margin:0;padding:0;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-auto-rows:'+s.labelH+'in;gap:'+s.gapY+'in '+s.gapX+'in;align-content:start;justify-content:start}.label{width:'+s.labelW+'in;height:'+s.labelH+'in;text-align:center;border:1px solid #222;padding:0.06in;box-sizing:border-box;overflow:hidden}.label>div{font-size:7px;line-height:1.1}.barcode{display:block;width:100%;height:0.52in;margin:0.04in auto;background:#fff}.barcode-real{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:6px}.label h3{font-size:9px;margin:0.02in 0}.prices{font-size:8px;margin-top:0.03in}'};
 }
 function printAllSpecificLabels(arr){
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
@@ -532,51 +532,35 @@ async function startCameraScan(){
   let modal=document.getElementById('cameraScanner');
   if(!modal){
     modal=document.createElement('div');modal.id='cameraScanner';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-sizing:border-box';
-    modal.innerHTML='<div style="color:#fff;font-size:19px;font-weight:bold;margin-bottom:6px">📷 Ultra Fast Barcode Scanner</div><div style="color:#ddd;font-size:12px;margin-bottom:7px">पूरा barcode frame में रखें • 15–30 cm • phone स्थिर रखें</div><div style="position:relative;width:min(97vw,640px);height:56vh"><video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;background:#111;border:2px solid #fff;border-radius:10px"></video><div style="position:absolute;left:3%;right:3%;top:40%;height:4px;background:#e91e63;box-shadow:0 0 10px #e91e63"></div></div><div id="cameraMsg" style="color:#fff;margin:8px;text-align:center">Barcode को लाल line के बीच पूरा रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 24px;border:0;border-radius:8px">✕ Close</button></div>';
+    modal.innerHTML='<div style="color:#fff;font-size:19px;font-weight:bold;margin-bottom:6px">📷 Fast Barcode Scanner</div><div style="color:#ddd;font-size:12px;margin-bottom:7px">पूरा barcode frame में रखें • 15–30 cm • phone स्थिर रखें</div><div style="position:relative;width:min(97vw,640px);height:56vh"><video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;background:#111;border:2px solid #fff;border-radius:10px"></video><div style="position:absolute;left:3%;right:3%;top:40%;height:4px;background:#e91e63;box-shadow:0 0 10px #e91e63"></div></div><div id="cameraMsg" style="color:#fff;margin:8px;text-align:center">Black lines orange line के बीच रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 24px;border:0;border-radius:8px">✕ Close</button></div>';
     document.body.appendChild(modal);
   }else modal.style.display='flex';
   const video=document.getElementById('cameraVideo'),msg=document.getElementById('cameraMsg');
   try{
-    window.__scanStop=false;window.__zxingReader=null;
-    window.__scanStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:'environment'},width:{ideal:1280,max:1920},height:{ideal:720,max:1080},frameRate:{ideal:30,max:60}},
-      audio:false
-    });
-    video.srcObject=window.__scanStream;
-    await video.play();
+    window.__scanStop=false; window.__zxingReader=null;
+    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
+    video.srcObject=window.__scanStream; await video.play();
     try{
       const track=window.__scanStream.getVideoTracks()[0],caps=track.getCapabilities?track.getCapabilities():{};
-      const advanced=[];
-      if(caps.focusMode&&caps.focusMode.includes('continuous'))advanced.push({focusMode:'continuous'});
-      if(advanced.length)await track.applyConstraints({advanced});
-      if(caps.torch)window.__cameraTorchCap=true;
+      if(caps.focusMode&&caps.focusMode.includes('continuous')) await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+      if(caps.zoom){const z=Math.min(caps.zoom.max,Math.max(caps.zoom.min,(caps.zoom.min+caps.zoom.max)/2));await track.applyConstraints({advanced:[{zoom:z}]})}
     }catch(e){}
-    msg.textContent='⚡ Scan ready — barcode दिखते ही तुरंत scan होगा';
+    msg.textContent='⚡ Fast scanning…';
     if('BarcodeDetector' in window){
       let detector;
-      try{detector=new BarcodeDetector({formats:['ean_13','ean_8','code_128','upc_a','upc_e']})}catch(e){detector=new BarcodeDetector()}
-      let busy=false,stopped=false;
+      try{detector=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']})}catch(e){detector=new BarcodeDetector()}
+      let busy=false,last='';
       const loop=async()=>{
-        if(window.__scanStop||stopped)return;
-        if(!busy){
-          busy=true;
-          try{
-            const codes=await detector.detect(video);
-            if(codes&&codes.length){
-              const code=String(codes[0].rawValue||'').trim();
-              if(code){
-                stopped=true;
-                stopCameraScan();
-                fillFromCode(code);
-                return;
-              }
-            }
-          }catch(e){}
-          busy=false;
-        }
-        requestAnimationFrame(loop);
-      };
-      requestAnimationFrame(loop);
+        if(window.__scanStop)return;
+        if(!busy){busy=true;try{
+          const codes=await detector.detect(video);
+          if(codes&&codes.length){
+            const code=String(codes[0].rawValue||'').trim();
+            if(code&&code!==last){last=code;stopCameraScan();fillFromCode(code);return}
+          }
+        }catch(e){}busy=false}
+        setTimeout(()=>requestAnimationFrame(loop),60);
+      }; loop();
     }else if(window.ZXingBrowser){
       try{
         window.__zxingReader=new ZXingBrowser.BrowserMultiFormatReader();
