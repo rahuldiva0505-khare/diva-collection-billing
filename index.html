@@ -338,7 +338,7 @@ function saveNewPurchaseProduct(){
 
 }
 function getLabelPrintSettings(){
- const d={paperW:4,paperH:6,labelW:2,labelH:1,gapX:0,gapY:0};
+ const d={paperW:4,paperH:6,labelW:1,labelH:1.5,gapX:0,gapY:0};
  try{const s=JSON.parse(localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS')||'{}');Object.assign(d,s)}catch(e){}
  return d;
 }
