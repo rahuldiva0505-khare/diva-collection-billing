@@ -1,6 +1,4 @@
-
-const CACHE = 'diva-billing-v32';
-
+const CACHE = 'diva-billing-v43';
 const CORE = [
   './',
   './index.html',
@@ -12,8 +10,7 @@ const CORE = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(CORE))
+    caches.open(CACHE).then(cache => cache.addAll(CORE).catch(()=>{}))
       .then(() => self.skipWaiting())
   );
 });
@@ -21,11 +18,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE)
-          .map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
 });
@@ -38,7 +31,7 @@ self.addEventListener('fetch', event => {
       fetch(req, {cache:'no-store'}).then(response => {
         if (response.ok) {
           const copy = response.clone();
-          caches.open(CACHE).then(cache => cache.put('./index.html', copy));
+          caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(()=>{});
         }
         return response;
       }).catch(() => caches.match('./index.html'))
@@ -49,7 +42,7 @@ self.addEventListener('fetch', event => {
     fetch(req).then(response => {
       if (response.ok) {
         const copy = response.clone();
-        caches.open(CACHE).then(cache => cache.put(req, copy));
+        caches.open(CACHE).then(cache => cache.put(req, copy)).catch(()=>{});
       }
       return response;
     }).catch(() => caches.match(req).then(cached => cached || caches.match('./index.html')))
