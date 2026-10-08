@@ -1,4 +1,4 @@
-const CACHE = 'diva-billing-v50';
+const CACHE = 'diva-billing-v51';
 const CORE = [
   './',
   './index.html',
