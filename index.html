@@ -580,7 +580,7 @@ async function startCameraScan(){
   const video=document.getElementById('cameraVideo'),msg=document.getElementById('cameraMsg');
   try{
     window.__scanStop=false; window.__zxingReader=null;
-    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
+    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
     video.srcObject=window.__scanStream; await video.play();
     try{
       const track=window.__scanStream.getVideoTracks()[0],caps=track.getCapabilities?track.getCapabilities():{};
@@ -612,7 +612,7 @@ async function startCameraScan(){
         });
       }catch(e){msg.textContent='Scanner start नहीं हुआ. Internet/Camera permission check करें.'}
     }else msg.textContent='इस browser में barcode decoder उपलब्ध नहीं है.';
-  }catch(e){stopCameraScan();alert('Camera start नहीं हुआ. Camera permission Allow करें. '+e.message)}
+  }catch(e){if(msg)msg.textContent='Camera शुरू नहीं हुआ: Camera permission Allow करें और दोबारा Scan दबाएँ.';console.error(e)}
 }
 function stopCameraScan(){window.__scanStop=true;try{if(window.__zxingReader)window.__zxingReader.reset()}catch(e){}if(window.__scanStream){window.__scanStream.getTracks().forEach(t=>t.stop());window.__scanStream=null}const m=document.getElementById('cameraScanner');if(m)m.style.display='none'}
 function renderSalesReturn(){
