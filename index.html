@@ -887,7 +887,20 @@ document.addEventListener("keydown",function(e){
 });
 function openLaptopHelp(){alert("Laptop पर software Chrome/Edge में सीधे index.html खोलकर चल सकता है. USB/Bluetooth barcode scanner लगाकर Billing page पर barcode scan करें—code अपने आप product, colour और size भर देगा.");}
 
-renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();renderPurchase();renderDashboard();cloudUI();
+renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();renderPurchase();renderDashboard();
+(function(){
+  const DEFAULT_DIVA_SYNC_CODE='DIVA-HNF2L3ES';
+  if(!localStorage.getItem('DIVA_CLOUD_CODE')){
+    localStorage.setItem('DIVA_CLOUD_CODE',DEFAULT_DIVA_SYNC_CODE);
+    localStorage.removeItem(SYNC_BASELINE_KEY);
+    localStorage.setItem(SYNC_APPLIED_KEY,'[]');
+    syncBaseline=null;
+  }
+  cloudUI('☁️ Diva Collection cloud sync: '+cloudCode());
+  setTimeout(function(){
+    if(navigator.onLine && typeof syncCloudNow==='function') syncCloudNow();
+  },800);
+})();
 </script><script>
 (function(){
 function addEnhancements(){
