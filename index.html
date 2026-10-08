@@ -539,43 +539,48 @@ function printAllLabels(){
 function fillFromCode(code){
  code=String(code||'').trim().toUpperCase().replace(/[\\r\\n\\t]/g,'');
  if(!code)return false;
- const norm=v=>String(v||'').trim().toUpperCase();
- const digits=code.replace(/[^0-9]/g,'');
- const eanCandidates=new Set([digits]);
- if(/^\\d{12}$/.test(digits))eanCandidates.add('0'+digits);
- if(/^\\d{13}$/.test(digits))eanCandidates.add(digits);
- let x=db.stock.find(a=>norm(a.code)===code||norm(a.barcode)===code);
- if(!x&&eanCandidates.size)x=db.stock.find(a=>{
-   const vals=[a.barcode,a.code,makeCode(a.category,a.sku,a.color,a.size)];
-   return vals.some(v=>eanCandidates.has(String(v||'').trim())||eanCandidates.has(ean13ForCode(v)));
- });
- if(!x&&/^\\d{13}$/.test(digits)){
-   x=db.stock.find(a=>ean13ForCode(a.code)===digits||ean13ForCode(makeCode(a.category,a.sku,a.color,a.size))===digits);
- }
- if(!x&&/^\\d{10}$/.test(digits)){
-   x=db.stock.find(a=>barcodeKey(a.code)===digits||barcodeKey(makeCode(a.category,a.sku,a.color,a.size))===digits);
- }
- if(!x&&/^D[A-Z0-9]{10,16}$/.test(code)){
-   x=db.stock.find(a=>barcodeKey(a.code)===code||barcodeKey(makeCode(a.category,a.sku,a.color,a.size))===code);
- }
- if(!x){let p=parseCode(code);x=db.stock.find(a=>norm(a.category)===norm(p.category)&&norm(a.sku)===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size))}
- if(!x){const compact=code.replace(/[|\\s_-]/g,'');x=db.stock.find(a=>norm(a.code).replace(/[|\\s_-]/g,'')===compact||norm(makeCode(a.category,a.sku,a.color,a.size)).replace(/[|\\s_-]/g,'')===compact)}
+ const norm=v=>String(v??'').trim().toUpperCase();
+ const clean=v=>String(v??'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+ const digits=code.replace(/\\D/g,'');
+ const variants=new Set([code,clean(code),digits]);
+ if(/^\\d{12}$/.test(digits))variants.add('0'+digits);
+ if(/^\\d{13}$/.test(digits))variants.add(digits.slice(1));
+ if(/^\\d{8}$/.test(digits))variants.add('00000'+digits);
+ let x=db.stock.find(a=>variants.has(norm(a.code))||variants.has(norm(a.barcode))||variants.has(clean(a.code))||variants.has(clean(a.barcode)));
  if(!x){
-   const all=[...db.stock];
-   const raw=code.replace(/[^A-Z0-9]/gi,'').toUpperCase();
-   x=all.find(a=>{
+   x=db.stock.find(a=>{
      const base=a.code||makeCode(a.category,a.sku,a.color,a.size);
-     const ean=ean13ForCode(base);
+     const generated=ean13ForCode(base);
+     const stored=String(a.barcode||'').replace(/\\D/g,'');
      const key=barcodeKey(base);
-     const stored=String(a.barcode||'').replace(/\D/g,'');
-     return stored===digits || stored===raw || key===digits || ean===digits || key===raw;
+     const nums=[generated,stored,key];
+     return nums.some(n=>{const d=String(n||'');return variants.has(d)||variants.has(d.slice(1))||variants.has(d.padStart(13,'0'))||digits===d||digits===d.slice(1)||digits.endsWith(d)||d.endsWith(digits)});
    });
+ }
+ if(!x){
+   let p=parseCode(code);
+   x=db.stock.find(a=>norm(a.category)===norm(p.category)&&norm(a.sku)===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size));
+ }
+ if(!x){
+   const compact=clean(code);
+   x=db.stock.find(a=>clean(a.code)===compact||clean(makeCode(a.category,a.sku,a.color,a.size))===compact);
  }
  if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}
  if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}
- if(!x.barcode||String(x.barcode).trim()!==ean13ForCode(x.code||makeCode(x.category,x.sku,x.color,x.size)))x.barcode=ean13ForCode(x.code||makeCode(x.category,x.sku,x.color,x.size));
+ const base=x.code||makeCode(x.category,x.sku,x.color,x.size);
+ x.barcode=ean13ForCode(base);
  save();
- document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('bqty').value=1;addItem();document.getElementById('scanStatus').textContent='✅ Bill में add हो गया: '+x.name+' | '+x.color+' | '+x.size;return true
+ document.getElementById('bcat').value=x.category;
+ loadBillProducts();
+ document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;
+ loadBillProductDetails();
+ document.getElementById('bsize').value=x.key;
+ document.getElementById('brate').value=x.selling;
+ document.getElementById('bdiscount').value=x.discount||0;
+ document.getElementById('bqty').value=1;
+ addItem();
+ document.getElementById('scanStatus').textContent='✅ Bill में add हो गया: '+x.name+' | '+x.color+' | '+x.size;
+ return true
 }
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
