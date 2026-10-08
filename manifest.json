@@ -28,5 +28,9 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "https://rahuldiva0505-khare.github.io/diva-collection-billing/"
+  "id": "https://rahuldiva0505-khare.github.io/diva-collection-billing/",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred"
 }
