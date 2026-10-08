@@ -497,10 +497,17 @@ function printAllLabels(){
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close()
 }
 function fillFromCode(code){
- code=String(code||'').trim().toUpperCase();if(!code)return false;
+ code=String(code||'').trim().toUpperCase().replace(/[\\r\\n\\t]/g,'');
+ if(!code)return false;
  const norm=v=>String(v||'').trim().toUpperCase();
+ const digits=code.replace(/[^0-9]/g,'');
  let x=db.stock.find(a=>norm(a.code)===code);
- if(!x&&/^\\d{13}$/.test(code))x=db.stock.find(a=>ean13ForCode(a.code)===code||ean13ForCode(makeCode(a.category,a.sku,a.color,a.size))===code);
+ if(!x&&/^\\d{13}$/.test(digits))x=db.stock.find(a=>ean13ForCode(a.code)===digits||ean13ForCode(makeCode(a.category,a.sku,a.color,a.size))===digits);
+ if(!x&&/^\\d{12}$/.test(digits)){
+   const d13='0'+digits;
+   x=db.stock.find(a=>ean13ForCode(a.code)===d13||ean13ForCode(makeCode(a.category,a.sku,a.color,a.size))===d13);
+ }
+ if(!x&&/^\\d{10}$/.test(digits))x=db.stock.find(a=>barcodeKey(a.code)===digits||barcodeKey(makeCode(a.category,a.sku,a.color,a.size))===digits);
  if(!x&&/^D[A-Z0-9]{10,16}$/.test(code))x=db.stock.find(a=>barcodeKey(a.code)===code||barcodeKey(makeCode(a.category,a.sku,a.color,a.size))===code);
  if(!x){let p=parseCode(code);x=db.stock.find(a=>norm(a.category)===norm(p.category)&&norm(a.sku)===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size))}
  if(!x){const compact=code.replace(/[|\\s_-]/g,'');x=db.stock.find(a=>norm(a.code).replace(/[|\\s_-]/g,'')===compact||norm(makeCode(a.category,a.sku,a.color,a.size)).replace(/[|\\s_-]/g,'')===compact)}
