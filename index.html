@@ -394,7 +394,7 @@ function printAllSpecificLabels(arr){
  }
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
- let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>DC</b><div>'+esc(x.name)+'</div><div>'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'<div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div></div>''}).join('');
+ let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>DC</b><div>'+esc(x.name)+'</div><div>'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'<div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div></div>';}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
 }
 function renderReturnOptions(){
@@ -551,6 +551,17 @@ function fillFromCode(code){
  }
  if(!x){let p=parseCode(code);x=db.stock.find(a=>norm(a.category)===norm(p.category)&&norm(a.sku)===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size))}
  if(!x){const compact=code.replace(/[|\\s_-]/g,'');x=db.stock.find(a=>norm(a.code).replace(/[|\\s_-]/g,'')===compact||norm(makeCode(a.category,a.sku,a.color,a.size)).replace(/[|\\s_-]/g,'')===compact)}
+ if(!x){
+   const all=[...db.stock];
+   const raw=code.replace(/[^A-Z0-9]/gi,'').toUpperCase();
+   x=all.find(a=>{
+     const base=a.code||makeCode(a.category,a.sku,a.color,a.size);
+     const ean=ean13ForCode(base);
+     const key=barcodeKey(base);
+     const stored=String(a.barcode||'').replace(/\D/g,'');
+     return stored===digits || stored===raw || key===digits || ean===digits || key===raw;
+   });
+ }
  if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}
  if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}
  if(!x.barcode||String(x.barcode).trim()!==ean13ForCode(x.code||makeCode(x.category,x.sku,x.color,x.size)))x.barcode=ean13ForCode(x.code||makeCode(x.category,x.sku,x.color,x.size));
