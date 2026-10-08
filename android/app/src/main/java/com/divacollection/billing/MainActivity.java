@@ -83,6 +83,20 @@ public class MainActivity extends Activity {
     public void disconnectPrinter(){ new Thread(this::close).start(); }
 
     @JavascriptInterface
+    public void testPrinter(){
+        new Thread(()->{
+            try{
+                if(socket==null||!socket.isConnected()){ runOnUiThread(()->toast("Pehle printer Connect karo.")); return; }
+                OutputStream out=socket.getOutputStream();
+                out.write(new byte[]{0x1B,0x40});
+                out.write(tspl("Diva Collection","TEST","Bluetooth","2x1","DIVA-TEST",1999,1499).getBytes(StandardCharsets.US_ASCII));
+                out.flush();
+                runOnUiThread(()->toast("Test label print command sent."));
+            }catch(Exception e){runOnUiThread(()->toast("Test print error: "+e.getMessage()));}
+        }).start();
+    }
+
+    @JavascriptInterface
     public void printLabel(String json){ new Thread(()->{
         try{
             if(socket==null||!socket.isConnected()){
@@ -132,5 +146,6 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void connectPrinter(){MainActivity.this.connectPrinter();}
         @JavascriptInterface public void disconnectPrinter(){MainActivity.this.disconnectPrinter();}
         @JavascriptInterface public void printLabel(String json){MainActivity.this.printLabel(json);}
+        @JavascriptInterface public void testPrinter(){MainActivity.this.testPrinter();}
     }
 }
