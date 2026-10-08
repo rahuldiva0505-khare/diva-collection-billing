@@ -506,7 +506,7 @@ function fillFromCode(code){
  if(!x){const compact=code.replace(/[|\\s_-]/g,'');x=db.stock.find(a=>norm(a.code).replace(/[|\\s_-]/g,'')===compact||norm(makeCode(a.category,a.sku,a.color,a.size)).replace(/[|\\s_-]/g,'')===compact)}
  if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}
  if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}
- document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('scanStatus').textContent='✅ Auto-filled: '+x.name+' | '+x.color+' | '+x.size;return true
+ document.getElementById('bcat').value=x.category;loadBillProducts();document.getElementById('bproduct').value=x.category+'|'+x.sku+'|'+x.color;loadBillProductDetails();document.getElementById('bsize').value=x.key;document.getElementById('brate').value=x.selling;document.getElementById('bdiscount').value=x.discount||0;document.getElementById('bqty').value=1;addItem();document.getElementById('scanStatus').textContent='✅ Bill में add हो गया: '+x.name+' | '+x.color+' | '+x.size;return true
 }
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
 async function startCameraScan(){
