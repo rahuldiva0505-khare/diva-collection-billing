@@ -370,7 +370,7 @@ function labelPrintStyle(){
 function printAllSpecificLabels(arr){
  let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
- let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>DC</b><div style="font-size:13px;font-weight:900;margin-top:1px">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><div>'+esc(x.name)+'</div><div style="font-size:13px;color:#222;font-weight:800">'+esc(x.sku)+' | <span style="font-weight:900">Colour: '+esc(x.color)+'</span> | <span style="font-weight:900">Size: '+esc(x.size)+'</span></div>'+code128Svg(code)+'<div class="small">'+esc(code)+'</div></div>'}).join('');
+ let cards=arr.map((x)=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>Diva Collection</b><div>'+esc(x.name)+'</div><div style="font-size:13px;color:#222;font-weight:800">'+esc(x.sku)+' | <span style="font-weight:900">Colour: '+esc(x.color)+'</span> | <span style="font-weight:900">Size: '+esc(x.size)+'</span></div>'+code128Svg(code)+'<div style="font-size:13px;font-weight:800;margin-top:2px">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><div class="small">'+esc(code)+'</div></div>'}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
 }
 function renderReturnOptions(){
@@ -487,7 +487,7 @@ function printLabelObj(x){
  if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
  const lp=labelPrintStyle();
  const svg=code128Svg(code);
- w.document.write('<!doctype html><html><head><title>Barcode Label '+esc(code)+'</title><style>'+lp.css+'</style></head><body><div class="label"><b>DC</b><div class="prices"><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><h3>'+esc(x.name)+'</h3><div>'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+svg<div class="small">'+esc(code)+'</div></div><script>setTimeout(()=>window.print(),500)<\/script></body></html>');w.document.close()
+ w.document.write('<!doctype html><html><head><title>Barcode Label '+esc(code)+'</title><style>'+lp.css+'</style></head><body><div class="label"><b>Diva Collection</b><h3>'+esc(x.name)+'</h3><div>'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+svg+'<div class="prices"><b>MRP ₹'+Number(x.mrp||0).toFixed(2)+'</b> &nbsp; <b>Sell ₹'+Number(x.selling||0).toFixed(2)+'</b></div><div class="small">'+esc(code)+'</div></div><script>setTimeout(()=>window.print(),500)<\/script></body></html>');w.document.close()
 }
 function printAllLabels(){
  let arr=db.stock;if(!arr.length){alert('Stock खाली है');return}
