@@ -2,8 +2,8 @@
   "name": "Diva Collection Billing",
   "short_name": "Diva Billing",
   "description": "Diva Collection offline billing, stock and customer management",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "https://rahuldiva0505-khare.github.io/diva-collection-billing/",
+  "scope": "https://rahuldiva0505-khare.github.io/diva-collection-billing/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f5f5f7",
@@ -28,5 +28,5 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "./diva-billing-v2"
+  "id": "https://rahuldiva0505-khare.github.io/diva-collection-billing/"
 }
