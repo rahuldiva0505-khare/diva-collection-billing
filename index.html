@@ -337,16 +337,7 @@ function saveNewPurchaseProduct(){
  ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; preparePurchaseSku();
 
 }
-function getLabelPrintSettings(){
- const d={paperW:4,paperH:6,labelW:1,labelH:1.5,gapX:0,gapY:0};
- try{
-  const s=JSON.parse(localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS')||'{}');
-  Object.assign(d,s); if(Number(s.labelW)!==1||Number(s.labelH)!==1.5){d.labelW=1;d.labelH=1.5};
-  // Rajkumari label master: physical label is 1 × 1.5 inch.
-  if(Number(s.labelW)===2&&Number(s.labelH)===1){d.labelW=1;d.labelH=1.5}
- }catch(e){}
- return d;
-}
+function getLabelPrintSettings(){ const d={paperW:4,paperH:6,labelW:1,labelH:1.5,gapX:0,gapY:0}; try{ const s=JSON.parse(localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS')||'{}'); Object.assign(d,s); if(Number(s.labelW)===2&&Number(s.labelH)===1){d.labelW=1;d.labelH=1.5} }catch(e){} return d; }
 function updateLabelLayoutInfo(){
  const ids=['lpPaperW','lpPaperH','lpLabelW','lpLabelH','lpGapX','lpGapY'];
  const v={};ids.forEach(id=>{const e=document.getElementById(id);if(e)v[id]=Number(e.value)||0});
