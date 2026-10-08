@@ -27,7 +27,10 @@ public class MainActivity extends Activity {
         setContentView(web);
     }
 
-    void permission(){ if(Build.VERSION.SDK_INT>=31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT},91); }
+    void permission(){
+        if(Build.VERSION.SDK_INT>=31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED)
+            requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT},91);
+    }
 
     @JavascriptInterface
     public void connectPrinter(){ runOnUiThread(()->{
@@ -36,10 +39,19 @@ public class MainActivity extends Activity {
             BluetoothAdapter a=BluetoothAdapter.getDefaultAdapter();
             if(a==null){toast("Bluetooth available nahi hai");return;}
             if(!a.isEnabled()){toast("Phone Bluetooth ON karo");return;}
-            Set<BluetoothDevice> ds=a.getBondedDevices(); ArrayList<BluetoothDevice> matches=new ArrayList<>();
-            for(BluetoothDevice d:ds){ String n=d.getName()==null?"":d.getName().toUpperCase(); if(n.contains("9280")||n.contains("JSC")) matches.add(d); }
+            Set<BluetoothDevice> ds=a.getBondedDevices();
+            ArrayList<BluetoothDevice> matches=new ArrayList<>();
+            for(BluetoothDevice d:ds){
+                String n=d.getName()==null?"":d.getName().toUpperCase();
+                if(n.contains("9280")||n.contains("JSC")) matches.add(d);
+            }
             if(matches.size()==1){connect(matches.get(0));return;}
-            if(matches.size()>1){String[] names=new String[matches.size()];for(int i=0;i<names.length;i++)names[i]=matches.get(i).getName();new AlertDialog.Builder(this).setTitle("Printer चुनें").setItems(names,(d,w)->connect(matches.get(w))).show();return;}
+            if(matches.size()>1){
+                String[] names=new String[matches.size()];
+                for(int i=0;i<names.length;i++)names[i]=matches.get(i).getName();
+                new AlertDialog.Builder(this).setTitle("Printer चुनें").setItems(names,(dialog,which)->connect(matches.get(which))).show();
+                return;
+            }
             if(ds.size()==1){connect(ds.iterator().next());return;}
             toast("Pehle Android Bluetooth Settings me POS-9280 pair karo");
         }catch(Exception e){toast("Bluetooth error: "+e.getMessage());}
@@ -47,39 +59,55 @@ public class MainActivity extends Activity {
 
     void connect(BluetoothDevice d){ new Thread(()->{ try{
         close(); socket=d.createRfcommSocketToServiceRecord(SPP); socket.connect();
-        runOnUiThread(()->toast("✅ "+d.getName()+" connected"));
-    }catch(Exception e){close();runOnUiThread(()->toast("❌ Connect nahi hua: "+e.getMessage()));} }).start(); }
+        runOnUiThread(()->toast("Connected: "+d.getName()));
+    }catch(Exception e){close();runOnUiThread(()->toast("Connect nahi hua: "+e.getMessage()));} }).start(); }
 
     @JavascriptInterface
     public void disconnectPrinter(){ new Thread(this::close).start(); }
 
     @JavascriptInterface
     public void printLabel(String json){ new Thread(()->{
-        try{ if(socket==null||!socket.isConnected()){runOnUiThread(()->connectPrinter());return;}
+        try{
+            if(socket==null||!socket.isConnected()){
+                runOnUiThread(()->connectPrinter()); return;
+            }
             org.json.JSONObject x=new org.json.JSONObject(json);
-            String name=x.optString("name",""), sku=x.optString("sku",""), color=x.optString("color",""), size=x.optString("size","");
-            String code=x.optString("code","DIVA"); double mrp=x.optDouble("mrp",0), sell=x.optDouble("selling",0);
+            String name=x.optString("name",""), sku=x.optString("sku","");
+            String color=x.optString("color",""), size=x.optString("size","");
+            String code=x.optString("code","DIVA");
+            double mrp=x.optDouble("mrp",0), sell=x.optDouble("selling",0);
             String cmd=tspl(name,sku,color,size,code,mrp,sell);
-            socket.getOutputStream().write(cmd.getBytes(StandardCharsets.UTF_8)); socket.getOutputStream().flush();
-            runOnUiThread(()->toast("✅ Label print sent"));
-        }catch(Exception e){runOnUiThread(()->toast("❌ Print error: "+e.getMessage()));}
+            socket.getOutputStream().write(cmd.getBytes(StandardCharsets.UTF_8));
+            socket.getOutputStream().flush();
+            runOnUiThread(()->toast("Label print sent"));
+        }catch(Exception e){runOnUiThread(()->toast("Print error: "+e.getMessage()));}
     }).start();}
 
-    String clean(String s){return s.replace("\\"," ").replace(""","'").replace("\n"," ").replace("\r"," ");}
+    String clean(String s){
+        return s.replace("\\"," ").replace(""","'").replace("\n"," ").replace("\r"," ");
+    }
 
     String tspl(String name,String sku,String color,String size,String code,double mrp,double sell){
         name=clean(name); sku=clean(sku); color=clean(color); size=clean(size); code=clean(code);
         StringBuilder b=new StringBuilder();
-        b.append("SIZE 2,1\r\nGAP 0,0\r\nDENSITY 8\r\nDIRECTION 1\r\nCLS\r\n");
-        b.append("TEXT 203,8,"0",0,1,1,"Diva Collection"\r\n");
-        b.append("TEXT 203,28,"0",0,1,1,"").append(name).append(""\r\n");
-        b.append("TEXT 203,48,"0",0,1,1,"").append(sku).append(" | ").append(color).append(" | ").append(size).append(""\r\n");
-        b.append("BARCODE 25,68,"128",58,1,0,2,2,"").append(code).append(""\r\n");
-        b.append("TEXT 203,145,"0",0,1,1,"MRP Rs ").append(String.format(Locale.US,"%.2f",mrp)).append(" | SELL Rs ").append(String.format(Locale.US,"%.2f",sell)).append(""\r\n");
-        b.append("PRINT 1,1\r\n"); return b.toString();
+        b.append("SIZE 2,1\r\n");
+        b.append("GAP 0,0\r\n");
+        b.append("DENSITY 8\r\n");
+        b.append("DIRECTION 1\r\n");
+        b.append("CLS\r\n");
+        b.append("TEXT 203,8,\"0\",0,1,1,\"Diva Collection\"\r\n");
+        b.append("TEXT 203,28,\"0\",0,1,1,\"").append(name).append("\"\r\n");
+        b.append("TEXT 203,48,\"0\",0,1,1,\"").append(sku).append(" | ").append(color).append(" | ").append(size).append("\"\r\n");
+        b.append("BARCODE 25,68,\"128\",58,1,0,2,2,\"").append(code).append("\"\r\n");
+        b.append("TEXT 203,145,\"0\",0,1,1,\"MRP Rs ").append(String.format(Locale.US,"%.2f",mrp))
+         .append(" | SELL Rs ").append(String.format(Locale.US,"%.2f",sell)).append("\"\r\n");
+        b.append("PRINT 1,1\r\n");
+        return b.toString();
     }
+
     void close(){try{if(socket!=null)socket.close();}catch(Exception e){}socket=null;}
     void toast(String s){Toast.makeText(this,s,Toast.LENGTH_LONG).show();}
+
     class Bridge {
         @JavascriptInterface public void connectPrinter(){MainActivity.this.connectPrinter();}
         @JavascriptInterface public void disconnectPrinter(){MainActivity.this.disconnectPrinter();}
