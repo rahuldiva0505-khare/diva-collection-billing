@@ -1,5 +1,5 @@
 <!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#e91e63"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="icon-192.png"><link rel="manifest" href="manifest.json">
-<title>Diva Collection Billing</title><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./SW.js',{scope:'./'}).then(()=>console.log('Diva Billing Service Worker ready')).catch(e=>console.error('Service Worker registration failed',e));});}</script>
+<title>Diva Collection Billing</title><script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));if(window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));}</script>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f4f4f7;color:#222}header{background:#e91e63;color:#fff;padding:16px;font-size:21px;font-weight:bold}
 nav{display:flex;gap:6px;overflow:auto;background:#fff;padding:10px;position:sticky;top:0;z-index:5}nav button{white-space:nowrap}
