@@ -502,13 +502,13 @@ function fillFromCode(code){
  const norm=v=>String(v||'').trim().toUpperCase();
  const digits=code.replace(/[^0-9]/g,'');
  let x=db.stock.find(a=>norm(a.code)===code);
- if(!x&&/^\\d{13}$/.test(digits))x=db.stock.find(a=>ean13ForCode(a.code)===digits||ean13ForCode(makeCode(a.category,a.sku,a.color,a.size))===digits);
- if(!x&&/^\\d{12}$/.test(digits)){
+ if(!x&&/^\d{13}$/.test(digits))x=db.stock.find(a=>ean13ForCode(a.code)===digits||ean13ForCode(makeCode(a.category,a.sku,a.color,a.size))===digits);
+ if(!x&&/^\d{12}$/.test(digits)){
    const d13='0'+digits;
    x=db.stock.find(a=>ean13ForCode(a.code)===d13||ean13ForCode(makeCode(a.category,a.sku,a.color,a.size))===d13);
  }
- if(!x&&/^\\d{10}$/.test(digits))x=db.stock.find(a=>barcodeKey(a.code)===digits||barcodeKey(makeCode(a.category,a.sku,a.color,a.size))===digits);
- if(!x&&/^\\d{12,13}$/.test(digits)){
+ if(!x&&/^\d{10}$/.test(digits))x=db.stock.find(a=>barcodeKey(a.code)===digits||barcodeKey(makeCode(a.category,a.sku,a.color,a.size))===digits);
+ if(!x&&/^\d{12,13}$/.test(digits)){
    const payload=digits.slice(3,12);
    x=db.stock.find(a=>barcodeKey(a.code).slice(-9)===payload||barcodeKey(makeCode(a.category,a.sku,a.color,a.size)).slice(-9)===payload);
  }
