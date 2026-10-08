@@ -1,6 +1,7 @@
 package com.divacollection.billing;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.*;
 import android.bluetooth.*;
 import android.content.*;
@@ -27,15 +28,24 @@ public class MainActivity extends Activity {
         setContentView(web);
     }
 
+    boolean btReady(){
+        return Build.VERSION.SDK_INT < 31 || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED;
+    }
     void permission(){
-        if(Build.VERSION.SDK_INT>=31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED)
+        if(Build.VERSION.SDK_INT>=31 && !btReady()){
             requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT},91);
+        }
+    }
+    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
+        super.onRequestPermissionsResult(requestCode,permissions,results);
+        if(requestCode==91 && btReady()) connectPrinter();
+        else if(requestCode==91) toast("Bluetooth permission allow karo, phir Connect dabao.");
     }
 
     @JavascriptInterface
-    public void connectPrinter(){ runOnUiThread(()->{
-        permission();
-        try{
+    public void connectPrinter(){
+        if(!btReady()){ permission(); return; }
+        runOnUiThread(()->{ try{
             BluetoothAdapter a=BluetoothAdapter.getDefaultAdapter();
             if(a==null){toast("Bluetooth available nahi hai");return;}
             if(!a.isEnabled()){toast("Phone Bluetooth ON karo");return;}
@@ -58,7 +68,14 @@ public class MainActivity extends Activity {
     });}
 
     void connect(BluetoothDevice d){ new Thread(()->{ try{
-        close(); socket=d.createRfcommSocketToServiceRecord(SPP); socket.connect();
+        close();
+        socket=d.createRfcommSocketToServiceRecord(SPP);
+        try { socket.connect(); }
+        catch(Exception first){
+            close();
+            socket=d.createInsecureRfcommSocketToServiceRecord(SPP);
+            socket.connect();
+        }
         runOnUiThread(()->toast("Connected: "+d.getName()));
     }catch(Exception e){close();runOnUiThread(()->toast("Connect nahi hua: "+e.getMessage()));} }).start(); }
 
@@ -69,7 +86,8 @@ public class MainActivity extends Activity {
     public void printLabel(String json){ new Thread(()->{
         try{
             if(socket==null||!socket.isConnected()){
-                runOnUiThread(()->connectPrinter()); return;
+                runOnUiThread(()->toast("Printer connected nahi hai. Pehle Connect JSC-9280 dabao."));
+                return;
             }
             org.json.JSONObject x=new org.json.JSONObject(json);
             String name=x.optString("name",""), sku=x.optString("sku","");
@@ -77,8 +95,10 @@ public class MainActivity extends Activity {
             String code=x.optString("code","DIVA");
             double mrp=x.optDouble("mrp",0), sell=x.optDouble("selling",0);
             String cmd=tspl(name,sku,color,size,code,mrp,sell);
-            socket.getOutputStream().write(cmd.getBytes(StandardCharsets.UTF_8));
-            socket.getOutputStream().flush();
+            OutputStream out=socket.getOutputStream();
+            out.write(new byte[]{0x1B,0x40});
+            out.write(cmd.getBytes(StandardCharsets.US_ASCII));
+            out.flush();
             runOnUiThread(()->toast("Label print sent"));
         }catch(Exception e){runOnUiThread(()->toast("Print error: "+e.getMessage()));}
     }).start();}
