@@ -1,4 +1,4 @@
-const CACHE = 'diva-billing-v65';
+const CACHE = 'diva-billing-v66';
 const CORE = ['./','./index.html','./manifest.json','./sw.js','./icon-192.png','./icon-512.png'];
 self.addEventListener('message', event => { if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting(); });
 
