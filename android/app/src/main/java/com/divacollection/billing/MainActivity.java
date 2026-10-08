@@ -84,7 +84,7 @@ public class MainActivity extends Activity {
     }).start();}
 
     String clean(String s){
-        return s.replace("\\"," ").replace(""","'").replace("\n"," ").replace("\r"," ");
+        return s.replace("\\"," ").replace("\n"," ").replace("\r"," ");
     }
 
     String tspl(String name,String sku,String color,String size,String code,double mrp,double sell){
