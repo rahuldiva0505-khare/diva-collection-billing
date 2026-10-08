@@ -144,7 +144,8 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
 <button class="green" onclick="addSalesReturnToStock()">➕ ADD BACK TO STOCK</button></div>
 <div class="card"><h3>Sales Return History</h3><div id="salesReturnTable"></div></div></section>
 
-<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div style="margin-top:12px;padding:10px;border:1px solid #e91e63;border-radius:10px;background:#fff0f6">
+<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div class="card" style="margin-top:10px;background:#fff0f6;border:1px solid #e91e63"><h3>📅 New Stock Barcode Print</h3><p class="small">जिस तारीख को नया stock add हुआ है, उसी purchase entry की पूरी नई quantity के barcode अलग से print करें। इससे पुराना stock mix नहीं होगा.</p><div class="grid"><label>Date<input id="newStockBarcodeDate" type="date"></label><button class="green" type="button" onclick="printNewStockBarcodesByDate()">🖨️ Print New Stock Barcode</button></div><div id="newStockBarcodeInfo" class="small" style="margin-top:8px"></div></div>
+<div style="margin-top:12px;padding:10px;border:1px solid #e91e63;border-radius:10px;background:#fff0f6">
 <label><input type="checkbox" id="autoPrintLabels" checked> Product add करते ही नई quantity के barcode automatic print करें</label>
 <button onclick="printCheckedLabelRows()" style="margin-left:8px">🖨️ Selected Rows Print</button>
 </div>
@@ -176,7 +177,50 @@ function code128Svg(value,opts={}){ return ean13Svg(value,opts); }</script>
     var s=printerSettings();
     var w=window.open('','_blank','width=600,height=600');
     if(!w){alert('Popup blocked है. Browser में popup Allow करें.');return}
-    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div></body></html>');
+    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div><script>
+(function(){
+ function localDateKey(v){
+   var d=v instanceof Date?v:new Date(v);
+   if(isNaN(d.getTime()))return '';
+   var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+   return y+'-'+m+'-'+day;
+ }
+ function initNewStockBarcodeDate(){
+   var e=document.getElementById('newStockBarcodeDate');
+   if(e && !e.value)e.value=localDateKey(new Date());
+ }
+ window.printNewStockBarcodesByDate=function(){
+   var input=document.getElementById('newStockBarcodeDate');
+   var dateKey=input&&input.value?input.value:localDateKey(new Date());
+   var purchases=(db.purchases||[]).filter(function(p){return localDateKey(p.date)===dateKey;});
+   var flat=[];
+   purchases.forEach(function(p){
+     var x=(db.stock||[]).find(function(s){return s.key===p.key;});
+     if(!x){
+       x=(db.stock||[]).find(function(s){return String(s.sku||'')===String(p.sku||'')&&String(s.color||'')===String(p.color||'')&&String(s.size||'')===String(p.size||'');});
+     }
+     if(!x)return;
+     var n=Math.max(0,Math.floor(Number(p.qty)||0));
+     for(var i=0;i<n;i++)flat.push(x);
+   });
+   var info=document.getElementById('newStockBarcodeInfo');
+   if(!purchases.length){
+     if(info)info.textContent='इस तारीख को कोई नया stock purchase entry नहीं मिली.';
+     alert('इस तारीख को नया stock add नहीं हुआ है.');
+     return;
+   }
+   if(!flat.length){
+     if(info)info.textContent='Purchase entries मिलीं, लेकिन उनके products stock में नहीं मिले.';
+     alert('New stock की barcode details नहीं मिलीं.');
+     return;
+   }
+   if(info)info.textContent='✅ '+flat.length+' नए stock pieces के barcode print के लिए तैयार हैं.';
+   printAllSpecificLabels(flat);
+ };
+ window.addEventListener('load',function(){initNewStockBarcodeDate();});
+ setTimeout(initNewStockBarcodeDate,300);
+})();
+</script></body></html>');
     w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
   };
   window.showJSCPrinterBox=function(){
