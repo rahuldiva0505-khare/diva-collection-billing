@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=108',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=109',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -263,7 +263,7 @@ function toggleGaneshMantra(){
  if(!box||!btn)return;
  if(box.dataset.playing==='yes'){box.innerHTML='';box.style.display='none';box.dataset.playing='no';btn.textContent='💰 व्यापार वृद्धि मंत्र';return;}
  box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ मंत्र बंद करें';
- box.innerHTML='<div style="padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff"><b>महालक्ष्मी मंत्र • महिला की आवाज़</b><p style="margin:6px 0">ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः</p><iframe title="Mahalakshmi mantra audio by Manjeera Ganguly" style="border-radius:12px" src="https://open.spotify.com/embed/track/1dzISFNtArS1evHl3mtv2d?utm_source=generator" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe><p style="font-size:12px;color:#777;margin:6px 0">यह ऑडियो है, वीडियो नहीं। Spotify पर प्ले करने के लिए इंटरनेट चाहिए।</p></div>';
+ box.innerHTML='<div style="padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff"><b>महालक्ष्मी मंत्र • महिला की आवाज़</b><p style="margin:6px 0">ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः</p><iframe title="Mahalakshmi audio player" style="border-radius:12px" src="https://audio.com/a1zlygeo/audio/shree-mahalakshmi-ashtakamm4a" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe><p style="font-size:12px;color:#777;margin:6px 0">यह केवल ऑडियो है, वीडियो नहीं। ▶ दबाएँ। इंटरनेट चाहिए। <a href="https://audio.com/a1zlygeo/audio/shree-mahalakshmi-ashtakamm4a" target="_blank" rel="noopener" style="color:#b72d70;font-weight:bold">ऑडियो अलग से खोलें</a></p></div>';
 }
 function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock"||id==="products")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
 function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
