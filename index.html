@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=84',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=85',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -123,6 +123,7 @@ function code128Svg(value,opts={}){
 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative"><input id="pcatSearch" type="text" inputmode="text" autocapitalize="words" placeholder="Category चुनें / टाइप करें" autocomplete="off" onfocus="syncPurchaseCategory()" oninput="syncPurchaseCategory()" style="flex:1;min-width:160px"><div id="pcatSuggestions" class="category-suggestions" style="display:none"></div><select id="pcat" style="display:none"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)" style="display:none">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
 <div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div>
+<div id="photoColorSuggestion" class="card" style="grid-column:1/-1;margin:8px 0;padding:12px;background:#eef8f0;font-size:16px;font-weight:bold">🎨 फोटो चुनने पर कपड़े का रंग यहाँ सुझाया जाएगा।</div>
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
 <input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No."><input id="pgst" type="number" min="0" max="100" step="0.01" placeholder="GST % (जैसे 5, 12, 18)">
@@ -443,7 +444,7 @@ function suggestColorFromImage(img){
   if(h<12||h>=348)return 'Red';if(h<25)return 'Reddish Orange';if(h<42)return 'Orange';if(h<65)return 'Yellow';if(h<85)return 'Lime Green';if(h<155)return 'Green';if(h<180)return 'Teal Green';if(h<200)return 'Teal Blue';if(h<245)return 'Blue';if(h<265)return 'Violet';if(h<290)return 'Purple';if(h<325)return 'Pink';return 'Magenta';
  }catch(e){return ''}
 }
-function applyPhotoColorSuggestion(){const color=pendingPhotoColorSuggestion;if(!color)return;const fields=[1,2,3,4].map(n=>document.getElementById('pcolor'+n));const target=fields.find(e=>e&&!e.value.trim())||fields[0];if(target)target.value=color;const note=document.getElementById('photoColorSuggestion');if(note)note.textContent='✅ Colour field में '+color+' भर दिया';}
+function applyPhotoColorSuggestion(){const color=pendingPhotoColorSuggestion;if(!color)return;const fields=[1,2,3,4].map(n=>document.getElementById('pcolor'+n));const target=fields.find(e=>e&&!e.value.trim())||fields[0];if(target)target.value=color;const note=document.getElementById('photoColorSuggestion');if(note)note.textContent='✅ फोटो के अनुसार सुझाया रंग: '+color+' — Colour field में भर दिया';}
 function previewNewProductPhoto(input){
  const file=input&&input.files&&input.files[0];if(!file)return;
  if(!file.type||!file.type.startsWith('image/')){alert('कृपया image photo चुनें.');input.value='';return}
@@ -456,7 +457,9 @@ function previewNewProductPhoto(input){
   const data=canvas.toDataURL('image/jpeg',0.48);
   if(data.length>45000){alert('Photo बहुत बड़ी है. छोटी photo चुनें.');input.value='';return}
   pendingNewProductPhoto=data;
-  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<img src="'+data+'" alt="Product preview"><small>📸 Photo से colour suggestion: <b>'+esc(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'</b></small><button type="button" class="gray" style="padding:6px 8px;font-size:12px" onclick="applyPhotoColorSuggestion()">🎨 Colour भरें</button><small id="photoColorSuggestion">Suggestion को Colour field में भरने के लिए दबाएँ</small>';
+  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<img src="'+data+'" alt="Product preview"><small>Photo ready</small>';
+  const note=document.getElementById('photoColorSuggestion');if(note){note.textContent='🎨 फोटो के अनुसार सुझाया रंग: '+(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'. Colour field में भरने के लिए नीचे बटन दबाएँ.';note.innerHTML+=' <button type="button" class="green" style="margin-top:8px" onclick="applyPhotoColorSuggestion()">🎨 यह रंग भरें</button>';}
+  if(pendingPhotoColorSuggestion){const f=document.getElementById('pcolor1');if(f&&!f.value.trim()){f.value=pendingPhotoColorSuggestion;if(note)note.textContent='✅ फोटो के अनुसार सुझाया रंग '+pendingPhotoColorSuggestion+' Colour 1 में भर दिया गया।';}}
  };img.onerror=function(){alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};img.src=String(reader.result||'')};
  reader.onerror=function(){alert('Photo read नहीं हो सकी.')};reader.readAsDataURL(file);
 }
