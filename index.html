@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=80',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=81',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -108,6 +108,8 @@ function code128Svg(value,opts={}){
 <div class="card"><h2>👤 Customers</h2><p class="small">Bill complete karte hi customer ka naam aur mobile number yahan automatically save/update hoga.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button></div></div>
 <div class="card"><div id="customerTable"></div></div>
 </section>
+
+<section id="products" class="page"><div class="card"><h2>🗂️ Products — Main Screen</h2><p class="small">नंबर और photo पर tap करके product खोलें; अंदर colour और size-wise quantity दिखेगी.</p><div id="productMainFolders"></div></div></section>
 
 <section id="stock" class="page">
 <div class="card"><h2>📦 CURRENT STOCK</h2><p>यहाँ केवल <b>वर्तमान उपलब्ध stock</b> दिखेगा। नया माल जोड़ने के लिए <b>Purchase / Stock Add</b> इस्तेमाल करें.</p>
@@ -250,7 +252,7 @@ let cart=[];
 function makeCode(cat,sku,color,size){return ['DC',cat,sku,color,size].map(v=>String(v||'').trim().replace(/\s+/g,'-')).filter(Boolean).join('|').toUpperCase()}
 function parseCode(code){let parts=String(code||'').split('|');return {category:parts[1]||'',sku:parts[2]||'',color:parts[3]||'',size:parts[4]||''}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
-function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
+function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock"||id==="products")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
 function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
 function choosePurchaseCategory(button){
  const value=button&&button.dataset?button.dataset.category:'',input=document.getElementById('pcatSearch'),pc=document.getElementById('pcat');
