@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=73',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=74',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -117,7 +117,7 @@ function code128Svg(value,opts={}){
 <p class="small">यहीं से <b>नया Product add</b> करें या existing product में purchase quantity जोड़ें। Product add होते ही barcode बन जाएगा और यहीं से label print कर सकते हैं.</p>
 <div class="card" style="background:#fafafa"><h3>➕ Add New Product / Purchase Entry</h3>
 <div class="grid">
-<div style="display:flex;gap:6px;align-items:center"><select id="pcat"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)">
+<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="pcatSearch" list="pcatSuggestions" placeholder="Category टाइप करें (जैसे S)" autocomplete="off" oninput="syncPurchaseCategory()" style="flex:1;min-width:160px"><datalist id="pcatSuggestions"></datalist><select id="pcat" style="display:none"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)" style="display:none">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
 <div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div>
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
@@ -251,10 +251,17 @@ function parseCode(code){let parts=String(code||'').split('|');return {category:
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
 function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
 function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
+function syncPurchaseCategory(){
+ const input=document.getElementById('pcatSearch'),pc=document.getElementById('pcat');if(!input||!pc)return;
+ const value=input.value.trim(),match=(db.categories||[]).find(c=>String(c).toLowerCase()===value.toLowerCase());
+ pc.value=match||'';
+}
 function renderCategories(){
- const pc=document.getElementById('pcat'); if(pc){const old=pc.value;pc.innerHTML='<option value="">Select Category</option>'+db.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(db.categories.includes(old))pc.value=old;}
- let cats=[...new Set(db.categories.concat(db.stock.map(x=>x.category).filter(Boolean)))];
+ const cats=[...new Set((db.categories||[]).concat((db.stock||[]).map(x=>x.category).filter(Boolean)))];
  db.categories=cats;
+ const pc=document.getElementById('pcat');if(pc){const old=pc.value;pc.innerHTML='<option value="">Select Category</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(cats.includes(old))pc.value=old;}
+ const dl=document.getElementById('pcatSuggestions');if(dl)dl.innerHTML=cats.map(c=>`<option value="${esc(c)}"></option>`).join('');
+ const search=document.getElementById('pcatSearch');if(search&&pc&&pc.value&&!search.value)search.value=pc.value;
  let b=document.getElementById("bcat");
  if(b){const bv=b.value;b.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");if(cats.includes(bv))b.value=bv;}
 }
@@ -389,14 +396,14 @@ function deleteStockRow(k){
  alert('✅ Stock और उसकी सभी linked Purchase entries delete हो गईं.');
 }
 function addNewCategory(){
- const el=document.getElementById('pnewcat');
- const name=(el&&el.value||'').trim() || prompt('नई Category का नाम लिखें:');
+ const el=document.getElementById('pnewcat'),search=document.getElementById('pcatSearch');
+ const name=(el&&el.value||search&&search.value||'').trim() || prompt('नई Category का नाम लिखें:');
  if(!name)return;
  if(!Array.isArray(db.categories))db.categories=[];
  if(db.categories.some(x=>String(x).trim().toLowerCase()===name.toLowerCase())){alert('यह Category पहले से मौजूद है.');return;}
  db.categories.push(name); save(); renderCategories();
- const pc=document.getElementById('pcat'); if(pc)pc.value=name;
- if(el)el.value=''; alert('✅ नई Category add हो गई: '+name);
+ const pc=document.getElementById('pcat'); if(pc)pc.value=name; if(search)search.value=name;
+ if(el)el.value=''; renderCategories(); if(search)search.value=name; alert('✅ नई Category add हो गई: '+name);
 }
 function selectedPurchaseSizes(){let a=[...document.querySelectorAll('.psizecheck:checked')].map(x=>x.value),c=(document.getElementById('pcustomSizes')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(a.concat(c))]}
 function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)}
@@ -408,7 +415,7 @@ function buildPurchaseMatrix(){
 }
 function clearPurchaseProductForm(){
  clearNewProductPhoto();
- ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
+ ['pnewcat','pcatSearch','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); const pcat=document.getElementById('pcat');if(pcat)pcat.value='';document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
 }
 function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); (db.purchases||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); let stored=Number(localStorage.getItem('DIVA_NEXT_SKU_NO')||0); max=Math.max(max,stored-1); let n=max+1; while(seen.includes(n)) n++; return 'DIVA-'+n;}
 function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
@@ -436,7 +443,8 @@ function clearNewProductPhoto(){
 }
 function saveNewPurchaseProduct(){
  const newcat=document.getElementById('pnewcat').value.trim();
- const cat=newcat || document.getElementById('pcat').value.trim();
+ const searchCat=document.getElementById('pcatSearch')?.value.trim()||'';
+ const cat=newcat || document.getElementById('pcat').value.trim() || searchCat;
  const sku=nextDivaSku();
  const skuEl=document.getElementById('psku'); if(skuEl) skuEl.value=sku;
  const name=document.getElementById('pname').value.trim() || sku;
