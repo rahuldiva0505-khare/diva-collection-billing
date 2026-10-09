@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=113',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=114',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -833,9 +833,43 @@ function renderSalesReturn(){
  el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th><th>Customer</th><th>Reason</th></tr>'+arr.slice().reverse().map(r=>`<tr><td>${new Date(r.date).toLocaleString()}</td><td>${esc(r.name)}<br><small>${esc(r.sku)}</small></td><td>${esc(r.color)}</td><td>${esc(r.size)}</td><td>${r.qty}</td><td>${esc(r.customer||'')}</td><td>${esc(r.reason||'')}</td></tr>`).join('')+'</table></div>';
 }
 function loadSalesReturnStock(){const key=document.getElementById('srStockKey')?.value;const x=db.stock.find(a=>a.key===key);document.getElementById('srStockInfo').textContent=x?`Current Stock: ${x.qty} | ${x.name} | ${x.color} | Size ${x.size}`:'';}
+function findStockForSalesReturnCode(code){
+ code=String(code||'').trim().toUpperCase().replace(/[\\r\\n\\t]/g,'');
+ if(!code)return null;
+ const norm=v=>String(v??'').trim().toUpperCase();
+ const clean=v=>String(v??'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+ const digits=code.replace(/\\D/g,'');
+ const variants=new Set([code,clean(code),digits]);
+ if(/^\\d{12}$/.test(digits))variants.add('0'+digits);
+ if(/^\\d{13}$/.test(digits))variants.add(digits.slice(1));
+ if(/^\\d{8}$/.test(digits))variants.add('00000'+digits);
+ let x=db.stock.find(a=>variants.has(norm(a.code))||variants.has(norm(a.barcode))||variants.has(clean(a.code))||variants.has(clean(a.barcode)));
+ if(!x){
+  x=db.stock.find(a=>{
+   const bases=[a.code,makeCode(a.category,a.sku,a.color,a.size)].filter(Boolean);
+   const stored=String(a.barcode||'').replace(/\\D/g,'');
+   const nums=[...bases.flatMap(base=>[ean13ForCode(base),barcodeKey(base)]),stored].filter(Boolean);
+   return nums.some(n=>{const d=String(n||'');return variants.has(d)||variants.has(d.slice(1))||variants.has(d.padStart(13,'0'))||digits===d||digits===d.slice(1)||digits.endsWith(d)||d.endsWith(digits)});
+  });
+ }
+ if(!x){
+  const p=parseCode(code);
+  x=db.stock.find(a=>norm(a.category)===norm(p.category)&&norm(a.sku)===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size));
+ }
+ if(!x){
+  const compact=clean(code);
+  x=db.stock.find(a=>clean(a.code)===compact||clean(makeCode(a.category,a.sku,a.color,a.size))===compact);
+ }
+ return x||null;
+}
 function fillSalesReturnFromCode(code){
- code=String(code||'').trim(); if(!code)return; const x=db.stock.find(a=>a.code===code); if(!x){alert('Barcode से product नहीं मिला: '+code);return}
- const sel=document.getElementById('srStockKey'); sel.value=x.key; loadSalesReturnStock(); document.getElementById('srScanStatus').textContent=`Selected: ${x.name} | ${x.color} | Size ${x.size}`; document.getElementById('srQty').focus();
+ const status=document.getElementById('srScanStatus');
+ const x=findStockForSalesReturnCode(code);
+ if(!x){if(status)status.textContent='❌ इस Barcode ID से stock item नहीं मिला: '+String(code||'');return false}
+ const sel=document.getElementById('srStockKey'); sel.value=x.key; loadSalesReturnStock();
+ if(status)status.textContent='✅ Selected: '+x.name+' | '+x.color+' | Size '+x.size+' — अब return quantity भरें';
+ document.getElementById('srQty').focus();
+ return true;
 }
 function handleSalesReturnScan(e){if(e.key==='Enter'){e.preventDefault();fillSalesReturnFromCode(e.target.value);e.target.select();}}
 function addSalesReturnToStock(){
