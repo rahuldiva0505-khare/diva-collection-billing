@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=106',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=107',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -78,8 +78,9 @@ function code128Svg(value,opts={}){
 <header style="position:relative"><img class="brandLogo" src="./diva-logo-v2.svg" alt="Diva Collection logo"> <span>Diva Collection Billing Software</span> <span style="font-size:12px;background:#fff;color:#9f174d;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2 • BARCODE V2</span><button onclick="openLaptopHelp()" style="padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button><button onclick="page('products')">🗂️ PRODUCTS</button>
-<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button onclick="page('cloudSync')">☁️ CLOUD SYNC</button>
+<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button onclick="page(\'cloudSync\')">☁️ CLOUD SYNC</button><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="background:#b72d70;white-space:nowrap">🙏 मंत्र सुनें</button>
 </nav>
+<div id="ganeshMusicPlayer" style="display:none;max-width:700px;margin:8px auto;padding:0 10px"></div>
 <nav>
 <main>
 <section id="dashboard" class="page">
@@ -88,7 +89,6 @@ function code128Svg(value,opts={}){
 <div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
 
 <section id="billing" class="page active">
-<div class="card" style="border:2px solid #b66b91;background:#fff7fb;padding:18px"><h2 style="margin-top:0">🙏 श्री गणेश मंत्र • Soft Music</h2><p style="margin:6px 0 12px">Ekadantaya Vakratundaya • महिला की आवाज़ में केवल ऑडियो</p><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="width:100%;min-height:54px;font-size:18px;background:#b72d70;color:#fff;border:0;border-radius:12px">▶️ मंत्र सुनें</button><div id="ganeshMusicPlayer" style="display:none;margin-top:10px"></div><small style="display:block;margin-top:8px;color:#777">महिला की आवाज़ में मंत्र • केवल ऑडियो, वीडियो नहीं। इंटरनेट चाहिए।</small></div>
 <div id="multiBillBox" class="card" style="background:#fff0f6"><h3>🧾 Multiple Bills</h3><div class="small">एक साथ कई customers के bills खुले रखें और किसी भी bill पर वापस जाएँ.</div><div id="draftTabs" style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0"></div><button type="button" class="green" onclick="newParallelBill()">➕ New Bill</button> <button type="button" class="gray" onclick="saveParallelBill()">💾 Save Draft</button> <button type="button" onclick="closeParallelBill()">✕ Close Bill</button></div>
 <div class="card"><h2>Billing</h2><div class="grid"><input id="cust" placeholder="Customer Name"><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="Customer Mobile No. (10 digits)"></div></div>
 <div class="card"><h3>Add Item</h3><div class="scanbox"><b>🔎 Barcode Scan</b><div class="small">USB/Bluetooth barcode scanner से scan करें या नीचे barcode value डालें. Scan होते ही product, colour और size auto-fill होगा.</div><div class="grid" style="margin-top:8px"><input id="scanCode" placeholder="Scan Barcode value here" onkeydown="handleScanKey(event)"><button type="button" onclick="startCameraScan()">📷 Camera Scan</button></div><div id="scanStatus" class="small"></div></div><br><div class="grid">
@@ -261,7 +261,7 @@ function toggleGaneshMantra(){
  const box=document.getElementById('ganeshMusicPlayer');
  const btn=document.getElementById('ganeshMusicToggle');
  if(!box||!btn)return;
- if(box.dataset.playing==='yes'){box.innerHTML='';box.style.display='none';box.dataset.playing='no';btn.textContent='▶️ मंत्र सुनें';return;}
+ if(box.dataset.playing==='yes'){box.innerHTML='';box.style.display='none';box.dataset.playing='no';btn.textContent='🙏 मंत्र सुनें';return;}
  box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ मंत्र बंद करें';
  box.innerHTML='<iframe title="Ekadantaya Vakratundaya female voice audio player" width="100%" height="250" style="border:0;border-radius:10px;background:#fff" src="https://audio.com/adwaita-thakur/audio/ekadantaya-vakratundaya-with-lyrics-female-version-full-song-by-priyal-shankar-mahadevan" loading="lazy"></iframe><p style="font-size:12px;color:#777;margin:6px 0">यह केवल ऑडियो है। प्लेयर में ▶ दबाकर मंत्र सुनें।</p>';
 }
