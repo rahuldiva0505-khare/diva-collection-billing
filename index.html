@@ -2,14 +2,14 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=72',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=73',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f1faf5;color:#222}
 .product-folder{border:1px solid #dce5df;border-radius:14px;margin:12px 0;overflow:hidden;background:#fff}
-.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fbfdfb}
+.new-product-photo-box{grid-column:1/-1;border:1px dashed #b7c8bc;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fbfdfb}.new-photo-preview{width:86px;height:100px;border:1px solid #ddd;border-radius:9px;background:#f4f7f4;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;overflow:hidden;color:#777}.new-photo-preview img{width:100%;height:78px;object-fit:cover}.new-photo-preview span{font-size:27px}.new-photo-preview small{font-size:10px;text-align:center}.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fbfdfb}
 .folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5}
 .folder-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#777}.folder-placeholder span{font-size:30px}.folder-placeholder small{font-size:10px}
 .folder-title{flex:1;min-width:0}.folder-title>b{display:block;font-size:16px;margin:4px 0;overflow-wrap:anywhere}.folder-number{font-size:11px;font-weight:800;color:#006b3c;letter-spacing:.7px}.folder-stats{font-size:12px;color:#444;margin-top:6px}.folder-arrow{font-size:24px;color:#006b3c}
@@ -119,6 +119,7 @@ function code128Svg(value,opts={}){
 <div class="grid">
 <div style="display:flex;gap:6px;align-items:center"><select id="pcat"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
+<div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div>
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
 <input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No."><input id="pgst" type="number" min="0" max="100" step="0.01" placeholder="GST % (जैसे 5, 12, 18)">
@@ -406,11 +407,33 @@ function buildPurchaseMatrix(){
  sizes.forEach(sz=>{html+='<tr><td><b>'+esc(sz)+'</b></td>';colors.forEach(c=>{html+='<td><input class="purchasematrixqty" data-size="'+esc(sz)+'" data-color="'+esc(c)+'" type="number" min="0" placeholder="Qty"></td>'});html+='</tr>'});el.innerHTML=html+'</table>';
 }
 function clearPurchaseProductForm(){
+ clearNewProductPhoto();
  ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
 }
 function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); (db.purchases||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); let stored=Number(localStorage.getItem('DIVA_NEXT_SKU_NO')||0); max=Math.max(max,stored-1); let n=max+1; while(seen.includes(n)) n++; return 'DIVA-'+n;}
 function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
 
+let pendingNewProductPhoto='';
+function previewNewProductPhoto(input){
+ const file=input&&input.files&&input.files[0];if(!file)return;
+ if(!file.type||!file.type.startsWith('image/')){alert('कृपया image photo चुनें.');input.value='';return}
+ const reader=new FileReader();
+ reader.onload=function(){const img=new Image();img.onload=function(){
+  const max=180,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  const data=canvas.toDataURL('image/jpeg',0.48);
+  if(data.length>45000){alert('Photo बहुत बड़ी है. छोटी photo चुनें.');input.value='';return}
+  pendingNewProductPhoto=data;
+  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<img src="'+data+'" alt="Product preview"><small>✅ Photo ready</small>';
+ };img.onerror=function(){alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};img.src=String(reader.result||'')};
+ reader.onerror=function(){alert('Photo read नहीं हो सकी.')};reader.readAsDataURL(file);
+}
+function clearNewProductPhoto(){
+ pendingNewProductPhoto='';
+ const input=document.getElementById('pnewProductPhoto');if(input)input.value='';
+ const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<span>👗</span><small>Product की photo यहाँ दिखेगी</small>';
+}
 function saveNewPurchaseProduct(){
  const newcat=document.getElementById('pnewcat').value.trim();
  const cat=newcat || document.getElementById('pcat').value.trim();
@@ -428,11 +451,17 @@ function saveNewPurchaseProduct(){
  let rows=matrix.map(i=>({size:i.dataset.size,color:i.dataset.color,qty:Number(i.value)||0})).filter(x=>x.qty>0);if(!rows.length){alert('कम से कम एक Size + Colour की Quantity भरें');return}
  if(newcat&&!db.categories.includes(newcat))db.categories.push(newcat);let added=[];
  rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0}else{x={key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)};db.stock.push(x)}db.purchases=db.purchases||[];db.purchases.push({date:new Date().toISOString(),key:k,name:x.name,sku:x.sku,color:x.color,size:x.size,qty:q,cost:cost||x.cost||0,supplier:document.getElementById('psupplier').value.trim(),invoice:document.getElementById('pinvoice').value.trim()});added.push(x)});
+ if(pendingNewProductPhoto){
+  if(!Array.isArray(db.productPhotos))db.productPhotos=[];
+  const photoKey=productFolderKey({category:cat,sku,name}),idx=db.productPhotos.findIndex(p=>String(p.key)===photoKey);
+  const rec={key:photoKey,data:pendingNewProductPhoto,updatedAt:new Date().toISOString()};
+  if(idx>=0)db.productPhotos[idx]=rec;else db.productPhotos.push(rec);
+ }
  save();
  const m=sku.match(/^DIVA-(\d+)$/i); if(m) localStorage.setItem('DIVA_NEXT_SKU_NO',String(Number(m[1])+1));
  renderCategories(); renderStock(); renderPurchase(); renderLabels();
  document.getElementById('newPurchaseResult').innerHTML='<b>✅ Product purchase saved.</b> '+added.length+' entries added. Barcode labels ready हैं.';
- ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; preparePurchaseSku();
+ ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; clearNewProductPhoto(); preparePurchaseSku();
 
 }
 function getLabelPrintSettings(){
