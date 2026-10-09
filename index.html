@@ -2,14 +2,14 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=75',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=76',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f1faf5;color:#222}
 .product-folder{border:1px solid #dce5df;border-radius:14px;margin:12px 0;overflow:hidden;background:#fff}
-.category-suggestions{position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:220px;overflow-y:auto;background:#fff;border:1px solid #b7c8bc;border-radius:8px;box-shadow:0 5px 15px #0002}.category-suggestion{display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-bottom:1px solid #eee;background:#fff;color:#222;font-size:16px}.category-suggestion:active{background:#e8f5ec}.category-no-match{padding:10px;color:#777;font-size:13px}
+.category-suggestions{position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #b7c8bc;border-radius:4px;box-shadow:0 3px 8px #0002}.category-suggestion{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #eee;background:#fff;color:#222;font-size:16px;min-height:42px}.category-suggestion:active{background:#e8f5ec}.category-no-match{padding:10px;color:#777;font-size:13px}
 .new-product-photo-box{grid-column:1/-1;border:1px dashed #b7c8bc;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fbfdfb}.new-photo-preview{width:86px;height:100px;border:1px solid #ddd;border-radius:9px;background:#f4f7f4;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;overflow:hidden;color:#777}.new-photo-preview img{width:100%;height:78px;object-fit:cover}.new-photo-preview span{font-size:27px}.new-photo-preview small{font-size:10px;text-align:center}.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fbfdfb}
 .folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5}
 .folder-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#777}.folder-placeholder span{font-size:30px}.folder-placeholder small{font-size:10px}
@@ -261,7 +261,7 @@ function syncPurchaseCategory(){
  const input=document.getElementById('pcatSearch'),pc=document.getElementById('pcat'),box=document.getElementById('pcatSuggestions');if(!input||!pc||!box)return;
  const value=input.value.trim(),lower=value.toLowerCase();
  const match=(db.categories||[]).find(c=>String(c).toLowerCase()===lower);pc.value=match||'';
- const matches=(db.categories||[]).filter(c=>!lower||String(c).toLowerCase().includes(lower)).slice(0,30);
+ const matches=(db.categories||[]).filter(c=>!lower||String(c).toLowerCase().startsWith(lower)).slice(0,50);
  box.innerHTML=matches.length?matches.map(c=>'<button type="button" class="category-suggestion" data-category="'+esc(c)+'" onclick="choosePurchaseCategory(this)">'+esc(c)+'</button>').join(''):'<div class="category-no-match">कोई Category नहीं मिली</div>';
  box.style.display=matches.length?'block':'none';
 }
