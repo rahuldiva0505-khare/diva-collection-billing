@@ -1287,9 +1287,9 @@ setTimeout(function(){
    try {
      const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
      const old=raw?JSON.parse(raw):{};
-     if(localStorage.getItem('DIVA_LABEL_FORMAT_V4')!=='1'){
-       Object.assign(old,{paperW:4,paperH:6,labelW:2,labelH:1,gapX:0,gapY:0});
-       localStorage.setItem('DIVA_LABEL_FORMAT_V4','1');
+     if(localStorage.getItem('DIVA_LABEL_FORMAT_V5')!=='1'){
+       Object.assign(old,{paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0});
+       localStorage.setItem('DIVA_LABEL_FORMAT_V5','1');
        localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(old));
      }
      Object.assign(d,old);
@@ -1310,7 +1310,7 @@ setTimeout(function(){
    const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
    const lp=window.labelPrintStyle(),s=lp.s;let cards='';
    arr.forEach((x,i)=>{if(i%lp.perPage===0)cards+='<div class="sheet">';const code=window.makeCode(x.category,x.sku,x.color,x.size);cards+='<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+window.esc(x.name)+'</div><div class="meta">'+window.esc(x.sku)+' | '+window.esc(x.color)+' | Size '+window.esc(x.size)+'</div>'+window.code128Svg(code)+'</div>';if(i%lp.perPage===lp.perPage-1||i===arr.length-1)cards+='</div>'});
-   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\\/script></body></html>');w.document.close();
+   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+' .printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}@page{size:4in 6in portrait;margin:0}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button onclick="window.close()">Close</button><span>4×6 page • 2×1.5 inch labels • up to 8 per page</span></div>'+cards+'</body></html>');w.document.close();
  };
  window.printAllLabels = function(){
    const arr=(typeof db!=='undefined'&&db.stock)?db.stock:[];if(!arr.length){alert('Stock खाली है');return}
