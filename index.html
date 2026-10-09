@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=99',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=100',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -83,7 +83,7 @@ function code128Svg(value,opts={}){
 <nav>
 <main>
 <section id="dashboard" class="page">
-<div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div><h3>🔐 App Lock Controls</h3><div class="grid"><button type="button" onclick="lockNow()">🔒 LOCK APP</button><button type="button" onclick="appLockSettings()">🔐 LOCK / UNLOCK / PIN SETTINGS</button></div></div>
+<div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div><h3>🔐 App Lock Controls</h3><div class="grid"><button type="button" onclick="lockNow()">🔒 LOCK APP</button><button type="button" onclick="appLockSettings()">🔐 LOCK / UNLOCK / PIN SETTINGS</button></div><div class="card" style="margin-top:14px"><h3>🙏 श्री गणेश मंत्र • Soft Music</h3><p style="margin:6px 0 10px">“Ekadantaya Vakratundaya” — धीमी आवाज़ में</p><div class="grid"><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()">▶️ मंत्र चालू करें</button></div><div id="ganeshMusicPlayer" style="display:none;margin-top:10px"></div><small style="display:block;margin-top:8px;color:#777">चलाने के लिए इंटरनेट चाहिए। संगीत की आवाज़ धीमी रखी जाएगी।</small></div></div>
 <div class="card"><h3>⚡ Quick Actions</h3><div class="grid"><button onclick="page('billing')">🧾 New Bill</button><button onclick="page('purchase')">📥 Purchase / Stock Add</button><button onclick="page('salesReturn')">🔄 Sales Return</button><button onclick="page('stockReturn')">↩️ Stock Return</button><button onclick="page('labels')">🏷️ Barcode Labels</button><button onclick="page('reports')">📊 Reports</button></div></div>
 <div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
 
@@ -205,6 +205,28 @@ function code128Svg(value,opts={}){
     var w=window.open('','_blank','width=600,height=600');
     if(!w){alert('Popup blocked है. Browser में popup Allow करें.');return}
     w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div><script>function toggleSideMenu(){var m=document.getElementById("sideMenuPanel");if(m)m.classList.toggle("open")}function closeSideMenu(){var m=document.getElementById("sideMenuPanel");if(m)m.classList.remove("open")}document.addEventListener("click",function(e){var m=document.getElementById("sideMenuPanel"),b=document.getElementById("sideMenuToggle");if(m&&m.classList.contains("open")&&!m.contains(e.target)&&e.target!==b)closeSideMenu()});<\/script>
+
+<script>
+(function(){
+ let ganeshPlayer=null,ganeshApiLoading=false,ganeshWantsPlay=false;
+ window.toggleGaneshMantra=function(){
+  const box=document.getElementById('ganeshMusicPlayer');
+  const btn=document.getElementById('ganeshMusicToggle');
+  if(!box||!btn)return;
+  if(ganeshWantsPlay){ganeshWantsPlay=false;try{if(ganeshPlayer&&ganeshPlayer.stopVideo)ganeshPlayer.stopVideo();if(ganeshPlayer&&ganeshPlayer.destroy)ganeshPlayer.destroy()}catch(e){}ganeshPlayer=null;box.innerHTML='';box.style.display='none';btn.textContent='▶️ मंत्र चालू करें';return;}
+  ganeshWantsPlay=true;box.style.display='block';btn.textContent='⏹️ मंत्र बंद करें';box.innerHTML='<div id="ganeshMantraYT" style="width:100%;max-width:360px;min-height:180px;background:#111;border-radius:10px;overflow:hidden"></div><p style="font-size:12px;color:#777">आवाज़ बहुत धीमी (लगभग 18%) रखी गई है।</p>';
+  if(window.YT&&window.YT.Player){createGaneshPlayer();return;}
+  if(ganeshApiLoading)return;ganeshApiLoading=true;
+  const previous=window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady=function(){ganeshApiLoading=false;if(typeof previous==='function')try{previous()}catch(e){}if(ganeshWantsPlay)createGaneshPlayer();};
+  const script=document.createElement('script');script.src='https://www.youtube.com/iframe_api';script.onerror=function(){ganeshApiLoading=false;box.innerHTML='मंत्र लोड नहीं हो पाया। इंटरनेट जाँचकर फिर चालू करें।';};document.head.appendChild(script);
+ };
+ function createGaneshPlayer(){
+  if(!ganeshWantsPlay)return;
+  try{ganeshPlayer=new YT.Player('ganeshMantraYT',{height:'203',width:'360',videoId:'re88S-5fpmA',playerVars:{autoplay:1,controls:1,loop:1,playlist:'re88S-5fpmA',playsinline:1,rel:0},events:{onReady:function(e){if(!ganeshWantsPlay){e.target.stopVideo();return;}e.target.setVolume(18);e.target.playVideo();},onError:function(){const box=document.getElementById('ganeshMusicPlayer');if(box)box.insertAdjacentHTML('beforeend','<p style="color:#b00020">यह वीडियो अभी नहीं चल पाया।</p>');}}});}catch(e){const box=document.getElementById('ganeshMusicPlayer');if(box)box.insertAdjacentHTML('beforeend','<p>मंत्र लोड नहीं हो पाया।</p>');}
+ }
+})();
+</script>
 </body></html>');
     w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
   };
