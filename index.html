@@ -2,12 +2,21 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=70',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=71',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f1faf5;color:#222}header{background:#000;color:#d8dadd;padding:12px 16px;font-size:21px;font-weight:bold;display:flex;align-items:center;gap:12px}header .brandLogo{width:58px;height:58px;object-fit:contain;flex-shrink:0}
+body{margin:0;font-family:Arial,sans-serif;background:#f1faf5;color:#222}
+.product-folder{border:1px solid #dce5df;border-radius:14px;margin:12px 0;overflow:hidden;background:#fff}
+.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fbfdfb}
+.folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5}
+.folder-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#777}.folder-placeholder span{font-size:30px}.folder-placeholder small{font-size:10px}
+.folder-title{flex:1;min-width:0}.folder-title>b{display:block;font-size:16px;margin:4px 0;overflow-wrap:anywhere}.folder-number{font-size:11px;font-weight:800;color:#006b3c;letter-spacing:.7px}.folder-stats{font-size:12px;color:#444;margin-top:6px}.folder-arrow{font-size:24px;color:#006b3c}
+.folder-tools{padding:0 12px 12px}.photo-pick{display:inline-flex;align-items:center;gap:6px;background:#e8f5ef;color:#123;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}.photo-pick input{display:none}
+.folder-details{border-top:1px solid #e3e8e4;padding:8px 12px 12px}.folder-color{background:#f8fbf8;border:1px solid #e4ece5;border-radius:10px;padding:8px;margin:8px 0}.folder-color h4{margin:4px 0 10px}.folder-size-table{min-width:570px!important}.folder-size-table th,.folder-size-table td{padding:7px 6px;font-size:12px}
+@media(min-width:700px){#productFolders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.product-folder{margin:0}.folder-head{align-items:flex-start}.folder-photo{width:95px;height:110px}}
+header{background:#000;color:#d8dadd;padding:12px 16px;font-size:21px;font-weight:bold;display:flex;align-items:center;gap:12px}header .brandLogo{width:58px;height:58px;object-fit:contain;flex-shrink:0}
 nav{display:flex;gap:6px;overflow:auto;background:#fff;padding:10px;position:sticky;top:0;z-index:5}nav button{white-space:nowrap}
 button{border:0;border-radius:8px;padding:11px 14px;background:#006b3c;color:#fff;font-size:15px}.gray{background:#e8f5ef;color:#222}.red{background:#d93025}.green{background:#188038}
 main{max-width:1200px;margin:auto;padding:12px}.page{display:none}.page.active{display:block}.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 7px #0001}
@@ -102,7 +111,7 @@ function code128Svg(value,opts={}){
 <section id="stock" class="page">
 <div class="card"><h2>📦 CURRENT STOCK</h2><p>यहाँ केवल <b>वर्तमान उपलब्ध stock</b> दिखेगा। नया माल जोड़ने के लिए <b>Purchase / Stock Add</b> इस्तेमाल करें.</p>
 <div class="grid"><input id="stockSearch" placeholder="Search Product / SKU / Colour / Size" oninput="renderStock()"><select id="stockCatFilter" onchange="renderStock()"><option value="">All Categories</option></select></div></div>
-<div class="card"><h3>Current Stock</h3><div id="stockTable"></div></div></section>
+<div class="card"><h3>🗂️ Product Folders</h3><p class="small">हर folder में product photo, उसके अंदर colours और हर colour में size-wise stock है। Photo जोड़ने के लिए 📷 Photo दबाएँ।</p><div id="productFolders"></div><div id="stockTable" style="display:none"></div></div></section>
 
 <section id="purchase" class="page"><div class="card"><h2>📥 PURCHASE / STOCK ADD</h2>
 <p class="small">यहीं से <b>नया Product add</b> करें या existing product में purchase quantity जोड़ें। Product add होते ही barcode बन जाएगा और यहीं से label print कर सकते हैं.</p>
@@ -233,7 +242,7 @@ try{
   try{localStorage.setItem(KEY,JSON.stringify(db))}catch(_){}
 }
 if(!Array.isArray(db.categories))db.categories=[]; db.categories=[...new Set(db.categories.concat(["Saree","Silk Saree","Cotton Saree","Designer Saree","Ready-Made Saree","Lehenga Choli","Bridal Lehenga","Crop Top Lehenga","Sharara Set","Gharara Set","Anarkali Suit","Straight Suit","Palazzo Suit","Pant Suit","Peplum Set","Indo-Western","Ready-Made Suit","Three-Piece Suit","Kurti","Kurta Set","Long Kurti","Short Kurti","A-Line Kurti","Straight Kurti","Shirt Kurti","Kaftan","Kaftan Suit","Angrakha Suit","Afghani Suit","Aliya Set","Nayera Set","Dhoti Set","Gown","Party Wear Gown","Maxi Dress","Midi Dress","Mini Dress","Frock","Dress","Jumpsuit","Co-Ord Set","Top","T-Shirt","Shirt","Crop Top","Blouse","Tunics","Jeans","Jeggings","Trousers","Pants","Palazzo","Leggings","Track Pants","Skirt","Shorts","Dupatta","Stole","Shrug","Jacket","Cardigan","Sweater","Sweatshirt","Night Suit","Nightwear","Maternity Wear","Abaya","Hijab","Modest Wear","Innerwear","Heels","Platform Heels","High Heels","Block Heels","Wedges","Kitten Heels","Sandals","Flats","Jutti","Mojari","Slippers","Shoes","Sneakers","Boots","Sports Shoes","Handbags","Sling Bags","Clutches","Wallets","Belts","Sunglasses","Watches","Jewellery","Earrings","Necklace","Bracelet","Bangles","Rings","Anklets","Hair Accessories","Makeup","Skincare","Beauty Accessories","Home & Kitchen","Other"]))];
-if(!Array.isArray(db.stock))db.stock=[]; if(!Array.isArray(db.sales))db.sales=[]; if(!Array.isArray(db.expenses))db.expenses=[]; if(!Array.isArray(db.stockReturns))db.stockReturns=[]; if(!Array.isArray(db.purchases))db.purchases=[]; if(!Array.isArray(db.salesReturns))db.salesReturns=[];
+if(!Array.isArray(db.stock))db.stock=[]; if(!Array.isArray(db.productPhotos))db.productPhotos=[]; if(!Array.isArray(db.sales))db.sales=[]; if(!Array.isArray(db.expenses))db.expenses=[]; if(!Array.isArray(db.stockReturns))db.stockReturns=[]; if(!Array.isArray(db.purchases))db.purchases=[]; if(!Array.isArray(db.salesReturns))db.salesReturns=[];
 db.stock=db.stock.map(x=>({...x,category:x.category||"Other",mrp:Number(x.mrp)||0,selling:Number(x.selling||x.rate)||0,discount:Number(x.discount)||0,cost:Number(x.cost)||0,code:x.code||makeCode(x.category||'Other',x.sku||x.name||'ITEM',x.color||'',x.size||'')}));
 let cart=[];
 function makeCode(cat,sku,color,size){return ['DC',cat,sku,color,size].map(v=>String(v||'').trim().replace(/\s+/g,'-')).filter(Boolean).join('|').toUpperCase()}
@@ -276,16 +285,65 @@ function saveStock(){
  alert(rows.length+' Size + Colour stock entries add हो गईं. '+labelCopies.length+' barcode labels print के लिए भेजे जा रहे हैं.');
 }
 function clearStockForm(){['newcat','ssku','sname','customSizes','smrp','sselling','sdiscount','scost','scolor1','scolor2','scolor3','scolor4'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.sizecheck').forEach(x=>x.checked=false);document.getElementById('stockMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('scat').value=''}
-function renderStock(){
- let el=document.getElementById("stockTable"); if(!el)return;
- const q=(document.getElementById('stockSearch')?.value||'').toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
- const filter=db.stock.filter(x=>Number(x.qty)>0&&(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
- const cats=[...new Set(db.categories.concat(db.stock.map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
- if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(cats.includes(old))cf.value=old;}
- if(!filter.length){el.innerHTML='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';return}
- el.innerHTML='<div class="tablewrap"><table><tr><th>Category</th><th>Product / SKU</th><th>Colour</th><th>Size</th><th>Available Qty</th><th>MRP</th><th>Selling</th><th>Barcode</th><th>Action</th></tr>'+filter.map(x=>`<tr><td><span class="pill">${esc(x.category)}</span></td><td>${esc(x.name)}<br><small>${esc(x.sku)}</small></td><td>${esc(x.color)}</td><td>${esc(x.size)}</td><td><b>${x.qty}</b></td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.selling||0).toFixed(2)}</td><td><button class="gray" onclick="printLabelByKey('${esc(x.key)}')">🏷️ Print</button></td><td><button class="red" onclick="deleteStockRow('${esc(x.key)}')">🗑️ Delete</button></td></tr>`).join("")+'</table></div>';
+function productFolderKey(x){return String(x.category||'Other')+'|'+String(x.sku||x.name||'ITEM')}
+function productPhotoFor(k){if(!Array.isArray(db.productPhotos))db.productPhotos=[];const p=db.productPhotos.find(v=>String(v.key)===String(k));return p&&p.data?p.data:''}
+function saveProductPhoto(input){
+ const file=input&&input.files&&input.files[0],k=input&&input.dataset&&input.dataset.photoKey;
+ if(!file||!k)return;
+ if(!file.type||!file.type.startsWith('image/')){alert('कृपया product की photo चुनें.');input.value='';return}
+ const reader=new FileReader();
+ reader.onload=function(){
+  const img=new Image();
+  img.onload=function(){
+   const max=180,scale=Math.min(1,max/Math.max(img.width,img.height));
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+   const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   const data=canvas.toDataURL('image/jpeg',0.48);
+   if(data.length>45000){alert('Photo बहुत बड़ी है. कृपया छोटी photo चुनें.');input.value='';return}
+   if(!Array.isArray(db.productPhotos))db.productPhotos=[];
+   const old=db.productPhotos.findIndex(v=>String(v.key)===String(k));
+   const rec={key:k,data:data,updatedAt:new Date().toISOString()};
+   if(old>=0)db.productPhotos[old]=rec;else db.productPhotos.push(rec);
+   try{save();renderStock();alert('✅ Product photo save हो गई. Cloud Sync दबाकर दूसरे device पर भी भेजें.');}
+   catch(e){alert('Photo save नहीं हो पाई. Phone/laptop storage खाली करके छोटी photo चुनें.');}
+  };
+  img.onerror=function(){alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};img.src=String(reader.result||'');
+ };
+ reader.onerror=function(){alert('Photo read नहीं हो सकी.')};reader.readAsDataURL(file);
 }
-
+function toggleProductFolder(head){
+ const k=head&&head.dataset?head.dataset.groupKey:'',details=head&&head.parentElement?head.parentElement.querySelector('.folder-details'):null;
+ if(!details)return;
+ const open=details.style.display!=='block';details.style.display=open?'block':'none';
+ const arrow=head.querySelector('.folder-arrow');if(arrow)arrow.textContent=open?'⌃':'⌄';
+}
+function renderStock(){
+ const el=document.getElementById('productFolders');if(!el)return;
+ const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
+ const cats=[...new Set((db.categories||[]).concat((db.stock||[]).map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
+ if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');if(cats.includes(old))cf.value=old;}
+ const matches=(db.stock||[]).filter(x=>Number(x.qty)>0&&(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
+ if(!matches.length){el.innerHTML='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';return}
+ const map=new Map();
+ matches.forEach(x=>{const k=productFolderKey(x);if(!map.has(k))map.set(k,{key:k,category:x.category||'Other',sku:x.sku||'',name:x.name||x.sku||'Product',rows:[]});map.get(k).rows.push(x)});
+ const groups=[...map.values()].sort((a,b)=>{
+  const an=Number((a.sku.match(/^DIVA-(\d+)$/i)||[])[1]),bn=Number((b.sku.match(/^DIVA-(\d+)$/i)||[])[1]);
+  if(an&&bn)return an-bn;if(an)return -1;if(bn)return 1;return String(a.name).localeCompare(String(b.name));
+ });
+ el.innerHTML=groups.map((g,index)=>{
+  const id='pf'+index,photo=productPhotoFor(g.key),m=(g.sku.match(/^DIVA-(\d+)$/i)||[])[1],num=m?Number(m):index+1;
+  const total=g.rows.reduce((n,x)=>n+Number(x.qty||0),0),colors=[...new Set(g.rows.map(x=>x.color||'No Colour'))];
+  const pic=photo?'<img class="folder-photo" src="'+photo+'" alt="Product photo">':'<div class="folder-photo folder-placeholder"><span>👗</span><small>Photo नहीं है</small></div>';
+  let detail='';
+  colors.forEach(color=>{
+   const rows=g.rows.filter(x=>(x.color||'No Colour')===color).sort((a,b)=>String(a.size).localeCompare(String(b.size),undefined,{numeric:true}));
+   detail+='<div class="folder-color"><h4>🎨 '+esc(color)+' <span class="pill">'+rows.reduce((n,x)=>n+Number(x.qty||0),0)+' pcs</span></h4><div class="tablewrap"><table class="folder-size-table"><tr><th>Size</th><th>Qty</th><th>MRP</th><th>Selling</th><th>Barcode</th><th>Action</th></tr>';
+   detail+=rows.map(x=>'<tr><td><b>'+esc(x.size||'-')+'</b></td><td><b>'+Number(x.qty||0)+'</b></td><td>₹'+Number(x.mrp||0).toFixed(2)+'</td><td>₹'+Number(x.selling||0).toFixed(2)+'</td><td><button type="button" class="gray" onclick="event.stopPropagation();printLabelByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🏷️ Print</button></td><td><button type="button" class="red" onclick="event.stopPropagation();deleteStockRow(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>').join('');
+   detail+='</table></div></div>';
+  });
+  return '<div class="product-folder"><div class="folder-head" data-group-key="'+esc(g.key)+'" onclick="toggleProductFolder(this)">'+pic+'<div class="folder-title"><div class="folder-number">PRODUCT '+num+'</div><b>'+esc(g.name)+'</b><div class="small">'+esc(g.sku)+' · '+esc(g.category)+'</div><div class="folder-stats">'+colors.length+' colours · '+total+' pcs</div></div><span class="folder-arrow">⌄</span></div><div class="folder-tools"><label class="photo-pick">📷 '+(photo?'Change Photo':'Add Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(g.key)+'" onchange="saveProductPhoto(this)"></label></div><div class="folder-details" style="display:none">'+detail+'</div></div>';
+ }).join('');
+}
 function deleteStockRow(k){
  const x=db.stock.find(a=>String(a.key)===String(k));
  if(!x){alert('Stock entry नहीं मिली.');return}
@@ -768,9 +826,10 @@ const SYNC_BASELINE_KEY='DIVA_SYNC_BASELINE_V3';
 const SYNC_APPLIED_KEY='DIVA_SYNC_APPLIED_V3';
 
 function syncClone(x){return JSON.parse(JSON.stringify(x));}
-function syncArrayNames(){return ['stock','sales','customers','purchases','stockReturns','salesReturns','expenses','categories'];}
+function syncArrayNames(){return ['stock','sales','customers','purchases','stockReturns','salesReturns','expenses','categories','productPhotos'];}
 function syncRecordKey(type,x){
  if(type==='stock') return String(x.key||x.id||[x.category,x.sku,x.color,x.size].join('|'));
+ if(type==='productPhotos') return String(x.key||x.id||'');
  if(type==='sales') return String(x.billNo||x.id||x.date);
  if(type==='customers') return String(x.id||x.phone||x.name);
  if(type==='purchases') return String(x.id||[x.date,x.key,x.qty,x.invoice].join('|'));
