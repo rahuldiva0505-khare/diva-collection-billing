@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=107',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=108',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -78,7 +78,7 @@ function code128Svg(value,opts={}){
 <header style="position:relative"><img class="brandLogo" src="./diva-logo-v2.svg" alt="Diva Collection logo"> <span>Diva Collection Billing Software</span> <span style="font-size:12px;background:#fff;color:#9f174d;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2 • BARCODE V2</span><button onclick="openLaptopHelp()" style="padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button><button onclick="page('products')">🗂️ PRODUCTS</button>
-<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button onclick="page(\'cloudSync\')">☁️ CLOUD SYNC</button><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="background:#b72d70;white-space:nowrap">🙏 मंत्र सुनें</button>
+<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button onclick="page(\'cloudSync\')">☁️ CLOUD SYNC</button><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="background:#b72d70;white-space:nowrap">💰 व्यापार वृद्धि मंत्र</button>
 </nav>
 <div id="ganeshMusicPlayer" style="display:none;max-width:700px;margin:8px auto;padding:0 10px"></div>
 <nav>
@@ -261,9 +261,9 @@ function toggleGaneshMantra(){
  const box=document.getElementById('ganeshMusicPlayer');
  const btn=document.getElementById('ganeshMusicToggle');
  if(!box||!btn)return;
- if(box.dataset.playing==='yes'){box.innerHTML='';box.style.display='none';box.dataset.playing='no';btn.textContent='🙏 मंत्र सुनें';return;}
+ if(box.dataset.playing==='yes'){box.innerHTML='';box.style.display='none';box.dataset.playing='no';btn.textContent='💰 व्यापार वृद्धि मंत्र';return;}
  box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ मंत्र बंद करें';
- box.innerHTML='<iframe title="Ekadantaya Vakratundaya female voice audio player" width="100%" height="250" style="border:0;border-radius:10px;background:#fff" src="https://audio.com/adwaita-thakur/audio/ekadantaya-vakratundaya-with-lyrics-female-version-full-song-by-priyal-shankar-mahadevan" loading="lazy"></iframe><p style="font-size:12px;color:#777;margin:6px 0">यह केवल ऑडियो है। प्लेयर में ▶ दबाकर मंत्र सुनें।</p>';
+ box.innerHTML='<div style="padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff"><b>महालक्ष्मी मंत्र • महिला की आवाज़</b><p style="margin:6px 0">ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः</p><iframe title="Mahalakshmi mantra audio by Manjeera Ganguly" style="border-radius:12px" src="https://open.spotify.com/embed/track/1dzISFNtArS1evHl3mtv2d?utm_source=generator" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe><p style="font-size:12px;color:#777;margin:6px 0">यह ऑडियो है, वीडियो नहीं। Spotify पर प्ले करने के लिए इंटरनेट चाहिए।</p></div>';
 }
 function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock"||id==="products")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
 function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
