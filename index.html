@@ -82,7 +82,7 @@ function code128Svg(value,opts={}){
 <header style="position:relative"><img class="brandLogo" src="./diva-logo-v2.svg" alt="Diva Collection logo"> <span>Diva Collection Billing Software</span> <span style="font-size:12px;background:#fff;color:#9f174d;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2 • BARCODE V2</span><button onclick="openLaptopHelp()" style="padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button><button onclick="page('products')">🗂️ PRODUCTS</button>
-<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button id="cloudSyncNavBtn" type="button" style="position:relative;z-index:20;pointer-events:auto;touch-action:manipulation" onclick="event.stopPropagation();openCloudSync()">☁️ CLOUD SYNC</button><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="background:#b72d70;white-space:nowrap">💰 व्यापार वृद्धि मंत्र</button>
+<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button id="cloudSyncNavBtn" type="button" style="position:relative;z-index:20;pointer-events:auto;touch-action:manipulation" onclick="event.stopPropagation();openCloudSync()">☁️ CLOUD SYNC</button><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="background:#b72d70;white-space:nowrap">🪔 लक्ष्मी माता की मधुर आरती</button>
 </nav>
 <div id="ganeshMusicPlayer" style="display:none;max-width:700px;margin:8px auto;padding:0 10px"></div>
 <main>
@@ -265,48 +265,21 @@ function toggleGaneshMantra(){
  if(!box||!btn)return;
  if(box.dataset.playing==='yes'){
    box.dataset.playing='no';
-   try{window.speechSynthesis.cancel();}catch(e){}
-   box.innerHTML='';box.style.display='none';btn.textContent='💰 व्यापार वृद्धि मंत्र';return;
+   const audio=document.getElementById('lakshmiAartiAudio');
+   if(audio){audio.pause();audio.currentTime=0;}
+   box.innerHTML='';box.style.display='none';btn.textContent='🪔 लक्ष्मी माता की मधुर आरती';return;
  }
- if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){
-   alert('इस ऐप के browser में Text-to-Speech उपलब्ध नहीं है। Android Settings में Text-to-speech output चालू करें।');return;
- }
- box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ मंत्र बंद करें';
- box.innerHTML='<div style="padding:12px;border:1px solid #e7b7ca;border-radius:12px;background:#fff"><b>महालक्ष्मी व्यापार वृद्धि मंत्र</b><p style="margin:8px 0;font-size:18px">ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः</p><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">फोन की हिंदी आवाज़ तैयार कर रहे हैं…</p></div>';
- const synth=window.speechSynthesis;
- let pending=false, loopTimer=null, pollCount=0;
- function status(t){const el=document.getElementById('mantraOfflineStatus');if(el)el.textContent=t;}
- function stopLoop(){if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}}
- function speak(){
-   if(box.dataset.playing!=='yes'||pending)return;
-   let voices=[];try{voices=synth.getVoices()||[]}catch(e){}
-   if(!voices.length)return;
-   const hindi=voices.filter(v=>/^hi(-|$)/i.test(v.lang||''));
-   const voice=hindi.find(v=>v.localService&&/female|woman|महिला/i.test(v.name||''))||
-     hindi.find(v=>v.localService)||hindi.find(v=>/female|woman|महिला/i.test(v.name||''))||
-     hindi[0]||voices.find(v=>/^en/i.test(v.lang||''))||voices[0];
-   const u=new SpeechSynthesisUtterance('ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः');
-   u.lang=voice.lang||'hi-IN';u.voice=voice;u.rate=0.72;u.pitch=1.25;u.volume=1;
-   pending=true;
-   status('आवाज़: '+voice.name+' ('+voice.lang+') — शुरू हो रहा है…');
-   u.onstart=()=>status('🔊 मंत्र चल रहा है — आवाज़: '+voice.name);
-   u.onerror=(e)=>{pending=false;status('आवाज़ शुरू नहीं हुई ('+(e.error||'TTS error')+')। Media volume बढ़ाएँ; फिर भी न चले तो Android Settings → General management → Text-to-speech में Google Speech Services और Hindi voice install करें।');};
-   u.onend=()=>{pending=false;if(box.dataset.playing==='yes')loopTimer=setTimeout(speak,1200);};
-   try{synth.cancel();synth.speak(u);setTimeout(()=>{if(pending&&box.dataset.playing==='yes'&&!synth.speaking&&!synth.pending){pending=false;status('फोन ने आवाज़ शुरू नहीं की। Android Settings → Text-to-speech output में Google Speech Services/Hindi voice चालू करें, फिर दोबारा दबाएँ।');}},3500);}
-   catch(e){pending=false;status('आवाज़ की त्रुटि: '+(e.message||e));}
- }
- try{synth.cancel();}catch(e){}
- // Android/Chrome may publish installed voices asynchronously and may not fire voiceschanged reliably.
- function pollVoices(){
-   if(box.dataset.playing!=='yes')return;
-   pollCount++;speak();
-   if(!pending&&pollCount<40)loopTimer=setTimeout(pollVoices,250);
-   else if(!pending&&pollCount>=40)status('हिंदी आवाज़ उपलब्ध नहीं हुई। Android Settings → General management → Text-to-speech output में Google Speech Services चुनकर Hindi voice डाउनलोड करें; फिर ऐप दोबारा खोलें।');
- }
- synth.onvoiceschanged=()=>{if(box.dataset.playing==='yes'&&!pending)speak();};
- // A short delayed retry handles mobile browsers that suppress the first speech request.
- pollVoices();
-}function openCloudSync(){try{const overlay=document.getElementById("appLockOverlay");if(overlay&&getComputedStyle(overlay).display!=="none"){alert("पहले App PIN से Unlock करें, फिर Cloud Sync दबाएँ।");return;}document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const target=document.getElementById("cloudSync");if(!target){alert("Cloud Sync page नहीं मिला। App को reload करें।");return;}target.classList.add("active");const code=document.getElementById("cloudCode");if(code&&!code.value&&typeof cloudCode==="function")code.value=cloudCode();if(typeof updateCloudAuthStatus==="function"&&typeof cloudAuth!=="undefined")updateCloudAuthStatus(cloudAuth&&cloudAuth.currentUser);window.scrollTo(0,0);}catch(e){console.error("Open Cloud Sync failed",e);alert("Cloud Sync खोलने में समस्या हुई। App को बंद करके दोबारा खोलें।");}}
+ box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ आरती बंद करें';
+ box.innerHTML='<div style="padding:12px;border:1px solid #e7b7ca;border-radius:12px;background:#fff"><b>🪔 लक्ष्मी माता की मधुर आरती</b><p style="margin:8px 0;font-size:14px">संगीत और भक्ति-गायन के साथ</p><audio id="lakshmiAartiAudio" controls preload="auto" style="width:100%"><source src="./lakshmi-aarti.ogg" type="audio/ogg">आपका browser audio नहीं चला पा रहा।</audio><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">आरती तैयार हो रही है… पहली बार इंटरनेट चालू रखें ताकि ऑडियो सेव हो सके।</p></div>';
+ const audio=document.getElementById('lakshmiAartiAudio');
+ const status=document.getElementById('mantraOfflineStatus');
+ if(!audio)return;
+ audio.loop=true;
+ audio.addEventListener('playing',()=>{if(status)status.textContent='🔊 लक्ष्मी माता की आरती चल रही है';});
+ audio.addEventListener('error',()=>{if(status)status.textContent='ऑडियो अभी उपलब्ध नहीं हुआ। एक बार इंटरनेट चालू करके ऐप फिर खोलें।';});
+ audio.play().then(()=>{if(status)status.textContent='🔊 आरती चल रही है';}).catch(()=>{if(status)status.textContent='आरती सुनने के लिए Play दबाएँ। पहली बार इंटरनेट चालू रखें ताकि ऑडियो सेव हो सके।';});
+}
+function openCloudSync(){try{const overlay=document.getElementById("appLockOverlay");if(overlay&&getComputedStyle(overlay).display!=="none"){alert("पहले App PIN से Unlock करें, फिर Cloud Sync दबाएँ।");return;}document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const target=document.getElementById("cloudSync");if(!target){alert("Cloud Sync page नहीं मिला। App को reload करें।");return;}target.classList.add("active");const code=document.getElementById("cloudCode");if(code&&!code.value&&typeof cloudCode==="function")code.value=cloudCode();if(typeof updateCloudAuthStatus==="function"&&typeof cloudAuth!=="undefined")updateCloudAuthStatus(cloudAuth&&cloudAuth.currentUser);window.scrollTo(0,0);}catch(e){console.error("Open Cloud Sync failed",e);alert("Cloud Sync खोलने में समस्या हुई। App को बंद करके दोबारा खोलें।");}}
 function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock"||id==="products")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
 function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
 function choosePurchaseCategory(button){
