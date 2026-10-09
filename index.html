@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=100',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=101',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -82,8 +82,8 @@ function code128Svg(value,opts={}){
 </nav>
 <nav>
 <main>
-<section id="dashboard" class="page">
-<div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div><h3>🔐 App Lock Controls</h3><div class="grid"><button type="button" onclick="lockNow()">🔒 LOCK APP</button><button type="button" onclick="appLockSettings()">🔐 LOCK / UNLOCK / PIN SETTINGS</button></div><div class="card" style="margin-top:14px"><h3>🙏 श्री गणेश मंत्र • Soft Music</h3><p style="margin:6px 0 10px">“Ekadantaya Vakratundaya” — धीमी आवाज़ में</p><div class="grid"><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()">▶️ मंत्र चालू करें</button></div><div id="ganeshMusicPlayer" style="display:none;margin-top:10px"></div><small style="display:block;margin-top:8px;color:#777">चलाने के लिए इंटरनेट चाहिए। संगीत की आवाज़ धीमी रखी जाएगी।</small></div></div>
+<section id="dashboard" class="page"><div class="card" style="border:2px solid #b66b91;background:#fff7fb;padding:18px"><h2 style="margin-top:0">🙏 श्री गणेश मंत्र • Soft Music</h2><p style="margin:6px 0 12px">“Ekadantaya Vakratundaya” — धीमी आवाज़ में</p><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="width:100%;min-height:54px;font-size:18px;background:#b72d70;color:#fff;border:0;border-radius:12px">▶️ मंत्र चालू करें</button><div id="ganeshMusicPlayer" style="display:none;margin-top:10px"></div><small style="display:block;margin-top:8px;color:#777">मंत्र चलाने के लिए इंटरनेट चाहिए।</small></div>
+<div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div><h3>🔐 App Lock Controls</h3><div class="grid"><button type="button" onclick="lockNow()">🔒 LOCK APP</button><button type="button" onclick="appLockSettings()">🔐 LOCK / UNLOCK / PIN SETTINGS</button></div></div>
 <div class="card"><h3>⚡ Quick Actions</h3><div class="grid"><button onclick="page('billing')">🧾 New Bill</button><button onclick="page('purchase')">📥 Purchase / Stock Add</button><button onclick="page('salesReturn')">🔄 Sales Return</button><button onclick="page('stockReturn')">↩️ Stock Return</button><button onclick="page('labels')">🏷️ Barcode Labels</button><button onclick="page('reports')">📊 Reports</button></div></div>
 <div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
 
