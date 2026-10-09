@@ -42,23 +42,25 @@ function ean13ForCode(code){
 function code128Svg(value,opts={}){
  value=String(value||'').trim(); if(!value)return "";
  const original=value;
- const encoded=(value.indexOf('DC|')===0)?ean13ForCode(value):value;
- let vals=[104];
- for(let i=0;i<encoded.length;i++){let n=encoded.charCodeAt(i);if(n<32||n>126)n=32;vals.push(n-32);}
- let sum=104;for(let i=1;i<vals.length;i++)sum+=vals[i]*i;vals.push(sum%103);vals.push(106);
- let x=28,barW=3.6,h=90,rects=[];
- for(const v of vals){
-   const p=CODE128_PATTERNS[v];
-   for(let k=0;k<p.length;k++){
-     const n=Number(p[k]),w=n*barW;
-     if(k%2===0)rects.push('<rect x="'+x.toFixed(2)+'" y="0" width="'+w.toFixed(2)+'" height="'+h+'" fill="#000000"/>');
-     x+=w;
-   }
+ const digits=ean13ForCode(value);
+ const parity=EAN_PARITY[Number(digits[0])];
+ let bits='101';
+ for(let i=1;i<=6;i++)bits+=(parity[i-1]==='L'?EAN_L[Number(digits[i])]:EAN_G[Number(digits[i])]);
+ bits+='01010';
+ for(let i=7;i<=12;i++)bits+=EAN_R[Number(digits[i])];
+ bits+='101';
+ const module=2.2, quiet=9, totalModules=quiet*2+bits.length, total=totalModules*module;
+ let rects='';
+ for(let i=0;i<bits.length;){
+   if(bits[i]!=='1'){i++;continue}
+   let j=i+1;while(j<bits.length&&bits[j]==='1')j++;
+   const guard=(i<3)||(i>=45&&i<50)||(i>=92);
+   rects+='<rect x="'+((quiet+i)*module).toFixed(2)+'" y="2" width="'+((j-i)*module).toFixed(2)+'" height="'+(guard?76:68)+'" fill="#000"/>';
+   i=j;
  }
- const total=x+28;
- const label=opts.label!==undefined?String(opts.label):original;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 116" width="100%" height="1.25in" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="Barcode '+esc(original)+'"><rect x="0" y="0" width="'+total.toFixed(2)+'" height="82" fill="#ffffff"/>'+rects.join('')+'<text x="'+(total/2).toFixed(2)+'" y="104" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#000000">'+esc(label)+'</text></svg>';
- return '<div class="barcode-real" style="width:100%;height:1.35in;margin:0.04in 0;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
+ const label=opts.label!==undefined?String(opts.label):digits;
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total.toFixed(2)+' 96" width="100%" height="1.15in" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="EAN-13 barcode '+digits+'"><rect width="100%" height="100%" fill="#fff"/>'+rects+'<text x="'+(total/2).toFixed(2)+'" y="91" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#000">'+digits+'</text></svg>';
+ return '<div class="barcode-real" style="width:100%;height:1.15in;margin:0.02in 0;display:block;background:#fff;overflow:hidden">'+svg+'</div>';
 }
 </script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
