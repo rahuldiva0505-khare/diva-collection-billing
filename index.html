@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=79',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=80',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -76,13 +76,13 @@ function code128Svg(value,opts={}){
 <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script></head><body>
 <header style="position:relative"><img class="brandLogo" src="./diva-logo-v2.svg" alt="Diva Collection logo"> <span>Diva Collection Billing Software</span> <span style="font-size:12px;background:#fff;color:#006b3c;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2 • BARCODE V2</span><button onclick="openLaptopHelp()" style="position:absolute;right:12px;top:10px;padding:7px 10px">💻 Laptop Help</button><span id="lockBtnsStatic" style="position:absolute;right:12px;bottom:8px;display:flex;gap:5px"><button type="button" onclick="lockNow()" style="padding:6px 9px">🔒 Lock</button><button type="button" onclick="appLockSettings()" style="padding:6px 9px">⚙️ Lock PIN</button></span></header>
 <nav>
-<button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button>
+<button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button><button onclick="page('products')">🗂️ PRODUCTS</button>
 <button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button onclick="page('cloudSync')">☁️ CLOUD SYNC</button>
 </nav>
 <main>
 <section id="dashboard" class="page">
 <div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div></div>
-<div class="card"><h3>🗂️ Products — Main Screen</h3><p class="small">नंबर और photo पर tap करके product खोलें; अंदर colour और size-wise quantity दिखेगी.</p><div id="dashboardProductFolders"></div></div><div class="card"><h3>⚡ Quick Actions</h3><div class="grid"><button onclick="page('billing')">🧾 New Bill</button><button onclick="page('purchase')">📥 Purchase / Stock Add</button><button onclick="page('salesReturn')">🔄 Sales Return</button><button onclick="page('stockReturn')">↩️ Stock Return</button><button onclick="page('labels')">🏷️ Barcode Labels</button><button onclick="page('reports')">📊 Reports</button></div></div>
+<div class="card"><h3>⚡ Quick Actions</h3><div class="grid"><button onclick="page('billing')">🧾 New Bill</button><button onclick="page('purchase')">📥 Purchase / Stock Add</button><button onclick="page('salesReturn')">🔄 Sales Return</button><button onclick="page('stockReturn')">↩️ Stock Return</button><button onclick="page('labels')">🏷️ Barcode Labels</button><button onclick="page('reports')">📊 Reports</button></div></div>
 <div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
 
 <section id="billing" class="page active">
@@ -335,12 +335,12 @@ function toggleProductFolder(head){
  const arrow=head.querySelector('.folder-arrow');if(arrow)arrow.textContent=open?'⌃':'⌄';
 }
 function renderStock(){
- const el=document.getElementById('productFolders'),homeEl=document.getElementById('dashboardProductFolders');if(!el&&!homeEl)return;
+ const el=document.getElementById('productFolders'),mainEl=document.getElementById('productMainFolders');if(!el&&!mainEl)return;
  const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
  const cats=[...new Set((db.categories||[]).concat((db.stock||[]).map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
  if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');if(cats.includes(old))cf.value=old;}
  const matches=(db.stock||[]).filter(x=>Number(x.qty)>0&&(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
- if(!matches.length){const empty='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';if(el)el.innerHTML=empty;if(homeEl)homeEl.innerHTML=empty;return}
+ if(!matches.length){const empty='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';if(el)el.innerHTML=empty;if(mainEl)mainEl.innerHTML=empty;return}
  const map=new Map();
  matches.forEach(x=>{const k=productFolderKey(x);if(!map.has(k))map.set(k,{key:k,category:x.category||'Other',sku:x.sku||'',name:x.name||x.sku||'Product',rows:[]});map.get(k).rows.push(x)});
  const groups=[...map.values()].sort((a,b)=>{
@@ -359,7 +359,7 @@ function renderStock(){
    detail+='</table></div></div>';
   });
   return '<div class="product-folder"><div class="folder-head" data-group-key="'+esc(g.key)+'" onclick="toggleProductFolder(this)">'+pic+'<div class="folder-title"><div class="folder-number">PRODUCT '+num+'</div><b>'+esc(g.name)+'</b><div class="small">'+esc(g.sku)+' · '+esc(g.category)+'</div><div class="folder-stats">'+colors.length+' colours · '+total+' pcs</div></div><span class="folder-arrow">⌄</span></div><div class="folder-tools"><label class="photo-pick">📷 '+(photo?'Change Photo':'Add Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(g.key)+'" onchange="saveProductPhoto(this)"></label><button type="button" class="gray folder-print-btn" onclick="event.stopPropagation();printProductFolderLabels(this.dataset.folderKey)" data-folder-key="'+esc(g.key)+'">🏷️ Print this design labels</button></div><div class="folder-details" style="display:none">'+detail+'<button type="button" class="design-print-button" onclick="event.stopPropagation();printDesignLabels(this)">🏷️ Print Selected Labels — This Design</button><p class="small">जिस colour/size के labels चाहिए, उसकी Print Qty भरें. केवल इसी design के चुने हुए labels print होंगे.</p></div></div>';
- }).join('');if(el)el.innerHTML=markup;if(homeEl)homeEl.innerHTML=markup;
+ }).join('');if(el)el.innerHTML=markup;if(mainEl)mainEl.innerHTML=markup;
 }
 function printDesignLabels(button){
  const folder=button&&button.closest?button.closest('.product-folder'):null;
