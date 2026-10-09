@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=114',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=115',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -238,7 +238,7 @@ function code128Svg(value,opts={}){
 <p class="small" style="margin-top:10px">नोट: यह browser से <b>BLE</b> printers के लिए है. पुराने Classic Bluetooth / SPP printers को Chrome web app सीधे control नहीं कर सकता; ऐसे printer में Android system print या manufacturer app की जरूरत पड़ सकती है.</p>
 </div></section>
 
-<section id="cloudSync" class="page"><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Is purane billing version ka data Firebase Cloud me sync hoga. Isi Sync Code ko doosre phone/laptop par connect karke data la sakte hain.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" onclick="createCloudCode()">➕ New Sync Code</button><button onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" onclick="syncCloudNow()">🔄 Sync Now</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Offline-ready. Pehle Sync Code banayein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #9f174d;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
+<section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Laptop aur mobile par apne Firebase Email/Password account se login karein. App ka 4–6 digit PIN lock pehle ki tarah rahega.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" onclick="syncCloudNow()">🔄 Sync Now</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #9f174d;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
 <div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
 <div id="report" style="margin-top:12px"></div></div></section>
 </main>
@@ -1143,13 +1143,36 @@ async function syncPullLegacySnapshot(code){
 }
 function saveLocalOnly(){localStorage.setItem(KEY,JSON.stringify(db));syncBaselineNow();}
 async function initCloud(){
- if(!cloudApp)cloudApp=firebase.initializeApp(FIREBASE_CONFIG);
+ if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);
  if(!cloudAuth)cloudAuth=firebase.auth();
  if(!cloudDb)cloudDb=firebase.firestore();
  try{if(cloudDb.enablePersistence)await cloudDb.enablePersistence({synchronizeTabs:true}).catch(()=>{});}catch(e){}
- if(!cloudAuth.currentUser)await cloudAuth.signInAnonymously();
  cloudUser=cloudAuth.currentUser;
+ return cloudUser;
 }
+async function cloudAccountLogin(){
+ const email=String(document.getElementById('cloudEmail')?.value||'').trim();
+ const password=String(document.getElementById('cloudPassword')?.value||'');
+ const status=document.getElementById('cloudAuthStatus');
+ if(!email||!password){if(status)status.textContent='Email aur password dono bharein.';return;}
+ try{
+  if(status)status.textContent='Firebase login ho raha hai...';
+  await initCloud();
+  if(cloudAuth.currentUser&&cloudAuth.currentUser.isAnonymous)await cloudAuth.signOut();
+  const cred=await cloudAuth.signInWithEmailAndPassword(email,password);
+  cloudUser=cred.user;
+  if(status)status.textContent='✅ Login ho gaya: '+(cloudUser.email||email);
+  document.getElementById('cloudPassword').value='';
+  if(cloudCode())await syncCloudNow();
+ }catch(e){console.error('DIVA ACCOUNT LOGIN',e);if(status)status.textContent='❌ Login nahi hua: '+(e.code==='auth/invalid-credential'?'Email ya password galat hai.':(e.message||e.code||'Firebase error'));}
+}
+async function cloudAccountLogout(){
+ try{await initCloud();if(cloudAuth.currentUser)await cloudAuth.signOut();cloudUser=null;const status=document.getElementById('cloudAuthStatus');if(status)status.textContent='Logout ho gaya. Local billing aur PIN lock chalte rahenge; cloud sync ke liye login karein.';cloudUI('Cloud sync ke liye Firebase account login karein.');}
+ catch(e){const status=document.getElementById('cloudAuthStatus');if(status)status.textContent='Logout error: '+(e.message||e);}
+}
+function updateCloudAuthStatus(user){cloudUser=user||null;const status=document.getElementById('cloudAuthStatus');if(status)status.textContent=(user&&!user.isAnonymous)?'✅ Logged in: '+(user.email||'Firebase account'):'Cloud account login required for syncing. Local billing remains available.';}
+(function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);});}catch(e){console.warn('Diva Firebase auth status',e);}})();
+
 async function syncCloudNow(){
  if(cloudBusy)return;
  const code=cloudCode();
@@ -1158,6 +1181,8 @@ async function syncCloudNow(){
  cloudBusy=true;cloudUI('☁️ Cloud se data check ho raha hai...');
  try{
   await initCloud();
+  if(!cloudAuth.currentUser||cloudAuth.currentUser.isAnonymous){cloudUI('🔐 Pehle Cloud Sync wale Firebase account se Login karein. Local billing safe hai.');return;}
+  cloudUser=cloudAuth.currentUser;
   if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
 
   /* FIRST CONNECTION: an empty/new device must pull laptop data before uploading anything. */
