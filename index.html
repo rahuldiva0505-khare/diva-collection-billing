@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=86',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=88',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -484,14 +484,16 @@ function previewNewProductPhoto(input){
   const img=new Image();
   img.onload=function(){
    pendingPhotoColorSuggestion=suggestColorFromImage(img);
-   const max=360,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
+   const previewSrc=String(reader.result||'');
+   const max=240,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
    canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
-   let data=canvas.toDataURL('image/jpeg',0.68);
-   if(data.length>180000){const smaller=document.createElement('canvas');const sc=Math.min(1,240/Math.max(img.width,img.height));smaller.width=Math.max(1,Math.round(img.width*sc));smaller.height=Math.max(1,Math.round(img.height*sc));const cx=smaller.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,smaller.width,smaller.height);cx.drawImage(img,0,0,smaller.width,smaller.height);data=smaller.toDataURL('image/jpeg',0.52);}
+   let data=canvas.toDataURL('image/jpeg',0.48);
+   if(data.length>45000)data=canvas.toDataURL('image/jpeg',0.30);
+   if(data.length>45000){const small=document.createElement('canvas');const sc=Math.min(1,160/Math.max(img.width,img.height));small.width=Math.max(1,Math.round(img.width*sc));small.height=Math.max(1,Math.round(img.height*sc));const sx=small.getContext('2d');sx.fillStyle='#fff';sx.fillRect(0,0,small.width,small.height);sx.drawImage(img,0,0,small.width,small.height);data=small.toDataURL('image/jpeg',0.30);}
    pendingNewProductPhoto=data;
    const el=document.getElementById('pnewProductPhotoPreview');
-   if(el)el.innerHTML='<img src="'+data+'" alt="Product photo preview" style="width:100%;height:100%;max-height:180px;object-fit:contain;background:#fff" onerror="this.style.display=\'none\';this.parentElement.insertAdjacentHTML(\'beforeend\',\'<small>Photo preview नहीं खुली</small>\')">';
+   if(el)el.innerHTML='<img src="'+previewSrc+'" alt="Product photo preview" style="width:100%;height:100%;max-height:180px;object-fit:contain;background:#fff">';
    const note=document.getElementById('photoColorSuggestion');
    if(note)note.textContent='🎨 फोटो से अनुमानित रंग: '+(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'। रंग सही न लगे तो Colour field में खुद सुधारें।';
    if(pendingPhotoColorSuggestion){const f=document.getElementById('pcolor1');if(f&&!f.value.trim())f.value=pendingPhotoColorSuggestion;}
