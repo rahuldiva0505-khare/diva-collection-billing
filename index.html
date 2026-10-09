@@ -15,7 +15,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f1faf5;color:#222}
 .folder-title{flex:1;min-width:0}.folder-title>b{display:block;font-size:16px;margin:4px 0;overflow-wrap:anywhere}.folder-number{font-size:11px;font-weight:800;color:#006b3c;letter-spacing:.7px}.folder-stats{font-size:12px;color:#444;margin-top:6px}.folder-arrow{font-size:24px;color:#006b3c}
 .folder-tools{padding:0 12px 12px}.photo-pick{display:inline-flex;align-items:center;gap:6px;background:#e8f5ef;color:#123;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}.photo-pick input{display:none}
 .folder-details{border-top:1px solid #e3e8e4;padding:8px 12px 12px}.folder-color{background:#f8fbf8;border:1px solid #e4ece5;border-radius:10px;padding:8px;margin:8px 0}.folder-color h4{margin:4px 0 10px}.folder-size-table{min-width:570px!important}.folder-size-table th,.folder-size-table td{padding:7px 6px;font-size:12px}
-@media(min-width:700px){#productFolders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.product-folder{margin:0}.folder-head{align-items:flex-start}.folder-photo{width:95px;height:110px}}
+@media(min-width:700px){#productFolders,#dashboardProductFolders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.product-folder{margin:0}.folder-head{align-items:flex-start}.folder-photo{width:95px;height:110px}}
 header{background:#000;color:#d8dadd;padding:12px 16px;font-size:21px;font-weight:bold;display:flex;align-items:center;gap:12px}header .brandLogo{width:58px;height:58px;object-fit:contain;flex-shrink:0}
 nav{display:flex;gap:6px;overflow:auto;background:#fff;padding:10px;position:sticky;top:0;z-index:5}nav button{white-space:nowrap}
 button{border:0;border-radius:8px;padding:11px 14px;background:#006b3c;color:#fff;font-size:15px}.gray{background:#e8f5ef;color:#222}.red{background:#d93025}.green{background:#188038}
@@ -81,7 +81,7 @@ function code128Svg(value,opts={}){
 <main>
 <section id="dashboard" class="page">
 <div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div></div>
-<div class="card"><h3>⚡ Quick Actions</h3><div class="grid"><button onclick="page('billing')">🧾 New Bill</button><button onclick="page('purchase')">📥 Purchase / Stock Add</button><button onclick="page('salesReturn')">🔄 Sales Return</button><button onclick="page('stockReturn')">↩️ Stock Return</button><button onclick="page('labels')">🏷️ Barcode Labels</button><button onclick="page('reports')">📊 Reports</button></div></div>
+<div class="card"><h3>🗂️ Products — Main Screen</h3><p class="small">नंबर और photo पर tap करके product खोलें; अंदर colour और size-wise quantity दिखेगी.</p><div id="dashboardProductFolders"></div></div><div class="card"><h3>⚡ Quick Actions</h3><div class="grid"><button onclick="page('billing')">🧾 New Bill</button><button onclick="page('purchase')">📥 Purchase / Stock Add</button><button onclick="page('salesReturn')">🔄 Sales Return</button><button onclick="page('stockReturn')">↩️ Stock Return</button><button onclick="page('labels')">🏷️ Barcode Labels</button><button onclick="page('reports')">📊 Reports</button></div></div>
 <div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
 
 <section id="billing" class="page active">
@@ -318,19 +318,19 @@ function toggleProductFolder(head){
  const arrow=head.querySelector('.folder-arrow');if(arrow)arrow.textContent=open?'⌃':'⌄';
 }
 function renderStock(){
- const el=document.getElementById('productFolders');if(!el)return;
+ const el=document.getElementById('productFolders'),homeEl=document.getElementById('dashboardProductFolders');if(!el&&!homeEl)return;
  const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
  const cats=[...new Set((db.categories||[]).concat((db.stock||[]).map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
  if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');if(cats.includes(old))cf.value=old;}
  const matches=(db.stock||[]).filter(x=>Number(x.qty)>0&&(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
- if(!matches.length){el.innerHTML='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';return}
+ if(!matches.length){const empty='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';if(el)el.innerHTML=empty;if(homeEl)homeEl.innerHTML=empty;return}
  const map=new Map();
  matches.forEach(x=>{const k=productFolderKey(x);if(!map.has(k))map.set(k,{key:k,category:x.category||'Other',sku:x.sku||'',name:x.name||x.sku||'Product',rows:[]});map.get(k).rows.push(x)});
  const groups=[...map.values()].sort((a,b)=>{
   const an=Number((a.sku.match(/^DIVA-(\d+)$/i)||[])[1]),bn=Number((b.sku.match(/^DIVA-(\d+)$/i)||[])[1]);
   if(an&&bn)return an-bn;if(an)return -1;if(bn)return 1;return String(a.name).localeCompare(String(b.name));
  });
- el.innerHTML=groups.map((g,index)=>{
+ const markup=groups.map((g,index)=>{
   const id='pf'+index,photo=productPhotoFor(g.key),m=(g.sku.match(/^DIVA-(\d+)$/i)||[])[1],num=m?Number(m):index+1;
   const total=g.rows.reduce((n,x)=>n+Number(x.qty||0),0),colors=[...new Set(g.rows.map(x=>x.color||'No Colour'))];
   const pic=photo?'<img class="folder-photo" src="'+photo+'" alt="Product photo">':'<div class="folder-photo folder-placeholder"><span>👗</span><small>Photo नहीं है</small></div>';
@@ -342,7 +342,7 @@ function renderStock(){
    detail+='</table></div></div>';
   });
   return '<div class="product-folder"><div class="folder-head" data-group-key="'+esc(g.key)+'" onclick="toggleProductFolder(this)">'+pic+'<div class="folder-title"><div class="folder-number">PRODUCT '+num+'</div><b>'+esc(g.name)+'</b><div class="small">'+esc(g.sku)+' · '+esc(g.category)+'</div><div class="folder-stats">'+colors.length+' colours · '+total+' pcs</div></div><span class="folder-arrow">⌄</span></div><div class="folder-tools"><label class="photo-pick">📷 '+(photo?'Change Photo':'Add Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(g.key)+'" onchange="saveProductPhoto(this)"></label></div><div class="folder-details" style="display:none">'+detail+'</div></div>';
- }).join('');
+ }).join('');if(el)el.innerHTML=markup;if(homeEl)homeEl.innerHTML=markup;
 }
 function deleteStockRow(k){
  const x=db.stock.find(a=>String(a.key)===String(k));
