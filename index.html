@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=82',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=83',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1227,7 +1227,7 @@ setTimeout(function(){
     o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔒 Diva Billing Locked</h2><p class="small">App खोलने के लिए PIN डालें.</p><input id="unlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digit PIN" style="text-align:center;font-size:22px;letter-spacing:6px"><button id="unlockBtn" style="margin-top:12px;width:100%">🔓 Unlock</button><div id="unlockMsg" class="small danger" style="margin-top:8px"></div></div>';
     document.body.appendChild(o);
     document.getElementById('unlockBtn').onclick=unlockApp;
-    const unlockInput=document.getElementById('unlockPin'); unlockInput.addEventListener('input',function(){const pin=this.value.trim();if(pin.length===4||pin.length===5||pin.length===6){if(/^\d{4,6}$/.test(pin))unlockApp();}}); unlockInput.onkeydown=e=>{if(e.key==='Enter')unlockApp()};
+    const unlockInput=document.getElementById('unlockPin'); let autoUnlockLast=''; function tryAutoUnlock(){const pin=unlockInput.value.trim();if(/^\d{4,6}$/.test(pin)&&pin!==autoUnlockLast){autoUnlockLast=pin;unlockApp();}else if(!pin||pin.length<4)autoUnlockLast='';} ['input','change','keyup','paste'].forEach(function(ev){unlockInput.addEventListener(ev,function(){setTimeout(tryAutoUnlock,ev==='paste'?80:0)});}); unlockInput.addEventListener('input',function(){if(this.value.length<4)autoUnlockLast=''}); unlockInput.onkeydown=e=>{if(e.key==='Enter')unlockApp()};
   }
   function getPin(){return String(localStorage.getItem(LOCK_KEY)||'')}
   function setupPinOnFirstLaunch(){
