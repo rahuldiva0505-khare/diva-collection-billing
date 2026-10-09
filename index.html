@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=71',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=72',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -13,7 +13,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f1faf5;color:#222}
 .folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5}
 .folder-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#777}.folder-placeholder span{font-size:30px}.folder-placeholder small{font-size:10px}
 .folder-title{flex:1;min-width:0}.folder-title>b{display:block;font-size:16px;margin:4px 0;overflow-wrap:anywhere}.folder-number{font-size:11px;font-weight:800;color:#006b3c;letter-spacing:.7px}.folder-stats{font-size:12px;color:#444;margin-top:6px}.folder-arrow{font-size:24px;color:#006b3c}
-.folder-tools{padding:0 12px 12px}.photo-pick{display:inline-flex;align-items:center;gap:6px;background:#e8f5ef;color:#123;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}.photo-pick input{display:none}
+.folder-tools{padding:0 12px 12px;display:flex;gap:8px;flex-wrap:wrap}.folder-print-btn{font-size:13px;padding:8px 12px}.photo-pick{display:inline-flex;align-items:center;gap:6px;background:#e8f5ef;color:#123;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}.photo-pick input{display:none}
 .folder-details{border-top:1px solid #e3e8e4;padding:8px 12px 12px}.folder-color{background:#f8fbf8;border:1px solid #e4ece5;border-radius:10px;padding:8px;margin:8px 0}.folder-color h4{margin:4px 0 10px}.folder-size-table{min-width:760px!important}.folder-size-table th,.folder-size-table td{padding:7px 6px;font-size:12px}.folder-size-table .design-print-qty{width:74px;min-width:74px;padding:7px;font-size:14px}.design-print-button{margin-top:12px;width:100%;background:#006b3c;font-weight:bold}
 @media(min-width:700px){#productFolders,#dashboardProductFolders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.product-folder{margin:0}.folder-head{align-items:flex-start}.folder-photo{width:95px;height:110px}}
 header{background:#000;color:#d8dadd;padding:12px 16px;font-size:21px;font-weight:bold;display:flex;align-items:center;gap:12px}header .brandLogo{width:58px;height:58px;object-fit:contain;flex-shrink:0}
@@ -341,7 +341,7 @@ function renderStock(){
    detail+=rows.map(x=>'<tr><td><b>'+esc(x.size||'-')+'</b></td><td><b>'+Number(x.qty||0)+'</b></td><td>₹'+Number(x.mrp||0).toFixed(2)+'</td><td>₹'+Number(x.selling||0).toFixed(2)+'</td><td><input class="design-print-qty" data-stock-key="'+esc(x.key)+'" type="number" min="0" max="'+Math.max(0,Number(x.qty)||0)+'" value="0" aria-label="Print quantity for '+esc(x.size||'size')+'" onclick="event.stopPropagation()"></td><td><button type="button" class="gray" onclick="event.stopPropagation();printLabelByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🏷️ 1 Label</button> <button type="button" class="red" onclick="event.stopPropagation();deleteStockRow(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>').join('');
    detail+='</table></div></div>';
   });
-  return '<div class="product-folder"><div class="folder-head" data-group-key="'+esc(g.key)+'" onclick="toggleProductFolder(this)">'+pic+'<div class="folder-title"><div class="folder-number">PRODUCT '+num+'</div><b>'+esc(g.name)+'</b><div class="small">'+esc(g.sku)+' · '+esc(g.category)+'</div><div class="folder-stats">'+colors.length+' colours · '+total+' pcs</div></div><span class="folder-arrow">⌄</span></div><div class="folder-tools"><label class="photo-pick">📷 '+(photo?'Change Photo':'Add Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(g.key)+'" onchange="saveProductPhoto(this)"></label></div><div class="folder-details" style="display:none">'+detail+'<button type="button" class="design-print-button" onclick="event.stopPropagation();printDesignLabels(this)">🏷️ Print Selected Labels — This Design</button><p class="small">जिस colour/size के labels चाहिए, उसकी Print Qty भरें. केवल इसी design के चुने हुए labels print होंगे.</p></div></div>';
+  return '<div class="product-folder"><div class="folder-head" data-group-key="'+esc(g.key)+'" onclick="toggleProductFolder(this)">'+pic+'<div class="folder-title"><div class="folder-number">PRODUCT '+num+'</div><b>'+esc(g.name)+'</b><div class="small">'+esc(g.sku)+' · '+esc(g.category)+'</div><div class="folder-stats">'+colors.length+' colours · '+total+' pcs</div></div><span class="folder-arrow">⌄</span></div><div class="folder-tools"><label class="photo-pick">📷 '+(photo?'Change Photo':'Add Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(g.key)+'" onchange="saveProductPhoto(this)"></label><button type="button" class="gray folder-print-btn" onclick="event.stopPropagation();printProductFolderLabels(this.dataset.folderKey)" data-folder-key="'+esc(g.key)+'">🏷️ Print this design labels</button></div><div class="folder-details" style="display:none">'+detail+'<button type="button" class="design-print-button" onclick="event.stopPropagation();printDesignLabels(this)">🏷️ Print Selected Labels — This Design</button><p class="small">जिस colour/size के labels चाहिए, उसकी Print Qty भरें. केवल इसी design के चुने हुए labels print होंगे.</p></div></div>';
  }).join('');if(el)el.innerHTML=markup;if(homeEl)homeEl.innerHTML=markup;
 }
 function printDesignLabels(button){
@@ -357,6 +357,18 @@ function printDesignLabels(button){
   for(let i=0;i<n;i++)flat.push(x);
  }
  if(!flat.length){alert('पहले इस design के जिन size/colour के labels चाहिए, उनकी Print Qty भरें.');return}
+ printAllSpecificLabels(flat);
+}
+function printProductFolderLabels(folderKey){
+ const rows=(db.stock||[]).filter(x=>Number(x.qty)>0&&productFolderKey(x)===String(folderKey));
+ if(!rows.length){alert('इस design में print करने के लिए stock नहीं है.');return}
+ const choices=rows.map(x=>String(x.color||'No Colour')+' / '+String(x.size||'-')+' — Stock '+Number(x.qty||0)).join('\n');
+ const mode=prompt('इस design के कौन से labels print करने हैं?\n1 = इस design के सभी colours/sizes (हर piece का label)\n2 = हर colour/size का सिर्फ 1 label\n\n'+choices+'\n\n1 या 2 लिखें:','2');
+ if(mode===null)return;
+ if(mode.trim()!=='1'&&mode.trim()!=='2'){alert('कृपया 1 या 2 चुनें.');return}
+ const flat=[];
+ rows.forEach(x=>{const n=mode.trim()==='1'?Math.max(0,Math.floor(Number(x.qty)||0)):1;for(let i=0;i<n;i++)flat.push(x)});
+ if(!flat.length){alert('इस design में stock quantity उपलब्ध नहीं है.');return}
  printAllSpecificLabels(flat);
 }
 function deleteStockRow(k){
