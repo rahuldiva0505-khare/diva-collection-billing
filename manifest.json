@@ -2,7 +2,7 @@
   "name": "Diva Collection Billing",
   "short_name": "Diva Billing",
   "description": "Diva Collection offline billing, stock and customer management",
-  "start_url": "./?app_version=68",
+  "start_url": "./?app_version=70",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -16,7 +16,7 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "./diva-logo.svg",
+      "src": "./diva-logo-v2.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
