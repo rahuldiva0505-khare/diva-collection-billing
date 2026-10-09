@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=88',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=89',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -123,7 +123,6 @@ function code128Svg(value,opts={}){
 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative"><input id="pcatSearch" type="text" inputmode="text" autocapitalize="words" placeholder="Category चुनें / टाइप करें" autocomplete="off" onfocus="syncPurchaseCategory()" oninput="syncPurchaseCategory()" style="flex:1;min-width:160px"><div id="pcatSuggestions" class="category-suggestions" style="display:none"></div><select id="pcat" style="display:none"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)" style="display:none">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
 <div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div>
-<div id="photoColorSuggestion" class="card" style="grid-column:1/-1;margin:8px 0;padding:12px;background:#eef8f0;font-size:16px;font-weight:bold">🎨 फोटो चुनने पर कपड़े का रंग यहाँ सुझाया जाएगा।</div>
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
 <input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No."><input id="pgst" type="number" min="0" max="100" step="0.01" placeholder="GST % (जैसे 5, 12, 18)">
@@ -433,73 +432,34 @@ function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let
 function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
 
 let pendingNewProductPhoto='';
-let pendingPhotoColorSuggestion='';
-function suggestColorFromImage(img){
- try{
-  const c=document.createElement('canvas'),w=120,h=160;c.width=w;c.height=h;
-  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);
-  const d=x.getImageData(0,0,w,h).data;let bins={},neutral={black:0,white:0,gray:0,cream:0,brown:0};
-  // कपड़े के बीच वाले हिस्से को ज्यादा महत्व दें; किनारों/बैकग्राउंड से रंग कम लें।
-  for(let y=12;y<h-10;y+=2)for(let xx=12;xx<w-12;xx+=2){
-   const i=(y*w+xx)*4,r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),delta=mx-mn,lum=(r+g+b)/3,sat=mx?delta/mx:0;
-   if(lum<55)neutral.black++;else if(sat<.16){if(lum>218)neutral.white++;else if(lum>170&&r>g*.94&&g>b*.82)neutral.cream++;else neutral.gray++;}
-   if(lum<125&&r>g*1.12&&g>b*1.08)neutral.brown++;
-   if(sat<.20||lum<28)continue;
-   let hue=0;if(delta){if(mx===r)hue=60*(((g-b)/delta)%6);else if(mx===g)hue=60*((b-r)/delta+2);else hue=60*((r-g)/delta+4)}if(hue<0)hue+=360;
-   // skin-like orange pixels are downweighted, not allowed to dominate as much
-   let weight=(sat*sat)*(lum>245?.35:1);if(hue>12&&hue<42&&r>g*1.08&&g>b*1.15)weight*=.45;
-   const bin=Math.round(hue/10)*10%360;bins[bin]=(bins[bin]||0)+weight;
-  }
-  const ranked=Object.entries(bins).sort((p,q)=>q[1]-p[1]),total=Object.values(neutral).reduce((a,v)=>a+v,0),best=ranked[0];
-  if(!best||best[1]<2){if(neutral.black>total*.35)return 'Black';if(neutral.cream>total*.25)return 'Cream / Beige';if(neutral.white>total*.4)return 'White';if(neutral.gray>total*.45)return 'Grey';if(neutral.brown>total*.2)return 'Brown';return 'White / Cream';}
-  const hue=Number(best[0]),strength=best[1],runner=ranked[1]?.[1]||0;
-  if(neutral.black>total*.48&&strength<runner*1.7)return 'Black';
-  if(hue<10||hue>=350)return 'Red / Maroon';
-  if(hue<20)return 'Red / Orange';
-  if(hue<38)return 'Orange / Rust';
-  if(hue<52)return 'Mustard / Yellow';
-  if(hue<75)return 'Lime Green';
-  if(hue<155)return 'Green';
-  if(hue<175)return 'Bottle Green / Teal';
-  if(hue<195)return 'Teal Blue';
-  if(hue<225)return 'Blue';
-  if(hue<250)return 'Navy / Blue';
-  if(hue<275)return 'Violet';
-  if(hue<300)return 'Purple';
-  if(hue<330)return 'Pink';
-  return 'Magenta';
- }catch(e){return ''}
-}
-function applyPhotoColorSuggestion(){
- const color=pendingPhotoColorSuggestion;if(!color)return;
- const fields=[1,2,3,4].map(n=>document.getElementById('pcolor'+n));
- const target=fields.find(e=>e&&!e.value.trim())||fields[0];if(target)target.value=color;
- const note=document.getElementById('photoColorSuggestion');if(note)note.textContent='🎨 फोटो से अनुमानित रंग: '+color+' — कृपया कपड़े से मिलाकर पुष्टि करें।';
-}
 function previewNewProductPhoto(input){
  const file=input&&input.files&&input.files[0];if(!file)return;
  if(!file.type||!file.type.startsWith('image/')){alert('कृपया image photo चुनें.');input.value='';return}
  const reader=new FileReader();
  reader.onload=function(){
+  const original=String(reader.result||'');
+  const el=document.getElementById('pnewProductPhotoPreview');
+  if(el)el.innerHTML='<img src="'+original+'" alt="Product photo preview" style="display:block;width:100%;height:100%;max-height:180px;object-fit:contain;background:#fff">';
   const img=new Image();
   img.onload=function(){
-   pendingPhotoColorSuggestion=suggestColorFromImage(img);
-   const previewSrc=String(reader.result||'');
-   const max=240,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
-   canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
-   const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
-   let data=canvas.toDataURL('image/jpeg',0.48);
-   if(data.length>45000)data=canvas.toDataURL('image/jpeg',0.30);
-   if(data.length>45000){const small=document.createElement('canvas');const sc=Math.min(1,160/Math.max(img.width,img.height));small.width=Math.max(1,Math.round(img.width*sc));small.height=Math.max(1,Math.round(img.height*sc));const sx=small.getContext('2d');sx.fillStyle='#fff';sx.fillRect(0,0,small.width,small.height);sx.drawImage(img,0,0,small.width,small.height);data=small.toDataURL('image/jpeg',0.30);}
-   pendingNewProductPhoto=data;
-   const el=document.getElementById('pnewProductPhotoPreview');
-   if(el)el.innerHTML='<img src="'+previewSrc+'" alt="Product photo preview" style="width:100%;height:100%;max-height:180px;object-fit:contain;background:#fff">';
-   const note=document.getElementById('photoColorSuggestion');
-   if(note)note.textContent='🎨 फोटो से अनुमानित रंग: '+(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'। रंग सही न लगे तो Colour field में खुद सुधारें।';
-   if(pendingPhotoColorSuggestion){const f=document.getElementById('pcolor1');if(f&&!f.value.trim())f.value=pendingPhotoColorSuggestion;}
+   try{
+    const max=240,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    let data=canvas.toDataURL('image/jpeg',0.42);
+    if(data.length>42000)data=canvas.toDataURL('image/jpeg',0.28);
+    if(data.length>42000){
+     const small=document.createElement('canvas'),sc=Math.min(1,140/Math.max(img.width,img.height));
+     small.width=Math.max(1,Math.round(img.width*sc));small.height=Math.max(1,Math.round(img.height*sc));
+     const sx=small.getContext('2d');sx.fillStyle='#fff';sx.fillRect(0,0,small.width,small.height);sx.drawImage(img,0,0,small.width,small.height);
+     data=small.toDataURL('image/jpeg',0.25);
+    }
+    if(data.length>45000){alert('Photo बहुत बड़ी है। कृपया छोटी photo चुनें।');pendingNewProductPhoto='';return}
+    pendingNewProductPhoto=data;
+   }catch(e){pendingNewProductPhoto='';alert('Photo save के लिए तैयार नहीं हो सकी। दूसरी photo चुनें।')}
   };
-  img.onerror=function(){alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};
-  img.src=String(reader.result||'');
+  img.onerror=function(){pendingNewProductPhoto='';if(el)el.innerHTML='<span>👗</span><small>Photo नहीं खुली — दूसरी photo चुनें</small>';alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};
+  img.src=original;
  };
  reader.onerror=function(){alert('Photo read नहीं हो सकी.')};
  reader.readAsDataURL(file);
