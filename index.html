@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=113',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=114',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -744,11 +744,9 @@ function fillFromCode(code){
  let x=db.stock.find(a=>variants.has(norm(a.code))||variants.has(norm(a.barcode))||variants.has(clean(a.code))||variants.has(clean(a.barcode)));
  if(!x){
    x=db.stock.find(a=>{
-     const base=a.code||makeCode(a.category,a.sku,a.color,a.size);
-     const generated=ean13ForCode(base);
+     const bases=[a.code,makeCode(a.category,a.sku,a.color,a.size)].filter(Boolean);
      const stored=String(a.barcode||'').replace(/\\D/g,'');
-     const key=barcodeKey(base);
-     const nums=[generated,stored,key];
+     const nums=[...bases.flatMap(base=>[ean13ForCode(base),barcodeKey(base)]),stored].filter(Boolean);
      return nums.some(n=>{const d=String(n||'');return variants.has(d)||variants.has(d.slice(1))||variants.has(d.padStart(13,'0'))||digits===d||digits===d.slice(1)||digits.endsWith(d)||d.endsWith(digits)});
    });
  }
@@ -1519,7 +1517,7 @@ setTimeout(function(){
    if(window.AndroidPrinter){arr.forEach((x,i)=>setTimeout(()=>window.AndroidPrinter.printLabel(JSON.stringify(x)),i*250));alert('✅ '+arr.length+' labels direct printer को भेजे गए।');return}
    const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
    const lp=window.labelPrintStyle(),s=lp.s;let cards='';
-   arr.forEach((x,i)=>{if(i%lp.perPage===0)cards+='<div class="sheet">';const code=window.makeCode(x.category,x.sku,x.color,x.size);cards+='<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+window.esc(x.name)+'</div><div class="meta">'+window.esc(x.sku)+' | '+window.esc(x.color)+' | Size '+window.esc(x.size)+'</div>'+window.code128Svg(code)+'</div>';if(i%lp.perPage===lp.perPage-1||i===arr.length-1)cards+='</div>'});
+   arr.forEach((x,i)=>{if(i%lp.perPage===0)cards+='<div class="sheet">';const code=x.code||window.makeCode(x.category,x.sku,x.color,x.size);cards+='<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+window.esc(x.name)+'</div><div class="meta">'+window.esc(x.sku)+' | '+window.esc(x.color)+' | Size '+window.esc(x.size)+'</div>'+window.code128Svg(code)+'</div>';if(i%lp.perPage===lp.perPage-1||i===arr.length-1)cards+='</div>'});
    w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+' .printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}@page{size:4in 6in portrait;margin:0}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button onclick="window.close()">Close</button><span>4×6 page • 2×1.5 inch labels • up to 8 per page</span></div>'+cards+'</body></html>');w.document.close();
  };
  window.printAllLabels = function(){
