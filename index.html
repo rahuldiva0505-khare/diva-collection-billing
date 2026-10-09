@@ -2,13 +2,14 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=74',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=75',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f1faf5;color:#222}
 .product-folder{border:1px solid #dce5df;border-radius:14px;margin:12px 0;overflow:hidden;background:#fff}
+.category-suggestions{position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:220px;overflow-y:auto;background:#fff;border:1px solid #b7c8bc;border-radius:8px;box-shadow:0 5px 15px #0002}.category-suggestion{display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-bottom:1px solid #eee;background:#fff;color:#222;font-size:16px}.category-suggestion:active{background:#e8f5ec}.category-no-match{padding:10px;color:#777;font-size:13px}
 .new-product-photo-box{grid-column:1/-1;border:1px dashed #b7c8bc;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fbfdfb}.new-photo-preview{width:86px;height:100px;border:1px solid #ddd;border-radius:9px;background:#f4f7f4;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;overflow:hidden;color:#777}.new-photo-preview img{width:100%;height:78px;object-fit:cover}.new-photo-preview span{font-size:27px}.new-photo-preview small{font-size:10px;text-align:center}.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fbfdfb}
 .folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5}
 .folder-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#777}.folder-placeholder span{font-size:30px}.folder-placeholder small{font-size:10px}
@@ -117,7 +118,7 @@ function code128Svg(value,opts={}){
 <p class="small">यहीं से <b>नया Product add</b> करें या existing product में purchase quantity जोड़ें। Product add होते ही barcode बन जाएगा और यहीं से label print कर सकते हैं.</p>
 <div class="card" style="background:#fafafa"><h3>➕ Add New Product / Purchase Entry</h3>
 <div class="grid">
-<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="pcatSearch" list="pcatSuggestions" placeholder="Category टाइप करें (जैसे S)" autocomplete="off" oninput="syncPurchaseCategory()" style="flex:1;min-width:160px"><datalist id="pcatSuggestions"></datalist><select id="pcat" style="display:none"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)" style="display:none">
+<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative"><input id="pcatSearch" type="text" inputmode="text" autocapitalize="words" placeholder="Category चुनें / टाइप करें" autocomplete="off" onfocus="syncPurchaseCategory()" oninput="syncPurchaseCategory()" style="flex:1;min-width:160px"><div id="pcatSuggestions" class="category-suggestions" style="display:none"></div><select id="pcat" style="display:none"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)" style="display:none">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
 <div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div>
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
@@ -251,16 +252,24 @@ function parseCode(code){let parts=String(code||'').split('|');return {category:
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
 function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
 function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
+function choosePurchaseCategory(button){
+ const value=button&&button.dataset?button.dataset.category:'',input=document.getElementById('pcatSearch'),pc=document.getElementById('pcat');
+ if(input)input.value=value;if(pc)pc.value=value;
+ const box=document.getElementById('pcatSuggestions');if(box)box.style.display='none';
+}
 function syncPurchaseCategory(){
- const input=document.getElementById('pcatSearch'),pc=document.getElementById('pcat');if(!input||!pc)return;
- const value=input.value.trim(),match=(db.categories||[]).find(c=>String(c).toLowerCase()===value.toLowerCase());
- pc.value=match||'';
+ const input=document.getElementById('pcatSearch'),pc=document.getElementById('pcat'),box=document.getElementById('pcatSuggestions');if(!input||!pc||!box)return;
+ const value=input.value.trim(),lower=value.toLowerCase();
+ const match=(db.categories||[]).find(c=>String(c).toLowerCase()===lower);pc.value=match||'';
+ const matches=(db.categories||[]).filter(c=>!lower||String(c).toLowerCase().includes(lower)).slice(0,30);
+ box.innerHTML=matches.length?matches.map(c=>'<button type="button" class="category-suggestion" data-category="'+esc(c)+'" onclick="choosePurchaseCategory(this)">'+esc(c)+'</button>').join(''):'<div class="category-no-match">कोई Category नहीं मिली</div>';
+ box.style.display=matches.length?'block':'none';
 }
 function renderCategories(){
  const cats=[...new Set((db.categories||[]).concat((db.stock||[]).map(x=>x.category).filter(Boolean)))];
  db.categories=cats;
  const pc=document.getElementById('pcat');if(pc){const old=pc.value;pc.innerHTML='<option value="">Select Category</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(cats.includes(old))pc.value=old;}
- const dl=document.getElementById('pcatSuggestions');if(dl)dl.innerHTML=cats.map(c=>`<option value="${esc(c)}"></option>`).join('');
+ const dl=document.getElementById('pcatSuggestions');if(dl&&dl.style.display!=='none')syncPurchaseCategory();
  const search=document.getElementById('pcatSearch');if(search&&pc&&pc.value&&!search.value)search.value=pc.value;
  let b=document.getElementById("bcat");
  if(b){const bv=b.value;b.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");if(cats.includes(bv))b.value=bv;}
