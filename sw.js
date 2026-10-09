@@ -1,5 +1,5 @@
-const CACHE = 'diva-billing-v67';
-const CORE = ['./','./index.html','./manifest.json','./sw.js','./icon-192.png','./icon-512.png'];
+const CACHE = 'diva-billing-v69';
+const CORE = ['./','./index.html','./manifest.json','./sw.js','./icon-192.png','./icon-512.png','./diva-logo.svg'];
 self.addEventListener('message', event => { if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting(); });
 
 self.addEventListener('install', event => {
