@@ -171,7 +171,7 @@ function code128Svg(value,opts={}){
 
 <section id="salesReturn" class="page"><div class="card"><h2>🔄 Sales Return / Stock में वापस जोड़ें</h2>
 <p class="small">Customer से वापस आया माल barcode scan करके उसी Colour + Size में stock में वापस जोड़ें.</p>
-<div class="scanbox"><b>📷 Barcode Scan</b><div class="grid" style="margin-top:8px"><input id="srScanCode" placeholder="Barcode scan करें" onkeydown="handleSalesReturnScan(event)"><button type="button" onclick="startSalesReturnCameraScan()">📷 Camera Scan</button></div><div id="srScanStatus" class="small"></div></div>
+<div class="scanbox"><b>📷 Barcode Scan</b><div class="grid" style="margin-top:8px"><input id="srScanCode" placeholder="Barcode scan करें" onkeydown="handleSalesReturnScan(event)"><button type="button" onclick="startSalesReturnCameraScan()">📷 Camera Scan</button></div><div id="srScanStatus" class="small"></div><hr><b>Barcode के बिना SKU से खोजें</b><div class="grid" style="margin-top:8px"><input id="srSkuSearch" placeholder="SKU ID जैसे DIVA-13"><input id="srSizeSearch" placeholder="Size जैसे XXL"><button type="button" onclick="selectSalesReturnBySkuSize()">🔎 SKU + Size चुनें</button></div></div>
 <div class="grid" style="margin-top:12px"><select id="srStockKey" onchange="loadSalesReturnStock()"><option value="">Select Product / Colour / Size</option></select><input id="srQty" type="number" min="1" placeholder="Return Quantity"><input id="srReason" placeholder="Return Reason"><input id="srCustomer" placeholder="Customer Name / Mobile"></div>
 <div id="srStockInfo" class="small" style="margin-top:8px"></div>
 <button class="green" onclick="addSalesReturnToStock()">➕ ADD BACK TO STOCK</button></div>
@@ -872,6 +872,22 @@ function findStockForSalesReturnCode(code){
   if(candidates.length===1)x=candidates[0];
  }
  return x||null;
+}
+function selectSalesReturnBySkuSize(){
+ const sku=String(document.getElementById('srSkuSearch')?.value||'').trim().toUpperCase();
+ const size=String(document.getElementById('srSizeSearch')?.value||'').trim().toUpperCase();
+ const status=document.getElementById('srScanStatus');
+ if(!sku||!size){if(status)status.textContent='SKU ID और Size दोनों भरें.';return false}
+ const norm=v=>String(v??'').trim().toUpperCase();
+ const matches=(db.stock||[]).filter(a=>norm(a.sku)===sku && norm(a.size)===size);
+ if(matches.length===0){if(status)status.textContent='❌ '+sku+' / '+size+' stock में नहीं मिला. पहले Stock में product/size की entry जाँचें.';return false}
+ if(matches.length>1){if(status)status.textContent='⚠️ '+sku+' / '+size+' के कई colours हैं. नीचे सही Colour वाला item चुनें.';}
+ const sel=document.getElementById('srStockKey');
+ sel.value=matches[0].key;
+ loadSalesReturnStock();
+ document.getElementById('srQty').value='1';
+ if(status)status.textContent='✅ चुना गया: '+matches[0].sku+' | '+matches[0].color+' | Size '+matches[0].size+' — 1 piece वापस जोड़ने के लिए ADD BACK TO STOCK दबाएँ.';
+ return true;
 }
 function fillSalesReturnFromCode(code){
  const status=document.getElementById('srScanStatus');
