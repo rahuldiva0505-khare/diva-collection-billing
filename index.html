@@ -436,33 +436,71 @@ let pendingNewProductPhoto='';
 let pendingPhotoColorSuggestion='';
 function suggestColorFromImage(img){
  try{
-  const c=document.createElement('canvas');c.width=100;c.height=Math.min(140,Math.max(1,Math.round(img.height*100/img.width)));
-  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,c.width,c.height);
-  const d=x.getImageData(0,0,c.width,c.height).data;let bins={};
-  for(let i=0;i<d.length;i+=16){const r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),delta=mx-mn, sat=mx?delta/mx:0, lum=(r+g+b)/3;if(lum>248||lum<24||sat<.17)continue;let h=0;if(delta){if(mx===r)h=60*(((g-b)/delta)%6);else if(mx===g)h=60*((b-r)/delta+2);else h=60*((r-g)/delta+4)}if(h<0)h+=360;const bin=Math.round(h/15)*15%360;bins[bin]=(bins[bin]||0)+sat*(.5+Math.min(1,lum/180))}
-  const a=Object.entries(bins).sort((p,q)=>q[1]-p[1]);if(!a.length)return 'White / Cream';const h=Number(a[0][0]);
-  if(h<12||h>=348)return 'Red';if(h<25)return 'Reddish Orange';if(h<42)return 'Orange';if(h<65)return 'Yellow';if(h<85)return 'Lime Green';if(h<155)return 'Green';if(h<180)return 'Teal Green';if(h<200)return 'Teal Blue';if(h<245)return 'Blue';if(h<265)return 'Violet';if(h<290)return 'Purple';if(h<325)return 'Pink';return 'Magenta';
+  const c=document.createElement('canvas'),w=120,h=160;c.width=w;c.height=h;
+  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data;let bins={},neutral={black:0,white:0,gray:0,cream:0,brown:0};
+  // कपड़े के बीच वाले हिस्से को ज्यादा महत्व दें; किनारों/बैकग्राउंड से रंग कम लें।
+  for(let y=12;y<h-10;y+=2)for(let xx=12;xx<w-12;xx+=2){
+   const i=(y*w+xx)*4,r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),delta=mx-mn,lum=(r+g+b)/3,sat=mx?delta/mx:0;
+   if(lum<55)neutral.black++;else if(sat<.16){if(lum>218)neutral.white++;else if(lum>170&&r>g*.94&&g>b*.82)neutral.cream++;else neutral.gray++;}
+   if(lum<125&&r>g*1.12&&g>b*1.08)neutral.brown++;
+   if(sat<.20||lum<28)continue;
+   let hue=0;if(delta){if(mx===r)hue=60*(((g-b)/delta)%6);else if(mx===g)hue=60*((b-r)/delta+2);else hue=60*((r-g)/delta+4)}if(hue<0)hue+=360;
+   // skin-like orange pixels are downweighted, not allowed to dominate as much
+   let weight=(sat*sat)*(lum>245?.35:1);if(hue>12&&hue<42&&r>g*1.08&&g>b*1.15)weight*=.45;
+   const bin=Math.round(hue/10)*10%360;bins[bin]=(bins[bin]||0)+weight;
+  }
+  const ranked=Object.entries(bins).sort((p,q)=>q[1]-p[1]),total=Object.values(neutral).reduce((a,v)=>a+v,0),best=ranked[0];
+  if(!best||best[1]<2){if(neutral.black>total*.35)return 'Black';if(neutral.cream>total*.25)return 'Cream / Beige';if(neutral.white>total*.4)return 'White';if(neutral.gray>total*.45)return 'Grey';if(neutral.brown>total*.2)return 'Brown';return 'White / Cream';}
+  const hue=Number(best[0]),strength=best[1],runner=ranked[1]?.[1]||0;
+  if(neutral.black>total*.48&&strength<runner*1.7)return 'Black';
+  if(hue<10||hue>=350)return 'Red / Maroon';
+  if(hue<20)return 'Red / Orange';
+  if(hue<38)return 'Orange / Rust';
+  if(hue<52)return 'Mustard / Yellow';
+  if(hue<75)return 'Lime Green';
+  if(hue<155)return 'Green';
+  if(hue<175)return 'Bottle Green / Teal';
+  if(hue<195)return 'Teal Blue';
+  if(hue<225)return 'Blue';
+  if(hue<250)return 'Navy / Blue';
+  if(hue<275)return 'Violet';
+  if(hue<300)return 'Purple';
+  if(hue<330)return 'Pink';
+  return 'Magenta';
  }catch(e){return ''}
 }
-function applyPhotoColorSuggestion(){const color=pendingPhotoColorSuggestion;if(!color)return;const fields=[1,2,3,4].map(n=>document.getElementById('pcolor'+n));const target=fields.find(e=>e&&!e.value.trim())||fields[0];if(target)target.value=color;const note=document.getElementById('photoColorSuggestion');if(note)note.textContent='✅ फोटो के अनुसार सुझाया रंग: '+color+' — Colour field में भर दिया';}
+function applyPhotoColorSuggestion(){
+ const color=pendingPhotoColorSuggestion;if(!color)return;
+ const fields=[1,2,3,4].map(n=>document.getElementById('pcolor'+n));
+ const target=fields.find(e=>e&&!e.value.trim())||fields[0];if(target)target.value=color;
+ const note=document.getElementById('photoColorSuggestion');if(note)note.textContent='🎨 फोटो से अनुमानित रंग: '+color+' — कृपया कपड़े से मिलाकर पुष्टि करें।';
+}
 function previewNewProductPhoto(input){
  const file=input&&input.files&&input.files[0];if(!file)return;
  if(!file.type||!file.type.startsWith('image/')){alert('कृपया image photo चुनें.');input.value='';return}
  const reader=new FileReader();
- reader.onload=function(){const img=new Image();img.onload=function(){
-  pendingPhotoColorSuggestion=suggestColorFromImage(img);
-  const max=180,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
-  canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
-  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
-  const data=canvas.toDataURL('image/jpeg',0.48);
-  if(data.length>45000){alert('Photo बहुत बड़ी है. छोटी photo चुनें.');input.value='';return}
-  pendingNewProductPhoto=data;
-  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<img src="'+data+'" alt="Product preview"><small>Photo ready</small><div id="photoColorSuggestion" style="font-size:12px;font-weight:bold;color:#006b3c;margin-top:6px">फोटो का रंग पहचाना जा रहा है…</div><button type="button" class="green" style="margin-top:8px;padding:7px;font-size:12px" onclick="applyPhotoColorSuggestion()">🎨 सुझाया रंग भरें</button>';
-  const note=document.getElementById('photoColorSuggestion');
-  if(note)note.textContent='🎨 फोटो के अनुसार सुझाया रंग: '+(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'.';
-  if(pendingPhotoColorSuggestion){const f=document.getElementById('pcolor1');if(f){if(!f.value.trim())f.value=pendingPhotoColorSuggestion;if(note)note.textContent='🎨 फोटो का सुझाया रंग: '+pendingPhotoColorSuggestion+(f.value===pendingPhotoColorSuggestion?' — Colour 1 में भर दिया':' — रंग भरने के लिए बटन दबाएँ');}}
- };img.onerror=function(){alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};img.src=String(reader.result||'')};
- reader.onerror=function(){alert('Photo read नहीं हो सकी.')};reader.readAsDataURL(file);
+ reader.onload=function(){
+  const img=new Image();
+  img.onload=function(){
+   pendingPhotoColorSuggestion=suggestColorFromImage(img);
+   const max=360,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+   const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   let data=canvas.toDataURL('image/jpeg',0.68);
+   if(data.length>180000){const smaller=document.createElement('canvas');const sc=Math.min(1,240/Math.max(img.width,img.height));smaller.width=Math.max(1,Math.round(img.width*sc));smaller.height=Math.max(1,Math.round(img.height*sc));const cx=smaller.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,smaller.width,smaller.height);cx.drawImage(img,0,0,smaller.width,smaller.height);data=smaller.toDataURL('image/jpeg',0.52);}
+   pendingNewProductPhoto=data;
+   const el=document.getElementById('pnewProductPhotoPreview');
+   if(el)el.innerHTML='<img src="'+data+'" alt="Product photo preview" style="width:100%;height:100%;max-height:180px;object-fit:contain;background:#fff" onerror="this.style.display=\'none\';this.parentElement.insertAdjacentHTML(\'beforeend\',\'<small>Photo preview नहीं खुली</small>\')">';
+   const note=document.getElementById('photoColorSuggestion');
+   if(note)note.textContent='🎨 फोटो से अनुमानित रंग: '+(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'। रंग सही न लगे तो Colour field में खुद सुधारें।';
+   if(pendingPhotoColorSuggestion){const f=document.getElementById('pcolor1');if(f&&!f.value.trim())f.value=pendingPhotoColorSuggestion;}
+  };
+  img.onerror=function(){alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};
+  img.src=String(reader.result||'');
+ };
+ reader.onerror=function(){alert('Photo read नहीं हो सकी.')};
+ reader.readAsDataURL(file);
 }
 function clearNewProductPhoto(){
  pendingNewProductPhoto='';
