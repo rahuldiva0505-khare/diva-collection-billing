@@ -82,7 +82,7 @@ function code128Svg(value,opts={}){
 <header style="position:relative"><img class="brandLogo" src="./diva-logo-v2.svg" alt="Diva Collection logo"> <span>Diva Collection Billing Software</span> <span style="font-size:12px;background:#fff;color:#9f174d;padding:4px 8px;border-radius:12px;margin-left:8px">CLOUD SYNC V2 • BARCODE V2</span><button onclick="openLaptopHelp()" style="padding:7px 10px">💻 Laptop Help</button></header>
 <nav>
 <button onclick="page('dashboard')">🏠 DASHBOARD</button><button onclick="page('billing')">🧾 BILLING</button><button onclick="page('billHistory')">📚 BILL HISTORY</button><button onclick="page('customers')">👤 CUSTOMERS</button><button onclick="page('stock')">📦 STOCK</button><button onclick="page('products')">🗂️ PRODUCTS</button>
-<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button id="cloudSyncNavBtn" type="button" style="position:relative;z-index:20;pointer-events:auto;touch-action:manipulation" onclick="event.stopPropagation();openCloudSync()">☁️ CLOUD SYNC</button><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="background:#b72d70;white-space:nowrap">🪔 लक्ष्मी माता की मधुर आरती</button>
+<button onclick="page('purchase')">📥 PURCHASE / STOCK ADD</button><button onclick="page('stockReturn')">↩️ STOCK RETURN</button><button onclick="page('salesReturn')">🔄 SALES RETURN / ADD BACK</button><button onclick="page('reports')">📊 REPORTS</button><button onclick="page('labels')">🏷️ LABELS</button><button onclick="page('printer')">🖨️ PRINTER</button><button id="cloudSyncNavBtn" type="button" style="position:relative;z-index:20;pointer-events:auto;touch-action:manipulation" onclick="event.stopPropagation();openCloudSync()">☁️ CLOUD SYNC</button><button id="ganeshMusicToggle" type="button" onclick="toggleGaneshMantra()" style="background:#b72d70;white-space:nowrap">🪔 लक्ष्मी माता की मधुर आरती</button><button id="lakshmiMantraToggle" type="button" onclick="toggleLakshmiMantra()" style="background:#6d3b83;white-space:nowrap">🪷 ह्रीं श्रीं लक्ष्मी मंत्र</button>
 </nav>
 <div id="ganeshMusicPlayer" style="display:none;max-width:700px;margin:8px auto;padding:0 10px"></div>
 <main>
@@ -260,6 +260,50 @@ let cart=[];
 function makeCode(cat,sku,color,size){return ['DC',cat,sku,color,size].map(v=>String(v||'').trim().replace(/\s+/g,'-')).filter(Boolean).join('|').toUpperCase()}
 function parseCode(code){let parts=String(code||'').split('|');return {category:parts[1]||'',sku:parts[2]||'',color:parts[3]||'',size:parts[4]||''}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+let lakshmiMantraActive=false, lakshmiMantraTimer=null, lakshmiAudioCtx=null, lakshmiOscillators=[];
+function stopLakshmiMantra(){
+ lakshmiMantraActive=false;
+ if(lakshmiMantraTimer){clearTimeout(lakshmiMantraTimer);lakshmiMantraTimer=null;}
+ try{if('speechSynthesis' in window)window.speechSynthesis.cancel();}catch(e){}
+ try{lakshmiOscillators.forEach(o=>{try{o.stop()}catch(e){}});lakshmiOscillators=[];if(lakshmiAudioCtx){lakshmiAudioCtx.close().catch(()=>{});lakshmiAudioCtx=null;}}catch(e){}
+ const btn=document.getElementById('lakshmiMantraToggle'),box=document.getElementById('lakshmiMantraPlayer');
+ if(btn)btn.textContent='🪷 ह्रीं श्रीं लक्ष्मी मंत्र';
+ if(box){box.style.display='none';box.innerHTML='';}
+}
+function toggleLakshmiMantra(){
+ const btn=document.getElementById('lakshmiMantraToggle');
+ let box=document.getElementById('lakshmiMantraPlayer');
+ if(lakshmiMantraActive){stopLakshmiMantra();return;}
+ if(!('speechSynthesis' in window)){alert('इस डिवाइस में offline voice उपलब्ध नहीं है।');return;}
+ if(!box){box=document.createElement('div');box.id='lakshmiMantraPlayer';box.style.cssText='display:none;max-width:700px;margin:8px auto;padding:0 10px';const nav=document.querySelector('nav');nav.insertAdjacentElement('afterend',box);}
+ box.style.display='block';
+ box.innerHTML='<div style="padding:14px;border:1px solid #d7b8e5;border-radius:12px;background:#fff;text-align:center"><b>🪷 महालक्ष्मी मंत्र — Offline</b><p style="font-size:20px;line-height:1.8;margin:8px 0">ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः।</p><p id="lakshmiMantraStatus" style="font-size:12px;color:#666;margin:6px 0">मंत्र शुरू हो रहा है…</p><button type="button" onclick="stopLakshmiMantra()" style="background:#555">⏹️ मंत्र बंद करें</button><p style="font-size:11px;color:#777;margin-bottom:0">यह सुविधा फोन में उपलब्ध Hindi offline voice पर निर्भर है।</p></div>';
+ lakshmiMantraActive=true;if(btn)btn.textContent='⏹️ मंत्र बंद करें';
+ const status=document.getElementById('lakshmiMantraStatus');
+ // Create a soft, low-volume tanpura-like drone locally, without internet or audio files.
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(AC){lakshmiAudioCtx=new AC();const master=lakshmiAudioCtx.createGain();master.gain.value=0.035;master.connect(lakshmiAudioCtx.destination);
+   [130.81,196,261.63].forEach((hz,i)=>{const osc=lakshmiAudioCtx.createOscillator(),gain=lakshmiAudioCtx.createGain();osc.type=i===0?'sine':'triangle';osc.frequency.value=hz;gain.gain.value=i===0?0.55:0.18;osc.connect(gain);gain.connect(master);osc.start();lakshmiOscillators.push(osc);});
+   lakshmiAudioCtx.resume().catch(()=>{});
+  }
+ }catch(e){}
+ function chant(){
+  if(!lakshmiMantraActive)return;
+  try{
+   const u=new SpeechSynthesisUtterance('ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः।');
+   u.lang='hi-IN';u.rate=0.72;u.pitch=1.08;u.volume=1;
+   const voices=window.speechSynthesis.getVoices();const hv=voices.find(v=>/^hi(-|_)?IN$/i.test(v.lang))||voices.find(v=>/^hi/i.test(v.lang));if(hv)u.voice=hv;
+   u.onend=()=>{if(lakshmiMantraActive)lakshmiMantraTimer=setTimeout(chant,1300);};
+   u.onerror=()=>{if(status)status.textContent='इस फोन में Hindi offline voice उपलब्ध नहीं है। Android में Hindi speech voice डाउनलोड करें।';};
+   if(status)status.textContent='🔊 मंत्र चल रहा है • हल्का संगीत साथ में';
+   window.speechSynthesis.speak(u);
+  }catch(e){if(status)status.textContent='Offline voice शुरू नहीं हो सकी। फोन में Hindi voice डाउनलोड करें।';}
+ }
+ const ready=()=>{if(lakshmiMantraActive)chant();};
+ const voices=window.speechSynthesis.getVoices();
+ if(voices.length)ready();else{window.speechSynthesis.onvoiceschanged=()=>{window.speechSynthesis.onvoiceschanged=null;ready();};setTimeout(()=>{if(lakshmiMantraActive&&!window.speechSynthesis.speaking)ready();},1200);}
+}
 function toggleGaneshMantra(){
  const box=document.getElementById('ganeshMusicPlayer'),btn=document.getElementById('ganeshMusicToggle');
  if(!box||!btn)return;
