@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=121',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=122',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -277,14 +277,14 @@ function toggleGaneshMantra(){
    const localHindi=voices.filter(v=>v.localService && /^hi(-|$)/i.test(v.lang||''));
    if(!localHindi.length){
      const status=document.getElementById('mantraOfflineStatus');
-     if(status)status.textContent='इस डिवाइस में offline हिंदी आवाज़ उपलब्ध नहीं है। Android की Text-to-speech settings में Hindi voice डाउनलोड करें; यह मंत्र ऑनलाइन ऑडियो नहीं चलाता।';
+     if(status)status.textContent='Offline हिंदी आवाज़ नहीं मिली। एक बार इंटरनेट चालू करके Android Settings → Text-to-speech output → Preferred engine/Language में Hindi voice डाउनलोड करें। फिर इंटरनेट बंद करके मंत्र चलाएँ।';
      return;
    }
    const voice=localHindi.find(v=>/female|woman|महिला/i.test(v.name||''))||localHindi.find(v=>/google hindi|hindi/i.test(v.name||''))||localHindi[0];
    const status=document.getElementById('mantraOfflineStatus');
    if(status)status.textContent='Offline आवाज़: '+voice.name+' • इंटरनेट की जरूरत नहीं';
    const utterance=new SpeechSynthesisUtterance('ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः');
-   utterance.lang=voice.lang||'hi-IN';utterance.voice=voice;utterance.rate=0.78;utterance.pitch=1.25;utterance.volume=1;
+   utterance.lang=voice.lang||'hi-IN';utterance.voice=voice;utterance.rate=0.75;utterance.pitch=1.3;utterance.volume=1;
    utterance.onend=()=>{if(box.dataset.playing==='yes')setTimeout(()=>{if(box.dataset.playing==='yes')speakMantra();},1200);};
    window.speechSynthesis.speak(utterance);
  };
