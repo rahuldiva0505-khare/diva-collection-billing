@@ -1279,11 +1279,11 @@ setTimeout(function(){
 })();
 </script>
 <script>
-/* 4x6 inch roll: print 2x1 inch labels in a 2-column x 6-row layout */
+/* 4x6 inch roll: print 2x1.5 inch labels in a 2-column x 4-row layout */
 (function(){
  const originalSettings = window.getLabelPrintSettings;
  window.getLabelPrintSettings = function(){
-   const d={paperW:4,paperH:6,labelW:2,labelH:1,gapX:0,gapY:0};
+   const d={paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0};
    try {
      const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
      const old=raw?JSON.parse(raw):{};
@@ -1301,7 +1301,7 @@ setTimeout(function(){
    const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
    const rows=Math.max(1,Math.floor((s.paperH+s.gapY)/(s.labelH+s.gapY)));
    const perPage=cols*rows;
-   const css='@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}*{box-sizing:border-box}html,body{margin:0!important;padding:0!important;width:'+s.paperW+'in;font-family:Arial,sans-serif}.sheet{width:'+s.paperW+'in;height:'+s.paperH+'in;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-template-rows:repeat('+rows+','+s.labelH+'in);column-gap:'+s.gapX+'in;row-gap:'+s.gapY+'in;align-content:start;justify-content:start;overflow:hidden;break-after:page;page-break-after:always}.sheet:last-child{break-after:auto;page-break-after:auto}.label{position:relative;width:'+s.labelW+'in;height:'+s.labelH+'in;margin:0;padding:0;overflow:hidden;text-align:center;border:0.3px solid #ddd;break-inside:avoid}.label .prices{position:absolute;top:.02in;left:.03in;right:.03in;height:.13in;font-size:8px!important;line-height:.13in!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:.16in;left:0;right:0;height:.10in;font-size:7px;line-height:.10in;font-weight:900;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:.27in;left:.04in;right:.04in;font-size:7px;line-height:.09in;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:.37in;left:.04in;right:.04in;font-size:6px;line-height:.08in;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:.47in;left:.06in;width:calc(100% - .12in)!important;height:.40in!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
+   const css='@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}*{box-sizing:border-box}html,body{margin:0!important;padding:0!important;width:'+s.paperW+'in;font-family:Arial,sans-serif}.sheet{width:'+s.paperW+'in;height:'+s.paperH+'in;display:grid;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-template-rows:repeat('+rows+','+s.labelH+'in);column-gap:'+s.gapX+'in;row-gap:'+s.gapY+'in;align-content:start;justify-content:start;overflow:hidden;break-after:page;page-break-after:always}.sheet:last-child{break-after:auto;page-break-after:auto}.label{position:relative;width:'+s.labelW+'in;height:'+s.labelH+'in;margin:0;padding:0;overflow:hidden;text-align:center;border:0.3px solid #ddd;break-inside:avoid}.label .prices{position:absolute;top:.04in;left:.04in;right:.04in;height:.16in;font-size:9px!important;line-height:.16in!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:.23in;left:0;right:0;height:.13in;font-size:8px;line-height:.13in;font-weight:900;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:.38in;left:.04in;right:.04in;font-size:8px;line-height:.11in;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:.51in;left:.04in;right:.04in;font-size:7px;line-height:.10in;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:.66in;left:.06in;width:calc(100% - .12in)!important;height:.65in!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
    return {s,cols,rows,perPage,css};
  };
  window.printAllSpecificLabels = function(arr){
