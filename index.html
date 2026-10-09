@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=76',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=77',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -168,7 +168,7 @@ function code128Svg(value,opts={}){
 <button class="green" onclick="addSalesReturnToStock()">➕ ADD BACK TO STOCK</button></div>
 <div class="card"><h3>Sales Return History</h3><div id="salesReturnTable"></div></div></section>
 
-<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div style="margin-top:12px;padding:10px;border:1px solid #006b3c;border-radius:10px;background:#f1faf5">
+<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="card" style="background:#f1faf5;margin:10px 0"><h3>🏷️ SKU चुनकर Labels Print करें</h3><label for="labelSkuSelect">Product / SKU ID चुनें</label><select id="labelSkuSelect" onchange="renderSkuLabelVariants()" style="width:100%;padding:12px;margin:6px 0 10px"><option value="">Select Product / SKU ID</option></select><div id="skuLabelVariants"><p class="small">SKU चुनते ही उसके सभी Colour और Size अपने आप यहाँ दिखेंगे.</p></div><button type="button" class="green" onclick="printSelectedSkuVariantLabels()">🖨️ चुने हुए Colour / Size के Labels Print करें</button></div><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div style="margin-top:12px;padding:10px;border:1px solid #006b3c;border-radius:10px;background:#f1faf5">
 <label><input type="checkbox" id="autoPrintLabels" checked> Product add करते ही नई quantity के barcode automatic print करें</label>
 <button onclick="printCheckedLabelRows()" style="margin-left:8px">🖨️ Selected Rows Print</button>
 </div>
@@ -590,7 +590,39 @@ function loadBillProductDetails(){
 function qrDataUrl(text,size=150){return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text)}
 function labelHtml(x){let code=x.code||makeCode(x.category,x.sku,x.color,x.size);let max=Math.max(0,Number(x.qty)||0);return `<div class="labelcard"><label style="display:block;text-align:left;margin-bottom:5px"><input type="checkbox" class="labelrowcheck" data-key="${esc(x.key)}"> Select Row</label><div style="font-weight:bold">DC</div><div>${esc(x.name)}</div><div class="small">${esc(x.sku)} | ${esc(x.color)} | Size ${esc(x.size)}</div><svg class="barcode" data-code="${esc(code)}"></svg><div><b>MRP ₹${Number(x.mrp||0).toFixed(2)}</b> &nbsp; <b>Sell ₹${Number(x.selling||0).toFixed(2)}</b></div><div class="small">${esc(code)}</div><div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-top:6px"><label><b>Qty:</b></label><input id="labelqty_${esc(x.key)}" type="number" min="1" max="${max}" value="${max>0?1:0}" style="width:70px" ${max<=0?'disabled':''}><span class="small">Stock: ${max}</span></div><button onclick="printLabelQtyByKey('${esc(x.key)}')" ${max<=0?'disabled':''}>🖨️ Print Qty</button></div>`}
 function printCheckedLabelRows(){let checks=[...document.querySelectorAll('.labelrowcheck:checked')];if(!checks.length){alert('पहले जिन rows के barcode print करने हैं उन्हें select करें.');return}let flat=[];checks.forEach(ch=>{let x=db.stock.find(a=>a.key===ch.dataset.key);if(!x)return;let qty=Math.min(Math.max(1,Math.floor(Number(document.getElementById('labelqty_'+x.key)?.value||1))),Math.max(0,Number(x.qty)||0));for(let i=0;i<qty;i++)flat.push(x)});if(flat.length)printAllSpecificLabels(flat)}
-function renderLabels(){let q=(document.getElementById('labelSearch')?.value||'').toLowerCase();let arr=db.stock.filter(x=>!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q)));let el=document.getElementById('labelsList');if(!el)return;el.innerHTML=arr.length?arr.map(labelHtml).join(''):'<div class="empty">कोई label नहीं मिला.</div>';document.querySelectorAll('#labelsList .barcode').forEach(el=>{let c=el.dataset.code;el.outerHTML=code128Svg(c)})}
+function renderSkuLabelOptions(){
+ const sel=document.getElementById('labelSkuSelect');if(!sel)return;
+ const old=sel.value,groups=new Map();
+ (db.stock||[]).filter(x=>Number(x.qty)>0).forEach(x=>{
+  const key=productFolderKey(x);
+  if(!groups.has(key))groups.set(key,{key,name:x.name||'Product',sku:x.sku||'No SKU',category:x.category||''});
+ });
+ sel.innerHTML='<option value="">Select Product / SKU ID</option>'+[...groups.values()].map(g=>'<option value="'+esc(g.key)+'">'+esc(g.sku)+' — '+esc(g.name)+(g.category?' ('+esc(g.category)+')':'')+'</option>').join('');
+ if([...sel.options].some(o=>o.value===old))sel.value=old;
+}
+function renderSkuLabelVariants(){
+ const sel=document.getElementById('labelSkuSelect'),el=document.getElementById('skuLabelVariants');if(!sel||!el)return;
+ const key=sel.value;
+ if(!key){el.innerHTML='<p class="small">SKU चुनते ही उसके सभी Colour और Size अपने आप यहाँ दिखेंगे.</p>';return}
+ const rows=(db.stock||[]).filter(x=>Number(x.qty)>0&&productFolderKey(x)===key);
+ if(!rows.length){el.innerHTML='<p class="small">इस SKU में उपलब्ध stock नहीं है.</p>';return}
+ const colors=[...new Set(rows.map(x=>String(x.color||'No Colour')))];
+ el.innerHTML='<p class="small">इस design में '+colors.length+' colour और '+rows.length+' colour/size rows हैं. जिनके labels चाहिए उन्हें select करें.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Select</th><th>Colour</th><th>Size</th><th>Stock</th><th>Print Qty</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><input type="checkbox" class="sku-label-check" data-stock-key="'+esc(x.key)+'" checked></td><td>'+esc(x.color||'No Colour')+'</td><td>'+esc(x.size||'-')+'</td><td>'+Number(x.qty||0)+'</td><td><input type="number" class="sku-label-qty" data-stock-key="'+esc(x.key)+'" min="1" max="'+Number(x.qty||0)+'" value="'+Number(x.qty||0)+'" style="width:76px"></td></tr>').join('')+'</tbody></table></div>';
+}
+function printSelectedSkuVariantLabels(){
+ const el=document.getElementById('skuLabelVariants');if(!el)return;
+ const checks=[...el.querySelectorAll('.sku-label-check:checked')],flat=[];
+ if(!checks.length){alert('पहले Colour / Size select करें.');return}
+ for(const ch of checks){
+  const key=ch.dataset.stockKey,x=(db.stock||[]).find(a=>String(a.key)===String(key));
+  const qtyInput=[...el.querySelectorAll('.sku-label-qty')].find(a=>String(a.dataset.stockKey)===String(key));
+  const qty=Math.floor(Number(qtyInput?.value||0)),max=Math.max(0,Number(x?.qty)||0);
+  if(!x||qty<1||qty>max){alert('Print Qty stock से 1 से '+max+' के बीच रखें.');return}
+  for(let i=0;i<qty;i++)flat.push(x);
+ }
+ if(flat.length)printAllSpecificLabels(flat);
+}
+function renderLabels(){renderSkuLabelOptions();renderSkuLabelVariants();let q=(document.getElementById('labelSearch')?.value||'').toLowerCase();let arr=db.stock.filter(x=>!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q)));let el=document.getElementById('labelsList');if(!el)return;el.innerHTML=arr.length?arr.map(labelHtml).join(''):'<div class="empty">कोई label नहीं मिला.</div>';document.querySelectorAll('#labelsList .barcode').forEach(el=>{let c=el.dataset.code;el.outerHTML=code128Svg(c)})}
 function getLabelPrintQty(k){let x=db.stock.find(a=>a.key===k);if(!x)return 0;let el=document.getElementById('labelqty_'+k);let q=Math.floor(Number(el?.value||1));let max=Math.max(0,Number(x.qty)||0);if(q<1)q=1;if(q>max)q=max;return q}
 function printLabel(i){printLabelObj(db.stock[i])}
 function printLabelByKey(k){let x=db.stock.find(a=>a.key===k);if(x)printLabelObj(x)}
