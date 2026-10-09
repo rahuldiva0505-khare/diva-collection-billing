@@ -261,45 +261,52 @@ function makeCode(cat,sku,color,size){return ['DC',cat,sku,color,size].map(v=>St
 function parseCode(code){let parts=String(code||'').split('|');return {category:parts[1]||'',sku:parts[2]||'',color:parts[3]||'',size:parts[4]||''}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
 function toggleGaneshMantra(){
- const box=document.getElementById('ganeshMusicPlayer');
- const btn=document.getElementById('ganeshMusicToggle');
+ const box=document.getElementById('ganeshMusicPlayer'),btn=document.getElementById('ganeshMusicToggle');
  if(!box||!btn)return;
  if(box.dataset.playing==='yes'){
-   if('speechSynthesis' in window)window.speechSynthesis.cancel();
-   box.innerHTML='';box.style.display='none';box.dataset.playing='no';btn.textContent='💰 व्यापार वृद्धि मंत्र';return;
+   box.dataset.playing='no';
+   try{window.speechSynthesis.cancel();}catch(e){}
+   box.innerHTML='';box.style.display='none';btn.textContent='💰 व्यापार वृद्धि मंत्र';return;
  }
- if(!('speechSynthesis' in window)){alert('इस ब्राउज़र में आवाज़ चलाने की सुविधा उपलब्ध नहीं है।');return;}
+ if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){
+   alert('इस ऐप के browser में Text-to-Speech उपलब्ध नहीं है। Android Settings में Text-to-speech output चालू करें।');return;
+ }
  box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ मंत्र बंद करें';
- box.innerHTML='<div style="padding:12px;border:1px solid #e7b7ca;border-radius:12px;background:#fff"><b>महालक्ष्मी व्यापार वृद्धि मंत्र</b><p style="margin:8px 0;font-size:18px">ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः</p><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">मंत्र शुरू हो रहा है…</p></div>';
- let started=false;
- const speakMantra=()=>{
-   if(box.dataset.playing!=='yes'||started)return;
-   const synth=window.speechSynthesis;
-   const voices=synth.getVoices()||[];
-   if(!voices.length){
-     const status=document.getElementById('mantraOfflineStatus');
-     if(status)status.textContent='फोन की आवाज़ तैयार हो रही है…';
-     return;
-   }
+ box.innerHTML='<div style="padding:12px;border:1px solid #e7b7ca;border-radius:12px;background:#fff"><b>महालक्ष्मी व्यापार वृद्धि मंत्र</b><p style="margin:8px 0;font-size:18px">ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः</p><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">फोन की हिंदी आवाज़ तैयार कर रहे हैं…</p></div>';
+ const synth=window.speechSynthesis;
+ let pending=false, loopTimer=null, pollCount=0;
+ function status(t){const el=document.getElementById('mantraOfflineStatus');if(el)el.textContent=t;}
+ function stopLoop(){if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}}
+ function speak(){
+   if(box.dataset.playing!=='yes'||pending)return;
+   let voices=[];try{voices=synth.getVoices()||[]}catch(e){}
+   if(!voices.length)return;
    const hindi=voices.filter(v=>/^hi(-|$)/i.test(v.lang||''));
    const voice=hindi.find(v=>v.localService&&/female|woman|महिला/i.test(v.name||''))||
      hindi.find(v=>v.localService)||hindi.find(v=>/female|woman|महिला/i.test(v.name||''))||
      hindi[0]||voices.find(v=>/^en/i.test(v.lang||''))||voices[0];
-   const status=document.getElementById('mantraOfflineStatus');
-   if(status)status.textContent=(voice.localService?'डिवाइस की आवाज़':'उपलब्ध आवाज़')+': '+voice.name+' • मंत्र चल रहा है';
-   const utterance=new SpeechSynthesisUtterance('ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः');
-   utterance.lang=voice.lang||'hi-IN';utterance.voice=voice;utterance.rate=0.75;utterance.pitch=1.3;utterance.volume=1;
-   utterance.onstart=()=>{started=true;};
-   utterance.onerror=(e)=>{started=false;const el=document.getElementById('mantraOfflineStatus');if(el)el.textContent='आवाज़ नहीं चल पाई ('+(e.error||'unknown')+')। फोन का Media volume बढ़ाएँ और फिर मंत्र बंद करके दोबारा चालू करें।';};
-   utterance.onend=()=>{started=false;if(box.dataset.playing==='yes')setTimeout(()=>{if(box.dataset.playing==='yes')speakMantra();},1500);};
-   synth.cancel();synth.speak(utterance);
- };
- window.speechSynthesis.cancel();
- speakMantra();
- window.speechSynthesis.onvoiceschanged=()=>{if(box.dataset.playing==='yes'&&!started)speakMantra();};
- setTimeout(()=>{if(box.dataset.playing==='yes'&&!started){speakMantra();const el=document.getElementById('mantraOfflineStatus');if(el&&!started)el.textContent='हिंदी आवाज़ नहीं मिली या तैयार नहीं है। Android Settings → Text-to-speech output में Hindi voice डाउनलोड करें; फिर दोबारा चालू करें।';}},1200);
-}
-function openCloudSync(){try{const overlay=document.getElementById("appLockOverlay");if(overlay&&getComputedStyle(overlay).display!=="none"){alert("पहले App PIN से Unlock करें, फिर Cloud Sync दबाएँ।");return;}document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const target=document.getElementById("cloudSync");if(!target){alert("Cloud Sync page नहीं मिला। App को reload करें।");return;}target.classList.add("active");const code=document.getElementById("cloudCode");if(code&&!code.value&&typeof cloudCode==="function")code.value=cloudCode();if(typeof updateCloudAuthStatus==="function"&&typeof cloudAuth!=="undefined")updateCloudAuthStatus(cloudAuth&&cloudAuth.currentUser);window.scrollTo(0,0);}catch(e){console.error("Open Cloud Sync failed",e);alert("Cloud Sync खोलने में समस्या हुई। App को बंद करके दोबारा खोलें।");}}
+   const u=new SpeechSynthesisUtterance('ॐ ह्रीं श्रीं क्लीं महालक्ष्म्यै नमः');
+   u.lang=voice.lang||'hi-IN';u.voice=voice;u.rate=0.72;u.pitch=1.25;u.volume=1;
+   pending=true;
+   status('आवाज़: '+voice.name+' ('+voice.lang+') — शुरू हो रहा है…');
+   u.onstart=()=>status('🔊 मंत्र चल रहा है — आवाज़: '+voice.name);
+   u.onerror=(e)=>{pending=false;status('आवाज़ शुरू नहीं हुई ('+(e.error||'TTS error')+')। Media volume बढ़ाएँ; फिर भी न चले तो Android Settings → General management → Text-to-speech में Google Speech Services और Hindi voice install करें।');};
+   u.onend=()=>{pending=false;if(box.dataset.playing==='yes')loopTimer=setTimeout(speak,1200);};
+   try{synth.cancel();synth.speak(u);setTimeout(()=>{if(pending&&box.dataset.playing==='yes'&&!synth.speaking&&!synth.pending){pending=false;status('फोन ने आवाज़ शुरू नहीं की। Android Settings → Text-to-speech output में Google Speech Services/Hindi voice चालू करें, फिर दोबारा दबाएँ।');}},3500);}
+   catch(e){pending=false;status('आवाज़ की त्रुटि: '+(e.message||e));}
+ }
+ try{synth.cancel();}catch(e){}
+ // Android/Chrome may publish installed voices asynchronously and may not fire voiceschanged reliably.
+ function pollVoices(){
+   if(box.dataset.playing!=='yes')return;
+   pollCount++;speak();
+   if(!pending&&pollCount<40)loopTimer=setTimeout(pollVoices,250);
+   else if(!pending&&pollCount>=40)status('हिंदी आवाज़ उपलब्ध नहीं हुई। Android Settings → General management → Text-to-speech output में Google Speech Services चुनकर Hindi voice डाउनलोड करें; फिर ऐप दोबारा खोलें।');
+ }
+ synth.onvoiceschanged=()=>{if(box.dataset.playing==='yes'&&!pending)speak();};
+ // A short delayed retry handles mobile browsers that suppress the first speech request.
+ pollVoices();
+}function openCloudSync(){try{const overlay=document.getElementById("appLockOverlay");if(overlay&&getComputedStyle(overlay).display!=="none"){alert("पहले App PIN से Unlock करें, फिर Cloud Sync दबाएँ।");return;}document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const target=document.getElementById("cloudSync");if(!target){alert("Cloud Sync page नहीं मिला। App को reload करें।");return;}target.classList.add("active");const code=document.getElementById("cloudCode");if(code&&!code.value&&typeof cloudCode==="function")code.value=cloudCode();if(typeof updateCloudAuthStatus==="function"&&typeof cloudAuth!=="undefined")updateCloudAuthStatus(cloudAuth&&cloudAuth.currentUser);window.scrollTo(0,0);}catch(e){console.error("Open Cloud Sync failed",e);alert("Cloud Sync खोलने में समस्या हुई। App को बंद करके दोबारा खोलें।");}}
 function page(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");renderCategories();if(id==="stock"||id==="products")renderStock();if(id==="purchase"){renderPurchase();preparePurchaseSku();}if(id==="billing"){loadBillProducts();renderCart()}if(id==="billHistory"){renderBillHistory()}if(id==="customers"){renderCustomers()}if(id==="reports")renderReport();if(id==="labels")renderLabels();if(id==="stockReturn")renderStockReturns();if(id==="salesReturn")renderSalesReturn()}
 function key(cat,sku,color,size){return [cat,sku,color,size].map(v=>String(v||"").trim().toLowerCase()).join("|")}
 function choosePurchaseCategory(button){
