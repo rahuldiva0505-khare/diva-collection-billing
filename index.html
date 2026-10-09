@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=85',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=86',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -457,9 +457,10 @@ function previewNewProductPhoto(input){
   const data=canvas.toDataURL('image/jpeg',0.48);
   if(data.length>45000){alert('Photo बहुत बड़ी है. छोटी photo चुनें.');input.value='';return}
   pendingNewProductPhoto=data;
-  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<img src="'+data+'" alt="Product preview"><small>Photo ready</small>';
-  const note=document.getElementById('photoColorSuggestion');if(note){note.textContent='🎨 फोटो के अनुसार सुझाया रंग: '+(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'. Colour field में भरने के लिए नीचे बटन दबाएँ.';note.innerHTML+=' <button type="button" class="green" style="margin-top:8px" onclick="applyPhotoColorSuggestion()">🎨 यह रंग भरें</button>';}
-  if(pendingPhotoColorSuggestion){const f=document.getElementById('pcolor1');if(f&&!f.value.trim()){f.value=pendingPhotoColorSuggestion;if(note)note.textContent='✅ फोटो के अनुसार सुझाया रंग '+pendingPhotoColorSuggestion+' Colour 1 में भर दिया गया।';}}
+  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<img src="'+data+'" alt="Product preview"><small>Photo ready</small><div id="photoColorSuggestion" style="font-size:12px;font-weight:bold;color:#006b3c;margin-top:6px">फोटो का रंग पहचाना जा रहा है…</div><button type="button" class="green" style="margin-top:8px;padding:7px;font-size:12px" onclick="applyPhotoColorSuggestion()">🎨 सुझाया रंग भरें</button>';
+  const note=document.getElementById('photoColorSuggestion');
+  if(note)note.textContent='🎨 फोटो के अनुसार सुझाया रंग: '+(pendingPhotoColorSuggestion||'पहचान नहीं पाया')+'.';
+  if(pendingPhotoColorSuggestion){const f=document.getElementById('pcolor1');if(f){if(!f.value.trim())f.value=pendingPhotoColorSuggestion;if(note)note.textContent='🎨 फोटो का सुझाया रंग: '+pendingPhotoColorSuggestion+(f.value===pendingPhotoColorSuggestion?' — Colour 1 में भर दिया':' — रंग भरने के लिए बटन दबाएँ');}}
  };img.onerror=function(){alert('Photo खुल नहीं सकी. दूसरी photo चुनें.')};img.src=String(reader.result||'')};
  reader.onerror=function(){alert('Photo read नहीं हो सकी.')};reader.readAsDataURL(file);
 }
