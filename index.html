@@ -860,6 +860,17 @@ function findStockForSalesReturnCode(code){
   const compact=clean(code);
   x=db.stock.find(a=>clean(a.code)===compact||clean(makeCode(a.category,a.sku,a.color,a.size))===compact);
  }
+ if(!x){
+  // If scanner returns the SKU printed on the label (e.g. DIVA-13), match only when unique.
+  const compact=clean(code);
+  const candidates=db.stock.filter(a=>{
+   const sku=clean(a.sku||'');
+   const name=clean(a.name||'');
+   const key=clean(a.key||'');
+   return compact && (compact===sku || compact===name || compact===key);
+  });
+  if(candidates.length===1)x=candidates[0];
+ }
  return x||null;
 }
 function fillSalesReturnFromCode(code){
