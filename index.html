@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=78',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=79',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -168,7 +168,7 @@ function code128Svg(value,opts={}){
 <button class="green" onclick="addSalesReturnToStock()">➕ ADD BACK TO STOCK</button></div>
 <div class="card"><h3>Sales Return History</h3><div id="salesReturnTable"></div></div></section>
 
-<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="card" style="background:#f1faf5;margin:10px 0"><h3>🏷️ SKU चुनकर Labels Print करें</h3><label for="labelSkuSelect">Product / SKU ID चुनें</label><select id="labelSkuSelect" onchange="renderSkuLabelVariants()" style="width:100%;padding:12px;margin:6px 0 10px"><option value="">Select Product / SKU ID</option></select><div id="skuLabelVariants"><p class="small">SKU चुनते ही उसके सभी Colour और Size अपने आप यहाँ दिखेंगे.</p></div><button type="button" class="green" onclick="printSelectedSkuVariantLabels()">🖨️ चुने हुए Colour / Size के Labels Print करें</button></div><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div style="margin-top:12px;padding:10px;border:1px solid #006b3c;border-radius:10px;background:#f1faf5">
+<section id="labels" class="page"><div class="card"><h2>🏷️ Product Barcode Labels</h2><p class="small">हर <b>Design + Colour + Size</b> के लिए अलग <b>Code 128 Barcode</b> label generate/print करें. Barcode scan करने पर billing में product, colour और size auto-fill होगा. Label पर MRP और Selling Price भी दिखेंगे.</p><div class="card" style="background:#f1faf5;margin:10px 0"><h3>🏷️ SKU चुनकर Labels Print करें</h3><label for="labelSkuSelect">Product / SKU IDs चुनें (एक से ज्यादा)</label><select id="labelSkuSelect" multiple size="5" onchange="renderSkuLabelVariants()" style="width:100%;padding:12px;margin:6px 0 10px;min-height:120px"><option value="">Select Product / SKU ID</option></select><p class="small">मोबाइल पर कई SKU चुनने के लिए हर SKU पर टैप करें; चुने हुए SKU पर दोबारा टैप करने से हट जाएगा।</p><div id="skuLabelVariants"><p class="small">SKU चुनते ही उसके सभी Colour और Size अपने आप यहाँ दिखेंगे.</p></div><button type="button" class="green" onclick="printSelectedSkuVariantLabels()">🖨️ चुने हुए Colour / Size के Labels Print करें</button></div><div class="grid"><input id="labelSearch" placeholder="Search SKU / Product / Colour / Size" oninput="renderLabels()"><button onclick="printSelectedLabelQuantities()">🖨️ Print Particular Qty</button><button onclick="printQuickLabels()">🖨️ Quick Print 4 / 6</button><button class="gray" onclick="printAllLabels()">🖨️ Print All Labels</button><button class="green" onclick="printSelectedLabelsBluetooth()">🔵 Bluetooth Barcode Print</button></div><div style="margin-top:12px;padding:10px;border:1px solid #006b3c;border-radius:10px;background:#f1faf5">
 <label><input type="checkbox" id="autoPrintLabels" checked> Product add करते ही नई quantity के barcode automatic print करें</label>
 <button onclick="printCheckedLabelRows()" style="margin-left:8px">🖨️ Selected Rows Print</button>
 </div>
@@ -529,7 +529,7 @@ function renderReturnOptions(){
  const sel=document.getElementById('returnStockKey'); if(!sel)return;
  const old=sel.value;
  sel.innerHTML='<option value="">Select Product / Colour / Size</option>'+db.stock.map(x=>'<option value="'+esc(x.key)+'">'+esc(x.name)+' — '+esc(x.sku)+' / '+esc(x.color)+' / Size '+esc(x.size)+' (Stock '+x.qty+')</option>').join('');
- if([...sel.options].some(o=>o.value===old))sel.value=old;
+ [...sel.options].forEach(o=>{o.selected=old.includes(o.value)});
  loadReturnStock();
 }
 function loadReturnStock(){
@@ -592,22 +592,30 @@ function labelHtml(x){let code=x.code||makeCode(x.category,x.sku,x.color,x.size)
 function printCheckedLabelRows(){let checks=[...document.querySelectorAll('.labelrowcheck:checked')];if(!checks.length){alert('पहले जिन rows के barcode print करने हैं उन्हें select करें.');return}let flat=[];checks.forEach(ch=>{let x=db.stock.find(a=>a.key===ch.dataset.key);if(!x)return;let qty=Math.min(Math.max(1,Math.floor(Number(document.getElementById('labelqty_'+x.key)?.value||1))),Math.max(0,Number(x.qty)||0));for(let i=0;i<qty;i++)flat.push(x)});if(flat.length)printAllSpecificLabels(flat)}
 function renderSkuLabelOptions(){
  const sel=document.getElementById('labelSkuSelect');if(!sel)return;
- const old=sel.value,groups=new Map();
+ const old=[...sel.selectedOptions].map(o=>o.value),groups=new Map();
  (db.stock||[]).filter(x=>Number(x.qty)>0).forEach(x=>{
   const key=productFolderKey(x);
   if(!groups.has(key))groups.set(key,{key,name:x.name||'Product',sku:x.sku||'No SKU',category:x.category||''});
  });
- sel.innerHTML='<option value="">Select Product / SKU ID</option>'+[...groups.values()].map(g=>'<option value="'+esc(g.key)+'">'+esc(g.sku)+' — '+esc(g.name)+(g.category?' ('+esc(g.category)+')':'')+'</option>').join('');
- if([...sel.options].some(o=>o.value===old))sel.value=old;
+ sel.innerHTML=[...groups.values()].map(g=>'<option value="'+esc(g.key)+'">'+esc(g.sku)+' — '+esc(g.name)+(g.category?' ('+esc(g.category)+')':'')+'</option>').join('');
+ [...sel.options].forEach(o=>{o.selected=old.includes(o.value)});
 }
 function renderSkuLabelVariants(){
  const sel=document.getElementById('labelSkuSelect'),el=document.getElementById('skuLabelVariants');if(!sel||!el)return;
- const key=sel.value;
- if(!key){el.innerHTML='<p class="small">SKU चुनते ही उसके सभी Colour और Size अपने आप यहाँ दिखेंगे.</p>';return}
- const rows=(db.stock||[]).filter(x=>Number(x.qty)>0&&productFolderKey(x)===key);
- if(!rows.length){el.innerHTML='<p class="small">इस SKU में उपलब्ध stock नहीं है.</p>';return}
- const colors=[...new Set(rows.map(x=>String(x.color||'No Colour')))];
- el.innerHTML='<p class="small">इस design में '+colors.length+' colour और '+rows.length+' colour/size rows हैं. जिनके labels चाहिए उन्हें select करें.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Select</th><th>Colour</th><th>Size</th><th>Stock</th><th>Print Qty</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><input type="checkbox" class="sku-label-check" data-stock-key="'+esc(x.key)+'" checked></td><td>'+esc(x.color||'No Colour')+'</td><td>'+esc(x.size||'-')+'</td><td>'+Number(x.qty||0)+'</td><td><input type="number" class="sku-label-qty" data-stock-key="'+esc(x.key)+'" min="1" max="'+Number(x.qty||0)+'" value="1" style="width:76px"></td></tr>').join('')+'</tbody></table></div>';
+ const keys=[...sel.selectedOptions].map(o=>o.value);
+ if(!keys.length){el.innerHTML='<p class="small">एक या अधिक SKU चुनें। उनके सभी Colour और Size अपने आप यहाँ दिखेंगे.</p>';return}
+ const rows=(db.stock||[]).filter(x=>Number(x.qty)>0&&keys.includes(productFolderKey(x)));
+ if(!rows.length){el.innerHTML='<p class="small">चुने हुए SKU में उपलब्ध stock नहीं है.</p>';return}
+ const bySku=new Map();
+ rows.forEach(x=>{const k=productFolderKey(x);if(!bySku.has(k))bySku.set(k,[]);bySku.get(k).push(x)});
+ let html='';
+ bySku.forEach((items,key)=>{
+  const first=items[0];
+  html+='<h4 style="margin:12px 0 5px">'+esc(first.sku||'No SKU')+' — '+esc(first.name||'Product')+'</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Select</th><th>Colour</th><th>Size</th><th>Stock</th><th>Print Qty</th></tr></thead><tbody>';
+  html+=items.map(x=>'<tr><td><input type="checkbox" class="sku-label-check" data-stock-key="'+esc(x.key)+'" checked></td><td>'+esc(x.color||'No Colour')+'</td><td>'+esc(x.size||'-')+'</td><td>'+Number(x.qty||0)+'</td><td><input type="number" class="sku-label-qty" data-stock-key="'+esc(x.key)+'" min="1" max="'+Number(x.qty||0)+'" value="1" style="width:76px"></td></tr>').join('');
+  html+='</tbody></table></div>';
+ });
+ el.innerHTML='<p class="small">'+keys.length+' SKU चुने गए. जिन Colour/Size के labels चाहिए, उन्हें select करें और Print Qty सेट करें.</p>'+html;
 }
 function printSelectedSkuVariantLabels(){
  const el=document.getElementById('skuLabelVariants');if(!el)return;
