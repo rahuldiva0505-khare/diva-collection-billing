@@ -1017,18 +1017,52 @@ function profitForSales(sales){
  let expenses=(db.expenses||[]).filter(e=>sales.some(b=>String(b.date)===String(e.date)));// legacy-safe fallback; period expenses are calculated separately in report
  return {revenue,cost,gross};
 }
+function salesReturnAdjustment(period){
+ const sales=(db.sales||[]).filter(b=>inPeriod(b.date,period));
+ const returns=(db.salesReturns||[]).filter(r=>inPeriod(r.date,period));
+ const used={}; let amount=0,cost=0,units=0;
+ const norm=v=>String(v??'').trim().toLowerCase();
+ for(const r of returns){
+  let left=Math.max(0,Number(r.qty)||0); if(!left)continue;
+  const matches=[];
+  for(const b of sales){
+   for(let idx=0;idx<(b.items||[]).length;idx++){
+    const i=b.items[idx];
+    const same=(r.key&&i.key&&String(r.key)===String(i.key)) ||
+      (norm(r.sku)&&norm(r.sku)===norm(i.sku)&&norm(r.color)===norm(i.color)&&norm(r.size)===norm(i.size)&&(!r.name||norm(r.name)===norm(i.name)));
+    if(same)matches.push({b,i,id:String(b.billNo||b.date)+'|'+idx,date:new Date(b.date||0).getTime()});
+   }
+  }
+  matches.sort((a,b)=>b.date-a.date);
+  for(const m of matches){
+   if(left<=0)break;
+   const sold=Math.max(0,Number(m.i.qty)||0),already=used[m.id]||0,available=Math.max(0,sold-already),take=Math.min(left,available);
+   if(!take)continue;
+   const unit=Math.max(0,Number(m.i.rate)||0)-Math.max(0,Number(m.i.discount)||0);
+   amount+=take*Math.max(0,unit);cost+=take*Math.max(0,Number(m.i.cost)||0);units+=take;
+   used[m.id]=already+take;left-=take;
+  }
+ }
+ return {amount,cost,units};
+}
 function periodProfit(period){
  const sales=(db.sales||[]).filter(x=>inPeriod(x.date,period));
- const revenue=sales.reduce((s,b)=>s+Number(b.total||0),0);
- const cost=sales.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0);
+ const grossRevenue=sales.reduce((s,b)=>s+Number(b.total||0),0);
+ const grossCost=sales.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0);
+ const returned=salesReturnAdjustment(period);
+ const revenue=Math.max(0,grossRevenue-returned.amount);
+ const cost=Math.max(0,grossCost-returned.cost);
  const gross=revenue-cost;
  const expenses=(db.expenses||[]).filter(e=>inPeriod(e.date,period)).reduce((s,e)=>s+Number(e.amount||0),0);
  return {revenue,cost,gross,expenses,net:gross-expenses};
 }
 function renderDashboard(){
  const sales=db.sales||[],today=sales.filter(x=>inPeriod(x.date,'day')),month=sales.filter(x=>inPeriod(x.date,'month'));
- const units=today.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
- const revenue=today.reduce((s,b)=>s+Number(b.total||0),0);
+ const soldUnits=today.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
+ const returnAdjustment=salesReturnAdjustment('day');
+ const units=Math.max(0,soldUnits-returnAdjustment.units);
+ const grossRevenue=today.reduce((s,b)=>s+Number(b.total||0),0);
+ const revenue=Math.max(0,grossRevenue-returnAdjustment.amount);
  const day=periodProfit('day'),mon=periodProfit('month');
  const stockUnits=db.stock.reduce((s,x)=>s+Number(x.qty||0),0),low=db.stock.filter(x=>Number(x.qty||0)<=5).length;
  const d=document.getElementById('dashCards');
