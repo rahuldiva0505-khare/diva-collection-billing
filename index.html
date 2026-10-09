@@ -1313,7 +1313,7 @@ setTimeout(function(){
    w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\\/script></body></html>');w.document.close();
  };
  window.printAllLabels = function(){
-   const arr=window.db&&window.db.stock||[];if(!arr.length){alert('Stock खाली है');return}
+   const arr=(typeof db!=='undefined'&&db.stock)?db.stock:[];if(!arr.length){alert('Stock खाली है');return}
    const withCodes=arr.flatMap(x=>Array.from({length:Math.max(1,Number(x.qty)||1)},()=>x));
    window.printAllSpecificLabels(withCodes);
  };
