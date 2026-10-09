@@ -1528,39 +1528,5 @@ setTimeout(function(){
 </script>
 
 
-<div id="divaWelcomeVoiceV1" role="dialog" aria-modal="true" aria-labelledby="divaWelcomeTitleV1" style="display:none">
- <div class="welcome-card">
-  <h2 id="divaWelcomeTitleV1">🌸 Welcome to Diva Collection</h2>
-  <p>आपका Diva Collection Billing App में हार्दिक स्वागत है। आपका दिन शुभ और व्यापार तरक्की वाला हो!</p>
-  <button type="button" id="divaWelcomePlayV1">🔊 स्वागत संदेश सुनें</button>
-  <button type="button" class="welcome-later" id="divaWelcomeCloseV1">आगे बढ़ें</button>
- </div>
-</div>
-<script>
-(function(){
- var key='divaWelcomeVoiceV1Seen';
- var modal=document.getElementById('divaWelcomeVoiceV1');
- var play=document.getElementById('divaWelcomePlayV1');
- var close=document.getElementById('divaWelcomeCloseV1');
- function sayWelcome(){
-   if(!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance){return;}
-   try{
-    window.speechSynthesis.cancel();
-    var msg=new SpeechSynthesisUtterance('आपका Diva Collection Billing App में हार्दिक स्वागत है। आपका दिन शुभ और व्यापार तरक्की वाला हो!');
-    msg.lang='hi-IN';msg.rate=0.88;msg.pitch=1;msg.volume=1;
-    var voices=window.speechSynthesis.getVoices();
-    var hindi=voices.find(function(v){return /^hi(-|_)/i.test(v.lang);});
-    if(hindi)msg.voice=hindi;
-    window.speechSynthesis.speak(msg);
-   }catch(e){}
- }
- function hide(){modal.style.display='none';try{sessionStorage.setItem(key,'1')}catch(e){}try{window.speechSynthesis.cancel()}catch(e){}}
- play.addEventListener('click',sayWelcome);
- close.addEventListener('click',hide);
- window.addEventListener('load',function(){
-   var show=true;try{show=sessionStorage.getItem(key)!=='1'}catch(e){}
-   if(show){modal.style.display='flex';setTimeout(sayWelcome,500);}
- });
-})();
-</script>
+
 </body></html>
