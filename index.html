@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=77',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=78',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -607,7 +607,7 @@ function renderSkuLabelVariants(){
  const rows=(db.stock||[]).filter(x=>Number(x.qty)>0&&productFolderKey(x)===key);
  if(!rows.length){el.innerHTML='<p class="small">इस SKU में उपलब्ध stock नहीं है.</p>';return}
  const colors=[...new Set(rows.map(x=>String(x.color||'No Colour')))];
- el.innerHTML='<p class="small">इस design में '+colors.length+' colour और '+rows.length+' colour/size rows हैं. जिनके labels चाहिए उन्हें select करें.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Select</th><th>Colour</th><th>Size</th><th>Stock</th><th>Print Qty</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><input type="checkbox" class="sku-label-check" data-stock-key="'+esc(x.key)+'" checked></td><td>'+esc(x.color||'No Colour')+'</td><td>'+esc(x.size||'-')+'</td><td>'+Number(x.qty||0)+'</td><td><input type="number" class="sku-label-qty" data-stock-key="'+esc(x.key)+'" min="1" max="'+Number(x.qty||0)+'" value="'+Number(x.qty||0)+'" style="width:76px"></td></tr>').join('')+'</tbody></table></div>';
+ el.innerHTML='<p class="small">इस design में '+colors.length+' colour और '+rows.length+' colour/size rows हैं. जिनके labels चाहिए उन्हें select करें.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Select</th><th>Colour</th><th>Size</th><th>Stock</th><th>Print Qty</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><input type="checkbox" class="sku-label-check" data-stock-key="'+esc(x.key)+'" checked></td><td>'+esc(x.color||'No Colour')+'</td><td>'+esc(x.size||'-')+'</td><td>'+Number(x.qty||0)+'</td><td><input type="number" class="sku-label-qty" data-stock-key="'+esc(x.key)+'" min="1" max="'+Number(x.qty||0)+'" value="1" style="width:76px"></td></tr>').join('')+'</tbody></table></div>';
 }
 function printSelectedSkuVariantLabels(){
  const el=document.getElementById('skuLabelVariants');if(!el)return;
