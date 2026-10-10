@@ -1168,7 +1168,7 @@ async function syncUploadOps(code,ops){
  if(!ops.length)return 0;
  const base=cloudDb.collection('cloudShops').doc(code).collection('changes');
  let n=0;
- for(const op of ops){const id=syncOpId();await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});n++;}
+ for(const op of ops){const id=syncOpId();await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});syncRemember(id);n++;}
  return n;
 }
 async function syncPullAndMerge(code){
