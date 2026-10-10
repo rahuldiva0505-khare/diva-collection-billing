@@ -1197,15 +1197,11 @@ function syncApplyOp(op){
  if(op.kind==='set'){
   if(idx>=0){
    if(type==='stock'){
-    // Protect a local stock change (for example a sale just billed) from an older
-    // snapshot pulled from another device. Stock quantity changes made locally
-    // since the last baseline must win over stale full-row snapshots.
-    const current=arr[idx],baseRows=Array.isArray(syncBaseline?.stock)?syncBaseline.stock:[];
-    const base=baseRows.find(x=>syncRecordKey('stock',x)===String(op.key));
-    const currentQty=Number(current.qty||0),baseQty=base?Number(base.qty||0):currentQty;
-    const localQtyChanged=!!base&&currentQty!==baseQty;
-    const incoming=syncClone(op.payload);
-    if(localQtyChanged)incoming.qty=current.qty;
+    // Existing stock quantity is controlled by stockDelta operations. A full-row
+    // snapshot may contain an old quantity and must never restore sold units.
+    // Merge product metadata from the snapshot, but keep this device's live qty.
+    const current=arr[idx],incoming=syncClone(op.payload);
+    incoming.qty=current.qty;
     arr[idx]={...current,...incoming};
    }else arr[idx]=syncClone(op.payload);
   }else arr.push(syncClone(op.payload));
