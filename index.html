@@ -1164,7 +1164,7 @@ function renderDashboard(){
  const grossRevenue=today.reduce((s,b)=>s+Number(b.total||0),0);
  const revenue=Math.max(0,grossRevenue-returnAdjustment.amount);
  const day=periodProfit('day'),mon=periodProfit('month');
- const stockUnits=db.stock.reduce((s,x)=>s+Number(x.qty||0),0),low=db.stock.filter(x=>Number(x.qty||0)<=5).length;
+ const stockUnits=db.stock.reduce((s,x)=>s+(Number(x.qty||0)>0?Number(x.qty||0):0),0),low=db.stock.filter(x=>Number(x.qty||0)<=5).length;
  const d=document.getElementById('dashCards');
  if(d)d.innerHTML=`<div class="card"><div class="small">आज की Bills</div><div class="big">${today.length}</div></div>
  <div class="card"><div class="small">आज की Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div>
