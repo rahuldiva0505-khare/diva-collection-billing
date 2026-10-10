@@ -146,7 +146,8 @@ function code128Svg(value,opts={}){
 <p class="small">पुराने SKU में नया size या quantity जोड़ने के लिए यहाँ SKU चुनें। इससे नया SKU नहीं बनेगा।</p>
 <div class="grid">
 <select id="quickSkuSelect" onchange="refreshQuickSkuColors()"><option value="">Select SKU / Product</option></select>
-<select id="quickSkuColor" onchange="refreshQuickSkuSizes()"><option value="">Select Colour</option></select>
+<select id="quickSkuColor" onchange="handleQuickSkuColorChange()"><option value="">Select Colour</option></select>
+<input id="quickSkuNewColor" placeholder="Naya colour likhein (jaise Teal Blue)" style="display:none" oninput="refreshQuickSkuSizes()">
 <select id="quickSkuSize"><option value="">Select Size</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>3XL</option><option>4XL</option><option>5XL</option></select>
 <input id="quickSkuQty" type="number" min="1" value="1" placeholder="Quantity">
 </div>
@@ -1035,25 +1036,32 @@ function renderCustomers(){
 }
 function printCurrentBill(){if(!cart.length){alert("Print करने के लिए bill में item add करें");return}printSale({billNo:"DRAFT",date:new Date().toISOString(),customer:document.getElementById("cust").value,phone:document.getElementById("phone").value,items:cart,total:cart.reduce((s,x)=>s+x.qty*Math.max(0,x.rate-x.discount),0),paymentMode:document.getElementById("paymentMode")?.value||"Cash"})}
 function printSale(b){const rows=(b.items||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}<br><small>${esc(x.sku)} / ${esc(x.color)} / ${esc(x.size)}</small></td><td>${x.qty}</td><td>₹${Number(x.rate).toFixed(2)}</td><td>₹${Number(x.discount||0).toFixed(2)}</td><td>₹${(x.qty*Math.max(0,x.rate-x.discount)).toFixed(2)}</td></tr>`).join("");const w=window.open("","_blank","width=800,height=900");if(!w){alert("Print window blocked है. Browser में pop-up allow करें.");return}w.document.write(`<!doctype html><html><head><title>${esc(b.billNo||"Bill")}</title><style>body{font-family:Arial;margin:25px;color:#222}h1{text-align:center;margin:0 0 5px}.meta{display:flex;justify-content:space-between;margin:15px 0}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}th{background:#f3f3f3}.right{text-align:right;font-size:20px;font-weight:bold;margin-top:18px}.foot{text-align:center;margin-top:30px;color:#666}.bill-thanks{margin-top:24px;text-align:center;color:#333;font-size:13px;line-height:1.6}.bill-smile{display:block;width:22px;height:22px;margin:0 auto 4px}.bill-visit{font-size:15px;font-weight:700;letter-spacing:.3px}.bill-tagline{font-size:12px;font-weight:700;margin-top:3px}</style></head><body><h1>Diva Collection</h1><p style="text-align:center">Billing Invoice</p><div class="meta"><div>Bill No: <b>${esc(b.billNo||"")}</b><br>Customer: ${esc(b.customer||"Walk-in Customer")}<br>Mobile: ${esc(b.phone||"")}</div><div>Date: ${new Date(b.date).toLocaleString()}</div></div><table><tr><th>#</th><th>Item</th><th>Qty</th><th>Rate</th><th>Discount</th><th>Amount</th></tr>${rows}</table><div class="right">Grand Total: ₹${Number(b.total||0).toFixed(2)}<br><span style="font-size:14px">Payment Mode: ${esc(b.paymentMode||"Cash")}</span></div><div class="foot">Thank you for shopping with Diva Collection</div><div class="bill-thanks"><svg class="bill-smile" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-label="smile"><circle cx="12" cy="12" r="10" fill="none" stroke="#333" stroke-width="1.6"/><circle cx="8.5" cy="9" r="1" fill="#333"/><circle cx="15.5" cy="9" r="1" fill="#333"/><path d="M7.5 13.5 Q12 19 16.5 13.5" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round"/></svg><div class="bill-visit">Visit Again!</div><div class="bill-tagline">Aapki Fashion, Hamara Passion</div></div></body></html>`);w.document.close();setTimeout(()=>w.print(),300)}
+function handleQuickSkuColorChange(){
+ const sel=document.getElementById('quickSkuColor'),input=document.getElementById('quickSkuNewColor');
+ if(input){const isNew=!!sel&&sel.value==='__NEW_COLOR__';input.style.display=isNew?'block':'none';if(!isNew)input.value='';}
+ refreshQuickSkuSizes();
+}
 function refreshQuickSkuColors(){
- const sku=document.getElementById('quickSkuSelect')?.value||'',colorEl=document.getElementById('quickSkuColor'),sizeEl=document.getElementById('quickSkuSize'),info=document.getElementById('quickSkuInfo');
+ const sku=document.getElementById('quickSkuSelect')?.value||'',colorEl=document.getElementById('quickSkuColor'),sizeEl=document.getElementById('quickSkuSize'),info=document.getElementById('quickSkuInfo'),newColor=document.getElementById('quickSkuNewColor');
  if(!colorEl||!sizeEl)return;
  const rows=(db.stock||[]).filter(x=>String(x.sku||'')===sku);
  const colors=[...new Set(rows.map(x=>String(x.color||'').trim()).filter(Boolean))];
- const old=colorEl.value;colorEl.innerHTML='<option value="">Select Colour</option>'+colors.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
- if(colors.includes(old))colorEl.value=old;else if(colors.length===1)colorEl.value=colors[0];
+ const old=colorEl.value;colorEl.innerHTML='<option value="">Select Colour</option>'+colors.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('')+'<option value="__NEW_COLOR__">➕ नया Colour जोड़ें</option>';
+ if(colors.includes(old))colorEl.value=old;else if(old==='__NEW_COLOR__')colorEl.value=old;else if(colors.length===1)colorEl.value=colors[0];
+ if(newColor&&colorEl.value!=='__NEW_COLOR__'){newColor.value='';newColor.style.display='none';}
  refreshQuickSkuSizes();
- if(info)info.textContent=sku?'SKU '+sku+' — '+rows[0]?.name+' | colour aur size select karein.':'';
+ if(info)info.textContent=sku?'SKU '+sku+' — '+rows[0]?.name+' | existing colour चुनें या नया colour जोड़ें.':'';
 }
 function refreshQuickSkuSizes(){
- const sku=document.getElementById('quickSkuSelect')?.value||'',color=document.getElementById('quickSkuColor')?.value||'',sizeEl=document.getElementById('quickSkuSize'),info=document.getElementById('quickSkuInfo');
+ const sku=document.getElementById('quickSkuSelect')?.value||'',colorSel=document.getElementById('quickSkuColor'),newColorEl=document.getElementById('quickSkuNewColor'),sizeEl=document.getElementById('quickSkuSize'),info=document.getElementById('quickSkuInfo');
  if(!sizeEl)return;
- const existing=(db.stock||[]).filter(x=>String(x.sku||'')===sku&&String(x.color||'')===color);
+ const color=colorSel?.value==='__NEW_COLOR__'?(newColorEl?.value||'').trim():(colorSel?.value||'');
+ const existing=(db.stock||[]).filter(x=>String(x.sku||'')===sku&&String(x.color||'').trim().toLowerCase()===color.toLowerCase());
  const sizes=[...new Set(['S','M','L','XL','XXL','3XL','4XL','5XL',...existing.map(x=>String(x.size||''))].filter(Boolean))];
  const old=sizeEl.value;sizeEl.innerHTML='<option value="">Select Size</option>'+sizes.map(z=>'<option value="'+esc(z)+'">'+esc(z)+(existing.some(x=>String(x.size)===z)?' (Stock '+(existing.find(x=>String(x.size)===z)?.qty||0)+')':' (New size)')+'</option>').join('');
  if(sizes.includes(old))sizeEl.value=old;
  const x=existing.find(a=>String(a.size)===sizeEl.value);
- if(info&&sku)info.textContent='SKU '+sku+' | '+color+' | '+(sizeEl.value||'size select karein')+(x?' | Current stock: '+Number(x.qty||0):' | नया size जोड़ेंगे');
+ if(info&&sku)info.textContent='SKU '+sku+' | '+(color||'colour select karein')+' | '+(sizeEl.value||'size select karein')+(x?' | Current stock: '+Number(x.qty||0):' | नया size/colour जोड़ेंगे');
 }
 function refreshQuickSkuSelect(){
  const el=document.getElementById('quickSkuSelect');if(!el)return;
@@ -1064,7 +1072,7 @@ function refreshQuickSkuSelect(){
  refreshQuickSkuColors();
 }
 function addQuickSkuStock(){
- const sku=document.getElementById('quickSkuSelect')?.value||'',color=document.getElementById('quickSkuColor')?.value||'',size=document.getElementById('quickSkuSize')?.value||'',qty=Math.floor(Number(document.getElementById('quickSkuQty')?.value)||0);
+ const sku=document.getElementById('quickSkuSelect')?.value||'',colorSel=document.getElementById('quickSkuColor')?.value||'',color=(colorSel==='__NEW_COLOR__'?(document.getElementById('quickSkuNewColor')?.value||'').trim():colorSel),size=document.getElementById('quickSkuSize')?.value||'',qty=Math.floor(Number(document.getElementById('quickSkuQty')?.value)||0);
  if(!sku){alert('SKU select karein.');return}if(!color){alert('Colour select karein.');return}if(!size){alert('Size select karein.');return}if(qty<1){alert('Quantity 1 ya usse zyada bharein.');return}
  const sameSku=(db.stock||[]).filter(x=>String(x.sku||'')===sku),base=sameSku.find(x=>String(x.color||'')===color)||sameSku[0];
  if(!base){alert('Is SKU ka existing product nahi mila.');return}
