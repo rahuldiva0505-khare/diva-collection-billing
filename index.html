@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=127',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=128',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1233,7 +1233,7 @@ async function syncPullAndMerge(code){
   localStorage.setItem(SYNC_LAST_PULL_TS_KEY,String(lastPull));
  }
  const docs=snap.docs.map(d=>d.data())
-  .filter(x=>x&&x.id&&!applied.has(x.id)&&(!lastPull||Number(x.ts||0)>lastPull))
+  .filter(x=>x&&x.id&&!applied.has(x.id)&&(!lastPull||Number(x.ts||0)>lastPull||!(x.entity==='stock'&&x.kind==='stockDelta')))
   .sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
  if(!docs.length)return 0;
  syncApplying=true;
