@@ -1219,15 +1219,28 @@ async function syncUploadOps(code,ops){
  for(const op of ops){const id=syncOpId();await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});syncRemember(id);n++;}
  return n;
 }
+const SYNC_LAST_PULL_TS_KEY='DIVA_SYNC_LAST_PULL_TS_V1';
 async function syncPullAndMerge(code){
  const base=cloudDb.collection('cloudShops').doc(code).collection('changes');
  const snap=await base.get();
  const applied=new Set(syncApplied());
- const docs=snap.docs.map(d=>d.data()).filter(x=>x&&x.id&&!applied.has(x.id)).sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
+ let lastPull=Number(localStorage.getItem(SYNC_LAST_PULL_TS_KEY)||0);
+ // Existing installations already have a full local stock snapshot. Do not replay
+ // old stockDelta events over that snapshot: doing so can restore sold quantities.
+ // A truly empty first-time device still replays the full event history to restore data.
+ if(!lastPull&&(syncBaseline||syncHasLocalData())){
+  lastPull=Date.now();
+  localStorage.setItem(SYNC_LAST_PULL_TS_KEY,String(lastPull));
+ }
+ const docs=snap.docs.map(d=>d.data())
+  .filter(x=>x&&x.id&&!applied.has(x.id)&&(!lastPull||Number(x.ts||0)>lastPull))
+  .sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
  if(!docs.length)return 0;
  syncApplying=true;
  try{for(const op of docs){syncApplyOp(op);syncRemember(op.id);}}
  finally{syncApplying=false;}
+ const newest=Math.max(lastPull,...docs.map(x=>Number(x.ts||0)));
+ if(newest>0)localStorage.setItem(SYNC_LAST_PULL_TS_KEY,String(newest));
  return docs.length;
 }
 async function syncPullLegacySnapshot(code){
@@ -1285,8 +1298,9 @@ async function cloudAccountLogout(){
 function updateCloudAuthStatus(user){cloudUser=user||null;const status=document.getElementById('cloudAuthStatus');if(status)status.textContent=(user&&!user.isAnonymous)?'✅ Logged in: '+(user.email||'Firebase account'):'Cloud account login required for syncing. Local billing remains available.';}
 (function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);});}catch(e){console.warn('Diva Firebase auth status',e);}})();
 
+let syncPendingAfterBusy=false;
 async function syncCloudNow(){
- if(cloudBusy)return;
+ if(cloudBusy){syncPendingAfterBusy=true;return;}
  const code=cloudCode();
  if(!code){cloudUI('Pehle New Sync Code ya existing Sync Code connect karein.');return;}
  if(!navigator.onLine){cloudUI('📴 Offline — local data safe hai. Internet aate hi sync hoga.');return;}
@@ -1331,7 +1345,13 @@ async function syncCloudNow(){
  }catch(e){
   console.error('DIVA CLOUD SYNC ERROR',e);
   cloudUI('⚠️ Cloud Sync failed: '+(e&&e.message?e.message:'Firebase error'));
- }finally{cloudBusy=false;}
+ }finally{
+  cloudBusy=false;
+  if(syncPendingAfterBusy){
+   syncPendingAfterBusy=false;
+   if(navigator.onLine&&cloudCode())setTimeout(()=>syncCloudNow(),150);
+  }
+ }
 }
 async function createCloudCode(){
  const code=randomCloudCode();
