@@ -1329,8 +1329,8 @@ async function initCloud(){
  cloudUser=cloudAuth.currentUser;
  return cloudUser;
 }
-const DIVA_ALLOWED_AUTH_UIDS=['8jAS7UKkf9OfNgtW7yiMtKIrK512','yCk8UGcn1FV6nvBkvNKu9ZlWDmG3'];
-function divaUserAuthorized(user){return !!(user&&!user.isAnonymous&&DIVA_ALLOWED_AUTH_UIDS.includes(user.uid));}
+const DIVA_OWNER_EMAIL='rahuldiva0505@gmail.com';
+function divaUserAuthorized(user){return !!(user&&!user.isAnonymous&&String(user.email||'').trim().toLowerCase()===DIVA_OWNER_EMAIL);}
 async function cloudAccountLogin(){
  const email=String(document.getElementById('cloudEmail')?.value||'').trim();
  const password=String(document.getElementById('cloudPassword')?.value||'');
