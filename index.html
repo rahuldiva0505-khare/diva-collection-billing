@@ -404,7 +404,7 @@ function renderStock(){
   colors.forEach(color=>{
    const rows=g.rows.filter(x=>(x.color||'No Colour')===color).sort((a,b)=>String(a.size).localeCompare(String(b.size),undefined,{numeric:true}));
    detail+='<div class="folder-color"><h4>🎨 '+esc(color)+' <span class="pill">'+rows.reduce((n,x)=>n+Number(x.qty||0),0)+' pcs</span></h4><div class="tablewrap"><table class="folder-size-table"><tr><th>Size</th><th>Stock</th><th>MRP</th><th>Selling</th><th>Print Qty</th><th>Action</th></tr>';
-   detail+=rows.map(x=>'<tr><td><b>'+esc(x.size||'-')+'</b></td><td><b>'+Number(x.qty||0)+'</b></td><td>₹'+Number(x.mrp||0).toFixed(2)+'</td><td>₹'+Number(x.selling||0).toFixed(2)+'</td><td><input class="design-print-qty" data-stock-key="'+esc(x.key)+'" type="number" min="0" max="'+Math.max(0,Number(x.qty)||0)+'" value="0" aria-label="Print quantity for '+esc(x.size||'size')+'" onclick="event.stopPropagation()"></td><td><button type="button" class="gray" onclick="event.stopPropagation();printLabelByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🏷️ 1 Label</button> <button type="button" class="red" onclick="event.stopPropagation();deleteStockRow(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>').join('');
+   detail+=rows.map(x=>'<tr><td><b>'+esc(x.size||'-')+'</b></td><td><b>'+Number(x.qty||0)+'</b></td><td>₹'+Number(x.mrp||0).toFixed(2)+'</td><td>₹'+Number(x.selling||0).toFixed(2)+'</td><td><input class="design-print-qty" data-stock-key="'+esc(x.key)+'" type="number" min="0" max="'+Math.max(0,Number(x.qty)||0)+'" value="0" aria-label="Print quantity for '+esc(x.size||'size')+'" onclick="event.stopPropagation()"></td><td><button type="button" class="gray" onclick="event.stopPropagation();printLabelByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🏷️ 1 Label</button> <button type="button" class="gray" onclick="event.stopPropagation();editStockQtyByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">✏️ Qty</button> <button type="button" class="red" onclick="event.stopPropagation();deleteStockRow(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>').join('');
    detail+='</table></div></div>';
   });
   return '<div class="product-folder"><div class="folder-head" data-group-key="'+esc(g.key)+'" onclick="toggleProductFolder(this)">'+pic+'<div class="folder-title"><div class="folder-number">PRODUCT '+num+'</div><b>'+esc(g.name)+'</b><div class="small">'+esc(g.sku)+' · '+esc(g.category)+'</div><div class="folder-stats">'+colors.length+' colours · '+total+' pcs</div></div><span class="folder-arrow">⌄</span></div><div class="folder-tools"><label class="photo-pick">📷 '+(photo?'Change Photo':'Add Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(g.key)+'" onchange="saveProductPhoto(this)"></label><button type="button" class="gray folder-print-btn" onclick="event.stopPropagation();printProductFolderLabels(this.dataset.folderKey)" data-folder-key="'+esc(g.key)+'">🏷️ Print this design labels</button></div><div class="folder-details" style="display:none">'+detail+'<button type="button" class="design-print-button" onclick="event.stopPropagation();printDesignLabels(this)">🏷️ Print Selected Labels — This Design</button><p class="small">जिस colour/size के labels चाहिए, उसकी Print Qty भरें. केवल इसी design के चुने हुए labels print होंगे.</p></div></div>';
@@ -436,6 +436,21 @@ function printProductFolderLabels(folderKey){
  rows.forEach(x=>{const n=mode.trim()==='1'?Math.max(0,Math.floor(Number(x.qty)||0)):1;for(let i=0;i<n;i++)flat.push(x)});
  if(!flat.length){alert('इस design में stock quantity उपलब्ध नहीं है.');return}
  printAllSpecificLabels(flat);
+}
+function editStockQtyByKey(k){
+ const x=(db.stock||[]).find(a=>String(a.key)===String(k));
+ if(!x){alert('Stock entry नहीं मिली.');return}
+ const oldQty=Math.max(0,Number(x.qty)||0);
+ const raw=prompt('SKU '+(x.sku||'')+' | Size '+(x.size||'-')+' की सही उपलब्ध quantity लिखें.\nअभी quantity: '+oldQty+'\nबेचे जा चुके piece के लिए 0 लिखें.',''+oldQty);
+ if(raw===null)return;
+ if(raw.trim()===''||!/^\d+(?:\.\d+)?$/.test(raw.trim())){alert('Quantity में 0 या उससे बड़ी संख्या लिखें.');return}
+ const qty=Number(raw.trim());
+ if(!Number.isFinite(qty)||qty<0){alert('Quantity सही नहीं है.');return}
+ if(qty===0&&!confirm('क्या '+(x.sku||'इस product')+' size '+(x.size||'-')+' का stock 0 करना है?'))return;
+ x.qty=qty;
+ save();
+ renderStock();loadBillProducts();renderDashboard();renderLabels();
+ alert('Stock quantity update हो गई: '+(x.sku||'')+' / '+(x.size||'-')+' = '+qty);
 }
 function deleteStockRow(k){
  const x=db.stock.find(a=>String(a.key)===String(k));
