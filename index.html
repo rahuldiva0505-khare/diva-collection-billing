@@ -1323,7 +1323,9 @@ async function syncCloudNow(){
 
   const ops=syncBuildOpsForCurrent();
   const uploaded=await syncUploadOps(code,ops);
-  if(uploaded)syncBaselineNow();
+  // Keep the pre-upload baseline until remote changes have been merged. Resetting it
+  // here makes local stock changes look unchanged and lets stale remote stock snapshots
+  // overwrite the quantity just decremented by a sale.
 
   const pulled=await syncPullAndMerge(code);
   syncBaselineNow();
