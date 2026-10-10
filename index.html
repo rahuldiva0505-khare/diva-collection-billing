@@ -1179,7 +1179,16 @@ function syncApplyOp(op){
   else arr[idx]={...arr[idx],...syncClone(op.meta),qty:Number(arr[idx].qty||0)+Number(op.delta||0)};
   return;
  }
- if(op.kind==='set'){if(idx>=0)arr[idx]=syncClone(op.payload);else arr.push(syncClone(op.payload));}
+ if(op.kind==='set'){
+  if(idx>=0){
+   if(type==='stock'){
+    // A stale full-record sync operation must not restore an older stock quantity
+    // over a sale already applied on this device. Quantity-only changes travel as stockDelta.
+    const currentQty=Number(arr[idx].qty||0);
+    arr[idx]={...syncClone(op.payload),qty:currentQty};
+   }else arr[idx]=syncClone(op.payload);
+  }else arr.push(syncClone(op.payload));
+ }
 }
 function syncBuildOpsForCurrent(){
  const prev=syncBaseline||syncRead(SYNC_BASELINE_KEY,null);
