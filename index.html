@@ -960,16 +960,38 @@ function renderCart(){
  cart.map((x,i)=>{let line=x.qty*Math.max(0,x.rate-x.discount);return `<tr><td>${esc(x.category)}</td><td>${esc(x.name)}<br><small>${esc(x.sku)} / ${esc(x.color)}</small></td><td>${esc(x.size)}</td><td>${x.qty}</td><td>₹${x.mrp}</td><td>₹${x.rate}</td><td>₹${x.discount}</td><td>₹${line}</td><td><button class="red" onclick="removeItem(${i})">🗑</button></td></tr>`}).join("")+'</table></div>';
  document.getElementById("total").textContent=cart.reduce((s,x)=>s+x.qty*Math.max(0,x.rate-x.discount),0).toFixed(2);
 }
+let saleCompletionBusy=false;
 function completeSale(){
+ if(saleCompletionBusy)return;
  if(!cart.length){alert("पहले item add करें");return}
- for(const a of cart){let x=db.stock.find(z=>z.key===a.key);if(!x||x.qty<a.qty){alert("Stock कम है");return}}
- const paymentMode=document.getElementById("paymentMode")?.value||"Cash";
- cart.forEach(a=>db.stock.find(z=>z.key===a.key).qty-=a.qty);
- let billNo="DC-"+Date.now().toString().slice(-8);
- let saved={billNo,date:new Date().toISOString(),customer:document.getElementById("cust").value,phone:document.getElementById("phone").value,items:JSON.parse(JSON.stringify(cart)),total:cart.reduce((s,x)=>s+x.qty*Math.max(0,x.rate-x.discount),0),paymentMode};
- db.sales.push(saved);
- saveCustomerFromSale(saved);
- save();cart=[];renderCart();loadBillProducts();renderStock();renderCustomers();alert("Sale save हो गई. Payment: "+paymentMode+" • Bill No: "+billNo);printSale(saved);
+ // Validate every line against the latest in-memory stock before changing anything.
+ for(const a of cart){
+  const x=(db.stock||[]).find(z=>String(z.key)===String(a.key));
+  if(!x||Number(x.qty)<Number(a.qty)){alert("Stock कम है. उपलब्ध stock: "+(x?Number(x.qty)||0:0));return}
+ }
+ saleCompletionBusy=true;
+ try{
+  const paymentMode=document.getElementById("paymentMode")?.value||"Cash";
+  const soldItems=JSON.parse(JSON.stringify(cart));
+  // Decrement the exact stock rows referenced by the cart, then persist immediately.
+  for(const a of soldItems){
+   const x=(db.stock||[]).find(z=>String(z.key)===String(a.key));
+   if(!x||Number(x.qty)<Number(a.qty))throw new Error("Stock बदल गया है. कृपया item दोबारा scan करके bill बनाएं.");
+   x.qty=Number(x.qty)-Number(a.qty);
+  }
+  const billNo="DC-"+Date.now().toString().slice(-8);
+  const saved={billNo,date:new Date().toISOString(),customer:document.getElementById("cust").value,phone:document.getElementById("phone").value,items:soldItems,total:soldItems.reduce((s,x)=>s+Number(x.qty)*Math.max(0,Number(x.rate)-Number(x.discount)),0),paymentMode};
+  db.sales=db.sales||[];
+  db.sales.push(saved);
+  saveCustomerFromSale(saved);
+  // Write the changed stock and bill to this device before starting asynchronous cloud sync.
+  localStorage.setItem(KEY,JSON.stringify(db));
+  cart=[];renderCart();loadBillProducts();renderStock();renderCustomers();renderDashboard();renderBillHistory();
+  save();
+  alert("Sale save हो गई. Stock अपडेट किया गया. Payment: "+paymentMode+" • Bill No: "+billNo);
+  printSale(saved);
+ }catch(e){alert(e&&e.message?e.message:"Bill save नहीं हुआ. कृपया stock जाँचें.");}
+ finally{saleCompletionBusy=false;}
 }
 function saveCustomerFromSale(b){
  const name=String(b.customer||'').trim(), phone=String(b.phone||'').replace(/\D/g,'');
