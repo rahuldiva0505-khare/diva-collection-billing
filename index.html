@@ -1,11 +1,8 @@
 <!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#000000"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="diva-logo.svg"><link rel="manifest" href="manifest.json">
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(!window.__divaSwReloaded){window.__divaSwReloaded=true;window.location.reload();}
-  });
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=130',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=131',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1200,11 +1197,15 @@ function syncApplyOp(op){
  if(op.kind==='set'){
   if(idx>=0){
    if(type==='stock'){
-    // Existing stock quantity is controlled by stockDelta operations. A full-row
-    // snapshot may contain an old quantity and must never restore sold units.
-    // Merge product metadata from the snapshot, but keep this device's live qty.
-    const current=arr[idx],incoming=syncClone(op.payload);
-    incoming.qty=current.qty;
+    // Protect a local stock change (for example a sale just billed) from an older
+    // snapshot pulled from another device. Stock quantity changes made locally
+    // since the last baseline must win over stale full-row snapshots.
+    const current=arr[idx],baseRows=Array.isArray(syncBaseline?.stock)?syncBaseline.stock:[];
+    const base=baseRows.find(x=>syncRecordKey('stock',x)===String(op.key));
+    const currentQty=Number(current.qty||0),baseQty=base?Number(base.qty||0):currentQty;
+    const localQtyChanged=!!base&&currentQty!==baseQty;
+    const incoming=syncClone(op.payload);
+    if(localQtyChanged)incoming.qty=current.qty;
     arr[idx]={...current,...incoming};
    }else arr[idx]=syncClone(op.payload);
   }else arr.push(syncClone(op.payload));
@@ -1222,28 +1223,15 @@ async function syncUploadOps(code,ops){
  for(const op of ops){const id=syncOpId();await base.doc(id).set({id,ts:Date.now(),device:cloudDevice(),...op});syncRemember(id);n++;}
  return n;
 }
-const SYNC_LAST_PULL_TS_KEY='DIVA_SYNC_LAST_PULL_TS_V1';
 async function syncPullAndMerge(code){
  const base=cloudDb.collection('cloudShops').doc(code).collection('changes');
  const snap=await base.get();
  const applied=new Set(syncApplied());
- let lastPull=Number(localStorage.getItem(SYNC_LAST_PULL_TS_KEY)||0);
- // Existing installations already have a full local stock snapshot. Do not replay
- // old stockDelta events over that snapshot: doing so can restore sold quantities.
- // A truly empty first-time device still replays the full event history to restore data.
- if(!lastPull&&(syncBaseline||syncHasLocalData())){
-  lastPull=Date.now();
-  localStorage.setItem(SYNC_LAST_PULL_TS_KEY,String(lastPull));
- }
- const docs=snap.docs.map(d=>d.data())
-  .filter(x=>x&&x.id&&!applied.has(x.id)&&(!lastPull||Number(x.ts||0)>lastPull||!(x.entity==='stock'&&x.kind==='stockDelta')))
-  .sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
+ const docs=snap.docs.map(d=>d.data()).filter(x=>x&&x.id&&!applied.has(x.id)).sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
  if(!docs.length)return 0;
  syncApplying=true;
  try{for(const op of docs){syncApplyOp(op);syncRemember(op.id);}}
  finally{syncApplying=false;}
- const newest=Math.max(lastPull,...docs.map(x=>Number(x.ts||0)));
- if(newest>0)localStorage.setItem(SYNC_LAST_PULL_TS_KEY,String(newest));
  return docs.length;
 }
 async function syncPullLegacySnapshot(code){
@@ -1301,9 +1289,8 @@ async function cloudAccountLogout(){
 function updateCloudAuthStatus(user){cloudUser=user||null;const status=document.getElementById('cloudAuthStatus');if(status)status.textContent=(user&&!user.isAnonymous)?'✅ Logged in: '+(user.email||'Firebase account'):'Cloud account login required for syncing. Local billing remains available.';}
 (function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);});}catch(e){console.warn('Diva Firebase auth status',e);}})();
 
-let syncPendingAfterBusy=false;
 async function syncCloudNow(){
- if(cloudBusy){syncPendingAfterBusy=true;return;}
+ if(cloudBusy)return;
  const code=cloudCode();
  if(!code){cloudUI('Pehle New Sync Code ya existing Sync Code connect karein.');return;}
  if(!navigator.onLine){cloudUI('📴 Offline — local data safe hai. Internet aate hi sync hoga.');return;}
@@ -1313,13 +1300,6 @@ async function syncCloudNow(){
   if(!cloudAuth.currentUser||cloudAuth.currentUser.isAnonymous){cloudUI('🔐 Pehle Cloud Sync wale Firebase account se Login karein. Local billing safe hai.');return;}
   cloudUser=cloudAuth.currentUser;
   if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
-
-  // Initialize the pull watermark BEFORE uploading local changes. If it is first
-  // initialized inside syncPullAndMerge, a just-uploaded stockDelta can be mistaken
-  // for old history and skipped on this device's partner device.
-  if(!localStorage.getItem(SYNC_LAST_PULL_TS_KEY)&&(syncBaseline||syncHasLocalData())){
-   localStorage.setItem(SYNC_LAST_PULL_TS_KEY,String(Date.now()));
-  }
 
   /* FIRST CONNECTION: an empty/new device must pull laptop data before uploading anything. */
   if(!syncBaseline&&!syncHasLocalData()){
@@ -1355,13 +1335,7 @@ async function syncCloudNow(){
  }catch(e){
   console.error('DIVA CLOUD SYNC ERROR',e);
   cloudUI('⚠️ Cloud Sync failed: '+(e&&e.message?e.message:'Firebase error'));
- }finally{
-  cloudBusy=false;
-  if(syncPendingAfterBusy){
-   syncPendingAfterBusy=false;
-   if(navigator.onLine&&cloudCode())setTimeout(()=>syncCloudNow(),150);
-  }
- }
+ }finally{cloudBusy=false;}
 }
 async function createCloudCode(){
  const code=randomCloudCode();
