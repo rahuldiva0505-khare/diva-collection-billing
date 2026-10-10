@@ -795,30 +795,29 @@ function fillFromCode(code){
  const norm=v=>String(v??'').trim().toUpperCase();
  const clean=v=>String(v??'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
  const digits=code.replace(/\\D/g,'');
- const variants=new Set([code,clean(code),digits]);
+ const variants=new Set([norm(code),clean(code),digits]);
  if(/^\\d{12}$/.test(digits))variants.add('0'+digits);
  if(/^\\d{13}$/.test(digits))variants.add(digits.slice(1));
  if(/^\\d{8}$/.test(digits))variants.add('00000'+digits);
- let x=db.stock.find(a=>variants.has(norm(a.code))||variants.has(norm(a.barcode))||variants.has(clean(a.code))||variants.has(clean(a.barcode)));
- if(!x){
-   x=db.stock.find(a=>{
-     const base=a.code||makeCode(a.category,a.sku,a.color,a.size);
-     const generated=ean13ForCode(base);
-     const stored=String(a.barcode||'').replace(/\\D/g,'');
-     const key=barcodeKey(base);
-     const nums=[generated,stored,key];
-     return nums.some(n=>{const d=String(n||'');return variants.has(d)||variants.has(d.slice(1))||variants.has(d.padStart(13,'0'))||digits===d||digits===d.slice(1)||digits.endsWith(d)||d.endsWith(digits)});
-   });
+ // Match the complete barcode only. Partial suffix matches can select a different size/colour.
+ const matches=(db.stock||[]).filter(a=>{
+   const base=a.code||makeCode(a.category,a.sku,a.color,a.size);
+   const candidates=[norm(a.code),norm(a.barcode),clean(a.code),clean(a.barcode),ean13ForCode(base),barcodeKey(base)].filter(Boolean);
+   return candidates.some(v=>variants.has(v));
+ });
+ let x=null;
+ if(matches.length===1)x=matches[0];
+ else if(matches.length>1){
+   const exact=matches.filter(a=>norm(a.code)===norm(code)||norm(a.barcode)===norm(code)||ean13ForCode(a.code||makeCode(a.category,a.sku,a.color,a.size))===digits);
+   if(exact.length===1)x=exact[0];
+   else {document.getElementById('scanStatus').textContent='⚠️ यह barcode एक से अधिक items से match हो रहा है. गलत size/price से बचने के लिए scan रोक दिया गया.';return false;}
  }
  if(!x){
-   let p=parseCode(code);
-   x=db.stock.find(a=>norm(a.category)===norm(p.category)&&norm(a.sku)===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size));
+   const p=parseCode(code);
+   const exact=(db.stock||[]).filter(a=>norm(a.category)===norm(p.category)&&norm(a.sku)===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size));
+   if(exact.length===1)x=exact[0];
  }
- if(!x){
-   const compact=clean(code);
-   x=db.stock.find(a=>clean(a.code)===compact||clean(makeCode(a.category,a.sku,a.color,a.size))===compact);
- }
- if(!x){document.getElementById('scanStatus').textContent='❌ Code से product नहीं मिला: '+code;return false}
+ if(!x){document.getElementById('scanStatus').textContent='❌ इस पूरे Barcode ID से product नहीं मिला: '+code+' — कृपया उसी size/colour का label दोबारा print करें.';return false}
  if(Number(x.qty)<=0){document.getElementById('scanStatus').textContent='⚠️ Stock 0 है: '+x.name+' / '+x.color+' / '+x.size;return false}
  const base=x.code||makeCode(x.category,x.sku,x.color,x.size);
  x.barcode=ean13ForCode(base);
@@ -832,7 +831,7 @@ function fillFromCode(code){
  document.getElementById('bdiscount').value=x.discount||0;
  document.getElementById('bqty').value=1;
  addItem();
- document.getElementById('scanStatus').textContent='✅ Bill में add हो गया: '+x.name+' | '+x.color+' | '+x.size;
+ document.getElementById('scanStatus').textContent='✅ सही item add हुआ: '+x.sku+' | '+x.color+' | Size '+x.size+' | Rate ₹'+Number(x.selling||0);
  return true
 }
 function handleScanKey(e){if(e.key==='Enter'){e.preventDefault();fillFromCode(e.target.value);e.target.select()}}
