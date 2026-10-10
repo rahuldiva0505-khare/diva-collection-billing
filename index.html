@@ -363,6 +363,7 @@ function saveStock(){
 }
 function clearStockForm(){['newcat','ssku','sname','customSizes','smrp','sselling','sdiscount','scost','scolor1','scolor2','scolor3','scolor4'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.sizecheck').forEach(x=>x.checked=false);document.getElementById('stockMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('scat').value=''}
 function productFolderKey(x){return String(x.category||'Other')+'|'+String(x.sku||x.name||'ITEM')}
+function productColorPhotoKey(x,color){return productFolderKey(x)+'|COLOR|'+String(color||'No Colour').trim().toLowerCase()}
 function productPhotoFor(k){if(!Array.isArray(db.productPhotos))db.productPhotos=[];const p=db.productPhotos.find(v=>String(v.key)===String(k));return p&&p.data?p.data:''}
 function saveProductPhoto(input){
  const file=input&&input.files&&input.files[0],k=input&&input.dataset&&input.dataset.photoKey;
@@ -414,7 +415,8 @@ function renderStock(){
   let detail='';
   colors.forEach(color=>{
    const rows=g.rows.filter(x=>(x.color||'No Colour')===color).sort((a,b)=>String(a.size).localeCompare(String(b.size),undefined,{numeric:true}));
-   detail+='<div class="folder-color"><h4>🎨 '+esc(color)+' <span class="pill">'+rows.reduce((n,x)=>n+Number(x.qty||0),0)+' pcs</span></h4><div class="tablewrap"><table class="folder-size-table"><tr><th>Size</th><th>Stock</th><th>MRP</th><th>Selling</th><th>Print Qty</th><th>Action</th></tr>';
+   const colorPhotoKey=productColorPhotoKey(g,color),colorPhoto=productPhotoFor(colorPhotoKey);
+   detail+='<div class="folder-color"><h4>🎨 '+esc(color)+' <span class="pill">'+rows.reduce((n,x)=>n+Number(x.qty||0),0)+' pcs</span></h4><div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="width:72px;height:88px;border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center">'+(colorPhoto?'<img src="'+colorPhoto+'" alt="'+esc(color)+' photo" style="width:100%;height:100%;object-fit:contain">':'<small style="text-align:center">Colour photo नहीं है</small>')+'</div><label class="photo-pick">📷 '+(colorPhoto?'Change '+esc(color)+' Photo':'Add '+esc(color)+' Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(colorPhotoKey)+'" onchange="saveProductPhoto(this)" onclick="event.stopPropagation()"></label></div><div class="tablewrap"><table class="folder-size-table"><tr><th>Size</th><th>Stock</th><th>MRP</th><th>Selling</th><th>Print Qty</th><th>Action</th></tr>';
    detail+=rows.map(x=>'<tr><td><b>'+esc(x.size||'-')+'</b></td><td><b>'+Number(x.qty||0)+'</b></td><td>₹'+Number(x.mrp||0).toFixed(2)+'</td><td>₹'+Number(x.selling||0).toFixed(2)+'</td><td><input class="design-print-qty" data-stock-key="'+esc(x.key)+'" type="number" min="0" max="'+Math.max(0,Number(x.qty)||0)+'" value="0" aria-label="Print quantity for '+esc(x.size||'size')+'" onclick="event.stopPropagation()"></td><td><button type="button" class="gray" onclick="event.stopPropagation();printLabelByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🏷️ 1 Label</button> <button type="button" class="gray" onclick="event.stopPropagation();editStockQtyByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">✏️ Qty</button> <button type="button" class="red" onclick="event.stopPropagation();deleteStockRow(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>').join('');
    detail+='</table></div></div>';
   });
