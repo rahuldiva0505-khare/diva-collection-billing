@@ -1329,6 +1329,8 @@ async function initCloud(){
  cloudUser=cloudAuth.currentUser;
  return cloudUser;
 }
+const DIVA_ALLOWED_AUTH_UIDS=['8jAS7UKkf9OfNgtW7yiMtKIrK512','yCk8UGcn1FV6nvBkvNKu9ZlWDmG3'];
+function divaUserAuthorized(user){return !!(user&&!user.isAnonymous&&DIVA_ALLOWED_AUTH_UIDS.includes(user.uid));}
 async function cloudAccountLogin(){
  const email=String(document.getElementById('cloudEmail')?.value||'').trim();
  const password=String(document.getElementById('cloudPassword')?.value||'');
@@ -1340,7 +1342,12 @@ async function cloudAccountLogin(){
   if(cloudAuth.currentUser&&cloudAuth.currentUser.isAnonymous)await cloudAuth.signOut();
   const cred=await cloudAuth.signInWithEmailAndPassword(email,password);
   cloudUser=cred.user;
-  if(status)status.textContent='✅ Login ho gaya: '+(cloudUser.email||email);
+  if(!divaUserAuthorized(cloudUser)){
+   await cloudAuth.signOut();cloudUser=null;
+   if(status)status.textContent='⛔ Is account ko app owner ne authorize nahi kiya. Owner se permission lein.';
+   return;
+  }
+  if(status)status.textContent='✅ Authorized login ho gaya: '+(cloudUser.email||email);
   document.getElementById('cloudPassword').value='';
   if(cloudCode())await syncCloudNow();
  }catch(e){console.error('DIVA ACCOUNT LOGIN',e);if(status)status.textContent='❌ Login nahi hua: '+(e.code==='auth/invalid-credential'?'Email ya password galat hai.':(e.message||e.code||'Firebase error'));}
@@ -1349,7 +1356,17 @@ async function cloudAccountLogout(){
  try{await initCloud();if(cloudAuth.currentUser)await cloudAuth.signOut();cloudUser=null;const status=document.getElementById('cloudAuthStatus');if(status)status.textContent='Logout ho gaya. Local billing aur PIN lock chalte rahenge; cloud sync ke liye login karein.';cloudUI('Cloud sync ke liye Firebase account login karein.');}
  catch(e){const status=document.getElementById('cloudAuthStatus');if(status)status.textContent='Logout error: '+(e.message||e);}
 }
-function updateCloudAuthStatus(user){cloudUser=user||null;const status=document.getElementById('cloudAuthStatus');if(status)status.textContent=(user&&!user.isAnonymous)?'✅ Logged in: '+(user.email||'Firebase account'):'Cloud account login required for syncing. Local billing remains available.';}
+function updateCloudAuthStatus(user){
+ if(user&&!user.isAnonymous&&!divaUserAuthorized(user)){
+  cloudUser=null;
+  if(cloudAuth&&cloudAuth.currentUser&&cloudAuth.currentUser.uid===user.uid)cloudAuth.signOut().catch(()=>{});
+  const status=document.getElementById('cloudAuthStatus');if(status)status.textContent='⛔ Is account ko app owner ne authorize nahi kiya. Owner se permission lein.';
+  return;
+ }
+ cloudUser=user||null;
+ const status=document.getElementById('cloudAuthStatus');
+ if(status)status.textContent=divaUserAuthorized(user)?'✅ Authorized login: '+(user.email||'Firebase account'):'Cloud account login required for syncing. Local billing remains available.';
+}
 (function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);});}catch(e){console.warn('Diva Firebase auth status',e);}})();
 
 async function syncCloudNow(){
