@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=134',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=135',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1400,6 +1400,19 @@ async function syncCloudNow(){
   cloudUI('⚠️ Cloud Sync failed: '+(e&&e.message?e.message:'Firebase error'));
  }finally{cloudBusy=false;}
 }
+// Automatic cross-device sync: check for mobile/laptop changes every 12 seconds.
+let divaAutoSyncTimer=null;
+function divaAutoSyncTick(){
+ if(!navigator.onLine||document.visibilityState==='hidden'||!cloudCode()||cloudBusy)return;
+ syncCloudNow();
+}
+(function startDivaAutoSync(){
+ if(divaAutoSyncTimer)clearInterval(divaAutoSyncTimer);
+ divaAutoSyncTimer=setInterval(divaAutoSyncTick,12000);
+ window.addEventListener('focus',()=>setTimeout(divaAutoSyncTick,500));
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(divaAutoSyncTick,500);});
+ window.addEventListener('online',()=>setTimeout(divaAutoSyncTick,1000));
+})();
 async function createCloudCode(){
  const code=randomCloudCode();
  localStorage.setItem('DIVA_CLOUD_CODE',code);
