@@ -1314,6 +1314,13 @@ async function syncCloudNow(){
   cloudUser=cloudAuth.currentUser;
   if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
 
+  // Initialize the pull watermark BEFORE uploading local changes. If it is first
+  // initialized inside syncPullAndMerge, a just-uploaded stockDelta can be mistaken
+  // for old history and skipped on this device's partner device.
+  if(!localStorage.getItem(SYNC_LAST_PULL_TS_KEY)&&(syncBaseline||syncHasLocalData())){
+   localStorage.setItem(SYNC_LAST_PULL_TS_KEY,String(Date.now()));
+  }
+
   /* FIRST CONNECTION: an empty/new device must pull laptop data before uploading anything. */
   if(!syncBaseline&&!syncHasLocalData()){
    const pulled=await syncPullAndMerge(code);
