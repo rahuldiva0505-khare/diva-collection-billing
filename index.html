@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=153',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=154',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -335,7 +335,7 @@ function toggleGaneshMantra(){
    box.innerHTML='';box.style.display='none';btn.textContent='🪔 लक्ष्मी माता की मधुर आरती';return;
  }
  box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ आरती बंद करें';
- box.innerHTML='<div style="padding:12px;border:1px solid #e7b7ca;border-radius:12px;background:#fff"><b>🪔 लक्ष्मी माता की मधुर आरती</b><p style="margin:8px 0;font-size:14px">संगीत और भक्ति-गायन के साथ</p><audio id="lakshmiAartiAudio" controls preload="auto" style="width:100%"><source src="./lakshmi-aarti.ogg" type="audio/ogg">आपका browser audio नहीं चला पा रहा।</audio><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">आरती तैयार हो रही है… पहली बार इंटरनेट चालू रखें ताकि ऑडियो सेव हो सके।</p></div>';
+ box.innerHTML='<div style="padding:12px;border:1px solid #e7b7ca;border-radius:12px;background:#fff"><b>🪔 लक्ष्मी माता की मधुर आरती</b><p style="margin:8px 0;font-size:14px">संगीत और भक्ति-गायन के साथ</p><audio id="lakshmiAartiAudio" controls preload="auto" style="width:100%"><source src="https://upload.wikimedia.org/wikipedia/commons/8/8b/Aarti_Puja%2C_Lakshmi_Laxmi.ogg" type="audio/ogg"><source src="./lakshmi-aarti.ogg" type="audio/ogg">आपका browser audio नहीं चला पा रहा।</audio><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">आरती तैयार हो रही है… पहली बार इंटरनेट चालू रखें ताकि ऑडियो सेव हो सके।</p></div>';
  const audio=document.getElementById('lakshmiAartiAudio');
  const status=document.getElementById('mantraOfflineStatus');
  if(!audio)return;
