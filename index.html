@@ -136,7 +136,7 @@ function code128Svg(value,opts={}){
 <div class="sizechips">
 <label class="sizechip"><input type="checkbox" class="psizecheck" value="S"> S</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="M"> M</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="L"> L</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XL"> XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXL"> XXL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="3XL"> 3XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="4XL"> 4XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="5XL"> 5XL</label>
 </div><input id="pcustomSizes" placeholder="Custom sizes, comma separated (जैसे 28,30,32)">
-<div class="small" style="margin-top:10px"><b>🎨 Colours (कम से कम 4 options)</b></div>
+<div class="small" style="margin-top:10px"><b>🎨 Colours (फोटो से पहचानें या खुद भरें)</b></div>
 <div class="colorrow"><div><label>Colour 1</label><input id="pcolor1" placeholder="जैसे Teak Blue"></div><div><label>Colour 2 (optional)</label><input id="pcolor2" placeholder="दूसरा Colour"></div></div>
 <div class="colorrow"><div><label>Colour 3</label><input id="pcolor3" placeholder="तीसरा Colour"></div><div><label>Colour 4</label><input id="pcolor4" placeholder="चौथा Colour"></div></div><div class="colorrow"><div><label>Colour 5 (optional)</label><input id="pcolor5" placeholder="पाँचवाँ Colour"></div><div><label>Colour 6 (optional)</label><input id="pcolor6" placeholder="छठा Colour"></div></div><div class="colorrow"><div><label>Colour 7 (optional)</label><input id="pcolor7" placeholder="सातवाँ Colour"></div><div><label>Colour 8 (optional)</label><input id="pcolor8" placeholder="आठवाँ Colour"></div><div><button type="button" class="gray" onclick="buildPurchaseMatrix()">🔄 Size/Colour Quantity Matrix</button></div></div>
 <div id="purchaseMatrix" class="matrix small">पहले Size और Colour चुनकर Matrix बनाएं.</div></div></div>
@@ -492,7 +492,7 @@ function addNewCategory(){
  if(el)el.value=''; renderCategories(); if(search)search.value=name; alert('✅ नई Category add हो गई: '+name);
 }
 function selectedPurchaseSizes(){let a=[...document.querySelectorAll('.psizecheck:checked')].map(x=>x.value),c=(document.getElementById('pcustomSizes')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(a.concat(c))]}
-function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4','pcolor5','pcolor6','pcolor7','pcolor8'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x.toLowerCase())===i)}
+function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4','pcolor5','pcolor6','pcolor7','pcolor8'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.findIndex(v=>v.toLowerCase()===x.toLowerCase())===i)}
 function buildPurchaseMatrix(){
  let sizes=selectedPurchaseSizes(),colors=selectedPurchaseColors(),el=document.getElementById('purchaseMatrix');
  if(!sizes.length||!colors.length){el.innerHTML='<div class="empty">कम से कम 1 Size और 1 Colour चुनें.</div>';return}
