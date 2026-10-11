@@ -222,7 +222,6 @@ function code128Svg(value,opts={}){
     w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div><script>function toggleSideMenu(){var m=document.getElementById("sideMenuPanel");if(m)m.classList.toggle("open")}function closeSideMenu(){var m=document.getElementById("sideMenuPanel");if(m)m.classList.remove("open")}document.addEventListener("click",function(e){var m=document.getElementById("sideMenuPanel"),b=document.getElementById("sideMenuToggle");if(m&&m.classList.contains("open")&&!m.contains(e.target)&&e.target!==b)closeSideMenu()});<\/script>
 
 
-<script>
 // Local JSON backup: downloads this device's current app data only; does not change Firebase or Sync Code.
 window.downloadDivaBackup = function(){
   try {
@@ -235,7 +234,6 @@ window.downloadDivaBackup = function(){
     const el=document.getElementById('divaBackupStatus');if(el)el.textContent='✅ Backup download shuru ho gaya. File ko safe jagah par rakhein.';
   } catch(e){alert('Backup nahi ban paya: '+(e.message||e));}
 };
-</script>
 
 </body></html>');
     w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
