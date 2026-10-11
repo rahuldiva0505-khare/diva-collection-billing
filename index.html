@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=152',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=153',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1226,8 +1226,8 @@ function cloudUI(msg){const e=document.getElementById('cloudCode'),s=document.ge
 async function initCloud(){if(!cloudApp)cloudApp=firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();if(!cloudDb)cloudDb=firebase.firestore();if(!cloudAuth.currentUser)await cloudAuth.signInAnonymously();cloudUser=cloudAuth.currentUser}
 function cleanCloudData(){return JSON.parse(JSON.stringify(db))}
 async function syncCloudNow(){if(cloudBusy)return;const code=cloudCode();if(!code){cloudUI('Pehle New Sync Code ya existing Sync Code connect karein.');return}cloudBusy=true;cloudUI('Cloud sync ho raha hai...');try{await initCloud();const ref=cloudDb.collection('cloudShops').doc(code);const snap=await ref.get();const localStamp=Number(localStorage.getItem('DIVA_CLOUD_STAMP')||0);const remote=snap.exists?snap.data():null;if(remote&&remote.updatedAt&&Number(remote.updatedAt)>localStamp&&remote.data){db=remote.data;if(!Array.isArray(db.stock))db.stock=[];if(!Array.isArray(db.sales))db.sales=[];if(!Array.isArray(db.expenses))db.expenses=[];if(!Array.isArray(db.stockReturns))db.stockReturns=[];if(!Array.isArray(db.purchases))db.purchases=[];if(!Array.isArray(db.salesReturns))db.salesReturns=[];save();localStorage.setItem('DIVA_CLOUD_STAMP',String(remote.updatedAt));refreshCloudApp();cloudUI('Cloud se latest data aa gaya ✓ '+new Date(remote.updatedAt).toLocaleTimeString());}else{const stamp=Date.now();await ref.set({updatedAt:stamp,device:cloudDevice(),data:cleanCloudData()});localStorage.setItem('DIVA_CLOUD_STAMP',String(stamp));cloudUI('Data cloud me save ho gaya ✓ '+new Date(stamp).toLocaleTimeString());}}catch(e){console.error(e);cloudUI('Cloud sync failed. Internet/Firebase check karein.')}finally{cloudBusy=false}}
-async function createCloudCode(){const code=randomCloudCode();localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');cloudUI('New Sync Code ready: '+code);await syncCloudNow()}
-async function connectCloudCode(){const code=document.getElementById('cloudCode').value.trim().toUpperCase();if(!code){cloudUI('Sync Code dalo.');return}localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');await syncCloudNow()}
+async function createCloudCode(){if(localStorage.getItem('DIVA_RESTORE_SYNC_PAUSED')==='1'){cloudUI('⚠️ Cloud Sync PAUSED after local restore. Naya Sync Code banana abhi mana hai; pehle data reconcile karein.');return;}const code=randomCloudCode();localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');cloudUI('New Sync Code ready: '+code);await syncCloudNow()}
+async function connectCloudCode(){if(localStorage.getItem('DIVA_RESTORE_SYNC_PAUSED')==='1'){cloudUI('⚠️ Cloud Sync PAUSED after local restore. Sync Code badalna abhi mana hai; pehle data reconcile karein.');return;}const code=document.getElementById('cloudCode').value.trim().toUpperCase();if(!code){cloudUI('Sync Code dalo.');return}localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');await syncCloudNow()}
 function refreshCloudApp(){renderCategories();loadBillProducts();renderStock();renderCart();renderPurchase();renderDashboard();renderBillHistory();renderCustomers();renderReport();renderLabels();renderStockReturns();renderSalesReturn()}
 /* DIVA CLOUD SYNC V3 — cloud-first initial pull + safe two-way merge */
 let syncApplying=false;
@@ -1455,6 +1455,7 @@ async function syncCloudNow(){
  }finally{cloudBusy=false;}
 }
 async function repairMissingSkuSync(){
+ if(localStorage.getItem('DIVA_RESTORE_SYNC_PAUSED')==='1'){cloudUI('⚠️ Restore ke baad Cloud Sync PAUSED hai. SKU repair bhi reconcile hone tak band hai.');return;}
  if(cloudBusy)return;
  const code=cloudCode();
  if(!code){cloudUI('Pehle dono devices par same Sync Code connect karein.');return;}
