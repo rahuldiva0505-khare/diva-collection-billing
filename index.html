@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=135',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=139',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -10,7 +10,7 @@ if('serviceWorker' in navigator){
 body{margin:0;font-family:Arial,sans-serif;background:#fff0f6;color:#222}
 .product-folder{border:1px solid #e7b7ca;border-radius:14px;margin:12px 0;overflow:hidden;background:#fff}
 .category-suggestions{position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #d58ba9;border-radius:4px;box-shadow:0 3px 8px #0002}.category-suggestion{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #eee;background:#fff;color:#222;font-size:16px;min-height:42px}.category-suggestion:active{background:#e8f5ec}.category-no-match{padding:10px;color:#777;font-size:13px}
-.new-product-photo-box{grid-column:1/-1;border:1px dashed #d58ba9;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff7fa}.new-photo-preview{width:86px;height:100px;border:1px solid #ddd;border-radius:9px;background:#fbeaf1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;overflow:hidden;color:#777}.new-photo-preview img{width:100%;height:78px;object-fit:cover}.new-photo-preview span{font-size:27px}.new-photo-preview small{font-size:10px;text-align:center}.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fff7fa}
+.photo-color-detect{grid-column:1/-1;border:1px solid #e7b7ca;border-radius:10px;padding:10px;background:#fff}.photo-color-detect .suggestions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.photo-color-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #d7c2cc;border-radius:18px;padding:6px 9px;background:#fff;font-size:13px}.photo-color-chip input{width:auto;margin:0}.photo-color-swatch{display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid #999;flex-shrink:0}.photo-color-detect .small{margin-top:5px}.new-product-photo-box{grid-column:1/-1;border:1px dashed #d58ba9;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff7fa}.new-photo-preview{width:86px;height:100px;border:1px solid #ddd;border-radius:9px;background:#fbeaf1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;overflow:hidden;color:#777}.new-photo-preview img{width:100%;height:78px;object-fit:cover}.new-photo-preview span{font-size:27px}.new-photo-preview small{font-size:10px;text-align:center}.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fff7fa}
 .folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5}
 .folder-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#777}.folder-placeholder span{font-size:30px}.folder-placeholder small{font-size:10px}
 .folder-title{flex:1;min-width:0}.folder-title>b{display:block;font-size:16px;margin:4px 0;overflow-wrap:anywhere}.folder-number{font-size:11px;font-weight:800;color:#9f174d;letter-spacing:.7px}.folder-stats{font-size:12px;color:#444;margin-top:6px}.folder-arrow{font-size:24px;color:#9f174d}
@@ -128,7 +128,7 @@ function code128Svg(value,opts={}){
 <div class="grid">
 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative"><input id="pcatSearch" type="text" inputmode="text" autocapitalize="words" placeholder="Category चुनें / टाइप करें" autocomplete="off" onfocus="syncPurchaseCategory()" oninput="syncPurchaseCategory()" style="flex:1;min-width:160px"><div id="pcatSuggestions" class="category-suggestions" style="display:none"></div><select id="pcat" style="display:none"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)" style="display:none">
 <div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
-<div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div>
+<div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div><div id="photoColorDetect" class="photo-color-detect"><b>🎨 फोटो से रंग पहचानें</b><div id="photoColorStatus" class="small">फोटो चुनने पर संभावित रंग यहाँ दिखेंगे। रंगों को जाँचकर ही जोड़ें।</div><div id="photoColorSuggestions" class="suggestions"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="gray" onclick="addSelectedPhotoColors()">➕ चुने हुए रंग जोड़ें</button><button type="button" class="gray" onclick="clearPhotoColorSuggestions()">रंग सुझाव हटाएँ</button></div></div>
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
 <input id="psupplier" placeholder="Supplier / Party Name"><input id="pinvoice" placeholder="Invoice No."><input id="pgst" type="number" min="0" max="100" step="0.01" placeholder="GST % (जैसे 5, 12, 18)">
@@ -136,9 +136,9 @@ function code128Svg(value,opts={}){
 <div class="sizechips">
 <label class="sizechip"><input type="checkbox" class="psizecheck" value="S"> S</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="M"> M</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="L"> L</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XL"> XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="XXL"> XXL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="3XL"> 3XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="4XL"> 4XL</label><label class="sizechip"><input type="checkbox" class="psizecheck" value="5XL"> 5XL</label>
 </div><input id="pcustomSizes" placeholder="Custom sizes, comma separated (जैसे 28,30,32)">
-<div class="small" style="margin-top:10px"><b>🎨 Colours (कम से कम 4 options)</b></div>
+<div class="small" style="margin-top:10px"><b>🎨 Colours (फोटो से पहचानें या खुद भरें)</b></div>
 <div class="colorrow"><div><label>Colour 1</label><input id="pcolor1" placeholder="जैसे Teak Blue"></div><div><label>Colour 2 (optional)</label><input id="pcolor2" placeholder="दूसरा Colour"></div></div>
-<div class="colorrow"><div><label>Colour 3</label><input id="pcolor3" placeholder="तीसरा Colour"></div><div><label>Colour 4</label><input id="pcolor4" placeholder="चौथा Colour"></div><div><button type="button" class="gray" onclick="buildPurchaseMatrix()">🔄 Size/Colour Quantity Matrix</button></div></div>
+<div class="colorrow"><div><label>Colour 3</label><input id="pcolor3" placeholder="तीसरा Colour"></div><div><label>Colour 4</label><input id="pcolor4" placeholder="चौथा Colour"></div></div><div class="colorrow"><div><label>Colour 5 (optional)</label><input id="pcolor5" placeholder="पाँचवाँ Colour"></div><div><label>Colour 6 (optional)</label><input id="pcolor6" placeholder="छठा Colour"></div></div><div class="colorrow"><div><label>Colour 7 (optional)</label><input id="pcolor7" placeholder="सातवाँ Colour"></div><div><label>Colour 8 (optional)</label><input id="pcolor8" placeholder="आठवाँ Colour"></div><div><button type="button" class="gray" onclick="buildPurchaseMatrix()">🔄 Size/Colour Quantity Matrix</button></div></div>
 <div id="purchaseMatrix" class="matrix small">पहले Size और Colour चुनकर Matrix बनाएं.</div></div></div>
 <button class="green" onclick="saveNewPurchaseProduct()">💾 SAVE PRODUCT + PURCHASE</button>
 <div id="newPurchaseResult" class="small" style="margin-top:8px"></div></div>
@@ -492,7 +492,7 @@ function addNewCategory(){
  if(el)el.value=''; renderCategories(); if(search)search.value=name; alert('✅ नई Category add हो गई: '+name);
 }
 function selectedPurchaseSizes(){let a=[...document.querySelectorAll('.psizecheck:checked')].map(x=>x.value),c=(document.getElementById('pcustomSizes')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);return [...new Set(a.concat(c))]}
-function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)}
+function selectedPurchaseColors(){return ['pcolor1','pcolor2','pcolor3','pcolor4','pcolor5','pcolor6','pcolor7','pcolor8'].map(id=>document.getElementById(id)?.value.trim()).filter(Boolean).filter((x,i,a)=>a.findIndex(v=>v.toLowerCase()===x.toLowerCase())===i)}
 function buildPurchaseMatrix(){
  let sizes=selectedPurchaseSizes(),colors=selectedPurchaseColors(),el=document.getElementById('purchaseMatrix');
  if(!sizes.length||!colors.length){el.innerHTML='<div class="empty">कम से कम 1 Size और 1 Colour चुनें.</div>';return}
@@ -507,6 +507,57 @@ function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let
 function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
 
 let pendingNewProductPhoto='';
+let photoColorCandidates=[];
+const PHOTO_COLOR_PALETTE=[
+ ['Black',25,25,28],['White',245,245,240],['Grey',135,137,140],['Red',205,35,48],['Maroon',111,25,55],['Pink',235,130,170],['Magenta',190,40,145],['Purple',118,60,155],['Violet',145,95,190],['Navy Blue',35,50,100],['Blue',45,95,190],['Teal Blue',35,125,145],['Sky Blue',105,180,220],['Green',45,135,75],['Pistachio Green',160,190,115],['Olive',125,125,45],['Yellow',235,205,55],['Mustard',195,145,35],['Orange',225,115,35],['Peach',240,175,145],['Beige',215,195,155],['Brown',120,75,48],['Cream',238,225,195]
+];
+function nearestPhotoColor(r,g,b){
+ let best=null,bestD=Infinity;
+ PHOTO_COLOR_PALETTE.forEach(p=>{const d=2*(r-p[1])**2+4*(g-p[2])**2+3*(b-p[3])**2;if(d<bestD){bestD=d;best=p}});
+ return best?{name:best[0],rgb:best.slice(1)}:null;
+}
+function detectPhotoColors(img){
+ const status=document.getElementById('photoColorStatus'),box=document.getElementById('photoColorSuggestions');
+ if(!status||!box)return;
+ try{
+  const c=document.createElement('canvas'),max=110,scale=Math.min(1,max/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
+  c.width=Math.max(1,Math.round((img.naturalWidth||img.width)*scale));c.height=Math.max(1,Math.round((img.naturalHeight||img.height)*scale));
+  const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,c.width,c.height);
+  const data=ctx.getImageData(0,0,c.width,c.height).data,hist={};
+  for(let y=0;y<c.height;y+=2)for(let x=0;x<c.width;x+=2){
+   const i=(y*c.width+x)*4,r=data[i],g=data[i+1],b=data[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),sat=mx?((mx-mn)/mx):0,bright=mx/255;
+   if(bright>.94||bright<.10)continue;
+   if(sat<.16&&bright>.32)continue;
+   const p=nearestPhotoColor(r,g,b);if(!p)continue;
+   const key=p.name;hist[key]=(hist[key]||0)+1;
+  }
+  const sorted=Object.entries(hist).sort((a,b)=>b[1]-a[1]).filter(([name,count])=>count>=2);
+  photoColorCandidates=[];
+  for(const [name,count] of sorted){
+   if(!photoColorCandidates.some(x=>x.name===name))photoColorCandidates.push({name,count,rgb:PHOTO_COLOR_PALETTE.find(p=>p[0]===name).slice(1)});
+   if(photoColorCandidates.length>=8)break;
+  }
+  if(!photoColorCandidates.length){status.textContent='रंग साफ़ नहीं पहचान पाए। नीचे Colour fields में रंग खुद लिख सकते हैं।';box.innerHTML='';return}
+  status.textContent='फोटो से संभावित रंग मिले हैं। सही रंग चुनें; गलत सुझाव का टिक हटाएँ।';
+  box.innerHTML=photoColorCandidates.map((p,i)=>'<label class="photo-color-chip"><input type="checkbox" class="photo-color-choice" data-index="'+i+'" checked><span class="photo-color-swatch" style="background:rgb('+p.rgb.join(',')+')"></span>'+esc(p.name)+'</label>').join('');
+ }catch(e){status.textContent='इस फोटो से रंग नहीं पहचान पाए। रंग नीचे खुद भर सकते हैं।';box.innerHTML='';}
+}
+function addSelectedPhotoColors(){
+ const chosen=[...document.querySelectorAll('.photo-color-choice:checked')].map(el=>photoColorCandidates[Number(el.dataset.index)]).filter(Boolean);
+ if(!chosen.length){alert('पहले सही रंगों पर टिक लगाएँ।');return}
+ const ids=['pcolor1','pcolor2','pcolor3','pcolor4','pcolor5','pcolor6','pcolor7','pcolor8'];
+ let added=0;
+ chosen.forEach(p=>{
+  const current=selectedPurchaseColors();
+  if(current.some(x=>x.toLowerCase()===p.name.toLowerCase()))return;
+  const empty=ids.find(id=>!document.getElementById(id).value.trim());
+  if(!empty)return;
+  document.getElementById(empty).value=p.name;added++;
+ });
+ if(added===0)alert('कोई नया रंग नहीं जुड़ा। शायद रंग पहले से मौजूद हैं या सभी 8 जगह भर चुकी हैं।');
+ else{buildPurchaseMatrix();document.getElementById('photoColorStatus').textContent=added+' रंग जोड़ दिए। मात्रा भरने से पहले रंगों की जाँच कर लें।';}
+}
+function clearPhotoColorSuggestions(){photoColorCandidates=[];const box=document.getElementById('photoColorSuggestions'),status=document.getElementById('photoColorStatus');if(box)box.innerHTML='';if(status)status.textContent='रंग सुझाव हटा दिए। फोटो चुनकर दोबारा पहचान सकते हैं।';}
 function previewNewProductPhoto(input){
  const file=input&&input.files&&input.files[0];if(!file)return;
  if(!file.type||!file.type.startsWith('image/')){alert('कृपया image photo चुनें.');input.value='';return}
@@ -517,6 +568,7 @@ function previewNewProductPhoto(input){
   if(el)el.innerHTML='<img src="'+original+'" alt="Product photo preview" style="display:block;width:100%;height:100%;max-height:180px;object-fit:contain;background:#fff">';
   const img=new Image();
   img.onload=function(){
+   detectPhotoColors(img);
    try{
     const max=240,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
     canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
@@ -541,6 +593,7 @@ function previewNewProductPhoto(input){
 }
 function clearNewProductPhoto(){
  pendingNewProductPhoto='';
+ clearPhotoColorSuggestions();
  const input=document.getElementById('pnewProductPhoto');if(input)input.value='';
  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<span>👗</span><small>Product की photo यहाँ दिखेगी</small>';
 }
@@ -572,7 +625,7 @@ function saveNewPurchaseProduct(){
  const m=sku.match(/^DIVA-(\d+)$/i); if(m) localStorage.setItem('DIVA_NEXT_SKU_NO',String(Number(m[1])+1));
  renderCategories(); renderStock(); renderPurchase(); renderLabels();
  document.getElementById('newPurchaseResult').innerHTML='<b>✅ Product purchase saved.</b> '+added.length+' entries added. Barcode labels ready हैं.';
- ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; clearNewProductPhoto(); preparePurchaseSku();
+ ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4','pcolor5','pcolor6','pcolor7','pcolor8'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.'; clearNewProductPhoto(); preparePurchaseSku();
 
 }
 function getLabelPrintSettings(){
