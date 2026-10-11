@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=148',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=149',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -127,7 +127,7 @@ function code128Svg(value,opts={}){
 <div class="card" style="background:#fafafa"><h3>➕ Add New Product / Purchase Entry</h3>
 <div class="grid">
 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative"><input id="pcatSearch" type="text" inputmode="text" autocapitalize="words" placeholder="Category चुनें / टाइप करें" autocomplete="off" onfocus="syncPurchaseCategory()" oninput="syncPurchaseCategory()" style="flex:1;min-width:160px"><div id="pcatSuggestions" class="category-suggestions" style="display:none"></div><select id="pcat" style="display:none"><option value="">Select Category</option></select><button type="button" class="gray" onclick="addNewCategory()">➕ New Category</button></div><input id="pnewcat" placeholder="नई Category (optional)" style="display:none">
-<div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><input id="pname" placeholder="Product Name">
+<div style="display:flex;align-items:center;gap:8px"><label style="font-weight:700;white-space:nowrap">Auto SKU</label><input id="psku" placeholder="DIVA-1" readonly title="SKU automatically generated, e.g. DIVA-1" style="font-weight:800;background:#eef6ff"><span id="nextSkuHint" class="pill">Next: DIVA-1</span></div><div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="unusedSkuSelect" style="font-weight:700">खाली SKU चुनें (optional)</label><select id="unusedSkuSelect" onchange="chooseUnusedSku(this.value)" style="max-width:260px"><option value="">Auto SKU (आगे की सीरीज़)</option></select><span class="small">DIVA-44 से DIVA-49 में जो खाली हो, उसे चुनें।</span></div><input id="pname" placeholder="Product Name">
 <div class="new-product-photo-box"><label for="pnewProductPhoto" class="photo-pick">📷 Product Photo चुनें</label><input id="pnewProductPhoto" type="file" accept="image/*" capture="environment" onchange="previewNewProductPhoto(this)" style="display:none"><div id="pnewProductPhotoPreview" class="new-photo-preview"><span>👗</span><small>Product की photo यहाँ दिखेगी</small></div><button type="button" class="gray" onclick="clearNewProductPhoto()">Photo हटाएँ</button></div>
 <input id="pmrp" type="number" min="0" placeholder="MRP ₹"><input id="pselling" type="number" min="0" placeholder="Selling Price ₹">
 <input id="pdiscount" type="number" min="0" placeholder="Discount ₹"><input id="pcost" type="number" min="0" placeholder="Purchase / Cost Price ₹">
@@ -515,7 +515,32 @@ function nextDivaSku(){
  max=Math.max(max,stored-1);
  return 'DIVA-'+(max+1);
 }
-function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
+function skuAlreadyUsed(sku){
+ try{return new RegExp('\\b'+sku+'\\b','i').test(JSON.stringify(db||{}));}
+ catch(e){return true}
+}
+function refreshUnusedSkuOptions(){
+ const sel=document.getElementById('unusedSkuSelect');if(!sel)return;
+ const current=sel.value;
+ sel.innerHTML='<option value="">Auto SKU (आगे की सीरीज़)</option>';
+ for(let n=44;n<=49;n++){
+  const sku='DIVA-'+n;
+  if(!skuAlreadyUsed(sku)){
+   const opt=document.createElement('option');opt.value=sku;opt.textContent=sku+' — खाली';sel.appendChild(opt);
+  }
+ }
+ if([...sel.options].some(o=>o.value===current))sel.value=current;
+}
+function chooseUnusedSku(value){
+ const sku=value||nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');
+ if(e)e.value=sku;
+ if(h)h.textContent=value?'Selected: '+sku:'Next: '+sku;
+}
+function preparePurchaseSku(){
+ refreshUnusedSkuOptions();
+ const sel=document.getElementById('unusedSkuSelect');if(sel)sel.value='';
+ chooseUnusedSku('');
+}
 
 let pendingNewProductPhoto='';
 function previewNewProductPhoto(input){
@@ -559,7 +584,9 @@ function saveNewPurchaseProduct(){
  const newcat=document.getElementById('pnewcat').value.trim();
  const searchCat=document.getElementById('pcatSearch')?.value.trim()||'';
  const cat=newcat || document.getElementById('pcat').value.trim() || searchCat;
- const sku=nextDivaSku();
+ const selectedSku=document.getElementById('unusedSkuSelect')?.value||'';
+ const sku=selectedSku||nextDivaSku();
+ if(selectedSku&&skuAlreadyUsed(selectedSku)){alert(selectedSku+' पहले से इस्तेमाल है। कृपया खाली SKU चुनें।');refreshUnusedSkuOptions();return}
  const skuEl=document.getElementById('psku'); if(skuEl) skuEl.value=sku;
  const name=document.getElementById('pname').value.trim() || sku;
  const sizes=selectedPurchaseSizes();
