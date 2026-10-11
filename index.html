@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=147',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=148',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -503,7 +503,18 @@ function clearPurchaseProductForm(){
  clearNewProductPhoto();
  ['pnewcat','pcatSearch','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); const pcat=document.getElementById('pcat');if(pcat)pcat.value='';document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
 }
-function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); (db.purchases||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); let stored=Number(localStorage.getItem('DIVA_NEXT_SKU_NO')||0); max=Math.max(max,stored-1); let n=max+1; while(seen.includes(n)) n++; return 'DIVA-'+n;}
+function nextDivaSku(){
+ // Preserve all existing SKU IDs; new products continue after the highest SKU already present.
+ let max=0;
+ try{
+  const raw=JSON.stringify(db||{});
+  const re=/DIVA-(\d+)/gi;let m;
+  while((m=re.exec(raw))!==null)max=Math.max(max,Number(m[1]));
+ }catch(e){}
+ const stored=Number(localStorage.getItem('DIVA_NEXT_SKU_NO')||0);
+ max=Math.max(max,stored-1);
+ return 'DIVA-'+(max+1);
+}
 function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
 
 let pendingNewProductPhoto='';
