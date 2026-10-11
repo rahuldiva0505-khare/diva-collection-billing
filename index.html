@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=144',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=145',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -504,7 +504,16 @@ function clearPurchaseProductForm(){
  clearNewProductPhoto();
  ['pnewcat','pcatSearch','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); const pcat=document.getElementById('pcat');if(pcat)pcat.value='';document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false);document.getElementById('purchaseMatrix').innerHTML='पहले Size और Colour चुनकर Matrix बनाएं.';document.getElementById('newPurchaseResult').innerHTML='';
 }
-function nextDivaSku(){ let max=0; const seen=[]; (db.stock||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); (db.purchases||[]).forEach(x=>{let m=String(x.sku||'').match(/^DIVA-(\d+)$/i);if(m){max=Math.max(max,Number(m[1]));seen.push(Number(m[1]));}}); let stored=Number(localStorage.getItem('DIVA_NEXT_SKU_NO')||0); max=Math.max(max,stored-1); let n=max+1; while(seen.includes(n)) n++; return 'DIVA-'+n;}
+function nextDivaSku(){
+ const seen=new Set();
+ function addSku(value){const m=String(value||'').match(/^DIVA-(\d+)$/i);if(m)seen.add(Number(m[1]));}
+ (db.stock||[]).forEach(x=>addSku(x.sku));
+ (db.purchases||[]).forEach(x=>addSku(x.sku));
+ (db.bills||[]).forEach(b=>{(b.items||b.cart||b.products||[]).forEach(x=>addSku(x.sku));});
+ // Reuse the first genuinely unused number; keep every existing product/bill SKU unchanged.
+ let n=1;while(seen.has(n))n++;
+ return 'DIVA-'+n;
+}
 function preparePurchaseSku(){let sku=nextDivaSku(),e=document.getElementById('psku'),h=document.getElementById('nextSkuHint');if(e)e.value=sku;if(h)h.textContent='Next: '+sku;}
 
 let pendingNewProductPhoto='';
