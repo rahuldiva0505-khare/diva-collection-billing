@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=154',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=155',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -113,7 +113,7 @@ function code128Svg(value,opts={}){
 <button type="button" onclick="menuPage('labels')">🏷️ Barcode Labels</button>
 <button type="button" onclick="menuPage('printer')">🖨️ Printer</button>
 <button type="button" onclick="closeSideMenu();openCloudSync()">☁️ Cloud Sync</button>
-<button type="button" onclick="closeSideMenu();toggleGaneshMantra()">🪔 लक्ष्मी माता की मधुर आरती</button>
+<button id="ganeshMusicToggle" type="button" onclick="closeSideMenu();toggleGaneshMantra()">🪔 लक्ष्मी माता की मधुर आरती</button>
 <button type="button" onclick="closeSideMenu();toggleLakshmiMantra()">🪷 ह्रीं श्रीं लक्ष्मी मंत्र</button>
 <button type="button" onclick="closeSideMenu();lockNow()">🔒 Lock App</button>
 <button type="button" onclick="closeSideMenu();appLockSettings()">🔐 Lock / Unlock / PIN Settings</button>
