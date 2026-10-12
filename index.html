@@ -283,7 +283,7 @@ function code128Svg(value,opts={}){
 <p class="small" style="margin-top:10px">नोट: यह browser से <b>BLE</b> printers के लिए है. पुराने Classic Bluetooth / SPP printers को Chrome web app सीधे control नहीं कर सकता; ऐसे printer में Android system print या manufacturer app की जरूरत पड़ सकती है.</p>
 </div></section>
 
-<section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Laptop aur mobile par apne Firebase Email/Password account se login karein. App ka 4–6 digit PIN lock pehle ki tarah rahega.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" type="button" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" type="button" onclick="syncCloudNow()">🔄 Sync Now</button><button type="button" onclick="repairMissingSkuSync()" style="background:#8a245d;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation">🛠️ 44, 45, 55 SKU Sync Repair</button><button type="button" onclick="repairMissingSkuRangeSync()" style="background:#9a3f18;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation">🧩 DIVA-23 से 43 Mobile Sync Repair (Laptop only)</button><button type="button" onclick="repairProductPhotoSync()" style="background:#6c2bd9;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation">📸 Product Photo Sync Repair (Laptop only)</button><button id="generateSyncCodeBtn" type="button" style="background:#b72d70;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation" onclick="createCloudCode()">➕ Generate New Sync Code</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #9f174d;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
+<section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Laptop aur mobile par apne Firebase Email/Password account se login karein. App ka 4–6 digit PIN lock pehle ki tarah rahega.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" type="button" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" type="button" onclick="syncCloudNow()">🔄 Sync Now</button><button id="generateSyncCodeBtn" type="button" style="background:#b72d70;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation" onclick="createCloudCode()">➕ Generate New Sync Code</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #9f174d;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
 <div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
 <div id="report" style="margin-top:12px"></div></div></section>
 </main>
@@ -1514,83 +1514,6 @@ async function syncCloudNow(){
  }catch(e){
   console.error('DIVA CLOUD SYNC ERROR',e);
   cloudUI('⚠️ Cloud Sync failed: '+(e&&e.message?e.message:'Firebase error'));
- }finally{cloudBusy=false;}
-}
-async function repairProductPhotoSync(){
- if(cloudBusy)return;
- const code=cloudCode();
- if(!code){cloudUI('Pehle laptop par wahi existing Sync Code connect karein.');return;}
- if(!navigator.onLine){cloudUI('📴 Internet connect karke photo sync repair karein.');return;}
- const photos=Array.isArray(db.productPhotos)?db.productPhotos.filter(p=>p&&p.key&&p.data):[];
- if(!photos.length){cloudUI('⚠️ Is laptop ke local data me product photos nahi mili. Kuch delete nahi hua.');return;}
- if(!confirm('Yeh repair sirf is laptop ki '+photos.length+' saved product photos ko current Sync Code par bhejega. Stock, bills aur quantities nahi badlenge. Yeh button LAPTOP par hi dabayein. Aage badhein?'))return;
- cloudBusy=true;
- cloudUI('📸 Laptop ki '+photos.length+' product photos cloud par bheji ja rahi hain...');
- try{
-  await initCloud();
-  if(!cloudAuth.currentUser||cloudAuth.currentUser.isAnonymous){cloudUI('🔐 Pehle Cloud Sync wale Firebase account se Login karein.');return;}
-  const ops=photos.map(p=>({kind:'set',entity:'productPhotos',key:syncRecordKey('productPhotos',p),payload:syncClone(p)}));
-  const uploaded=await syncUploadOps(code,ops);
-  const pulled=await syncPullAndMerge(code);
-  saveLocalOnly();
-  syncBaselineNow();
-  refreshCloudApp();
-  cloudUI('✅ Photo Sync Repair complete: '+uploaded+' photos cloud par bheji. Ab mobile par Cloud Sync > Sync Now dabayein.');
- }catch(e){
-  console.error('DIVA PHOTO SYNC REPAIR ERROR',e);
-  cloudUI('⚠️ Photo Sync Repair failed: '+(e&&e.message?e.message:'Firebase error'));
- }finally{cloudBusy=false;}
-}
-async function repairMissingSkuRangeSync(){
- if(cloudBusy)return;
- const code=cloudCode();
- if(!code){cloudUI('Pehle laptop par wahi existing Sync Code connect karein.');return;}
- if(!navigator.onLine){cloudUI('📴 Internet connect karke phir SKU Sync Repair karein.');return;}
- if(!confirm('Yeh button LAPTOP par hi dabayein. Laptop ke local stock se sirf DIVA-23 se DIVA-43 tak ke stock records existing Sync Code par bheje jayenge. Mobile ke existing stock/bills delete nahi honge aur quantities ko seedha overwrite nahi kiya jayega. Aage badhein?'))return;
- cloudBusy=true;
- cloudUI('🧩 Laptop se DIVA-23 se DIVA-43 tak ke stock records cloud par bheje ja rahe hain...');
- try{
-  await initCloud();
-  if(!cloudAuth.currentUser||cloudAuth.currentUser.isAnonymous){cloudUI('🔐 Pehle Cloud Sync wale Firebase account se Login karein.');return;}
-  const wanted=new Set(Array.from({length:21},(_,i)=>'DIVA-'+(i+23)));
-  const rows=(Array.isArray(db.stock)?db.stock:[]).filter(x=>wanted.has(String(x.sku||'').trim().toUpperCase()));
-  if(!rows.length){cloudUI('⚠️ Laptop ke local Stock me DIVA-23 se DIVA-43 tak records nahi mile. Kuch delete nahi hua.');return;}
-  const ops=rows.map(x=>({kind:'set',entity:'stock',key:syncRecordKey('stock',x),payload:syncClone(x)}));
-  const uploaded=await syncUploadOps(code,ops);
-  const pulled=await syncPullAndMerge(code);
-  saveLocalOnly();
-  syncBaselineNow();
-  refreshCloudApp();
-  cloudUI('✅ Laptop SKU repair complete: '+uploaded+' stock records cloud par bheje. Ab mobile par isi Sync Code ke saath Cloud Sync > Sync Now dabayein. Mobile par missing products aa jane chahiye.');
- }catch(e){
-  console.error('DIVA SKU RANGE REPAIR ERROR',e);
-  cloudUI('⚠️ SKU Repair failed: '+(e&&e.message?e.message:'Firebase error'));
- }finally{cloudBusy=false;}
-}
-async function repairMissingSkuSync(){
- if(cloudBusy)return;
- const code=cloudCode();
- if(!code){cloudUI('Pehle dono devices par same Sync Code connect karein.');return;}
- if(!navigator.onLine){cloudUI('📴 Internet connect karke phir SKU Sync Repair karein.');return;}
- if(!confirm('Mobile ke local stock se sirf DIVA-44, DIVA-45 aur DIVA-55 ke sabhi variants current Sync Code par bhejein? Koi SKU delete nahi hoga.'))return;
- cloudBusy=true;
- cloudUI('🛠️ DIVA-44, 45, 55 ka stock cloud par bheja ja raha hai...');
- try{
-  await initCloud();
-  if(!cloudAuth.currentUser||cloudAuth.currentUser.isAnonymous){cloudUI('🔐 Pehle Cloud Sync wale Firebase account se Login karein.');return;}
-  const wanted=new Set(['DIVA-44','DIVA-45','DIVA-55']);
-  const rows=(Array.isArray(db.stock)?db.stock:[]).filter(x=>wanted.has(String(x.sku||'').trim().toUpperCase()));
-  if(!rows.length){cloudUI('⚠️ Is device ke local Stock me DIVA-44, DIVA-45, DIVA-55 records nahi mile. Kuch delete nahi hua.');return;}
-  const ops=rows.map(x=>({kind:'set',entity:'stock',key:syncRecordKey('stock',x),payload:syncClone(x)}));
-  const uploaded=await syncUploadOps(code,ops);
-  const pulled=await syncPullAndMerge(code);
-  saveLocalOnly();
-  syncBaselineNow();
-  refreshCloudApp();
-  cloudUI('✅ SKU Repair complete: '+uploaded+' stock record(s) uploaded. Ab laptop par Sync Now dabayein; download '+pulled+'.');
- }catch(e){
-  console.error('DIVA SKU REPAIR ERROR',e);
-  cloudUI('⚠️ SKU Repair failed: '+(e&&e.message?e.message:'Firebase error'));
  }finally{cloudBusy=false;}
 }
 // Automatic cross-device sync: check for mobile/laptop changes every 12 seconds.
