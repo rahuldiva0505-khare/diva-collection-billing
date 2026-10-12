@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=155',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=156',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1457,6 +1457,27 @@ async function syncCloudNow(){
   await initCloud();
   if(!cloudAuth.currentUser||cloudAuth.currentUser.isAnonymous){cloudUI('🔐 Pehle Cloud Sync wale Firebase account se Login karein. Local billing safe hai.');return;}
   cloudUser=cloudAuth.currentUser;
+  /* SAFE WORKSPACE SWITCH: pull the destination laptop/cloud data before any local upload. */
+  if(localStorage.getItem('DIVA_SYNC_SWITCH_PULL_FIRST')===code){
+   const switchedPull=await syncPullAndMerge(code);
+   if(switchedPull>0){
+    saveLocalOnly();
+    localStorage.removeItem('DIVA_SYNC_SWITCH_PULL_FIRST');
+    refreshCloudApp();
+    cloudUI('✅ Naye Sync Code se '+switchedPull+' cloud changes download hue. Laptop ka stock pehle merge hua; mobile ka purana backup surakshit rakhein.');
+    return;
+   }
+   const switchedLegacy=await syncPullLegacySnapshot(code);
+   if(switchedLegacy){
+    localStorage.removeItem('DIVA_SYNC_SWITCH_PULL_FIRST');
+    cloudUI('✅ Laptop ka purana cloud stock aur bills is device par aa gaye.');
+    return;
+   }
+   syncBaselineNow();
+   localStorage.removeItem('DIVA_SYNC_SWITCH_PULL_FIRST');
+   cloudUI('⚠️ Is Sync Code par cloud data nahi mila. Mobile ka data upload nahi kiya gaya. Laptop ka code dobara check karein.');
+   return;
+  }
   if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
 
   /* FIRST CONNECTION: an empty/new device must pull laptop data before uploading anything. */
@@ -1546,8 +1567,14 @@ async function createCloudCode(){
 async function connectCloudCode(){
  const code=document.getElementById('cloudCode').value.trim().toUpperCase();
  if(!code){cloudUI('Sync Code dalo.');return;}
+ const oldCode=cloudCode();
+ if(code!==oldCode){
+  if(!confirm('Sync Code badal raha hai. Pehle naye code se laptop/cloud ka data download hoga; mobile ka data pehle upload nahi hoga. Kal ke JSON backups sambhal kar rakhein. Kya aage badhein?'))return;
+  syncBaselineNow();
+  syncBaseline=syncClone(db);
+  localStorage.setItem('DIVA_SYNC_SWITCH_PULL_FIRST',code);
+ }
  localStorage.setItem('DIVA_CLOUD_CODE',code);
- if(!syncBaseline)syncBaseline=syncRead(SYNC_BASELINE_KEY,null);
  await syncCloudNow();
 }
 function refreshCloudApp(){renderCategories();loadBillProducts();renderStock();renderCart();renderPurchase();renderDashboard();renderBillHistory();renderCustomers();renderReport();renderLabels();renderStockReturns();renderSalesReturn();}
