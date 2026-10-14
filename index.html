@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=167',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=168',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1403,7 +1403,7 @@ async function sendMissingSkusFromThisDevice(){
  if(cloudBusy){cloudUI('Sync चल रहा है — पूरा होने दें।');return;}
  const code=cloudCode();
  if(!code){cloudUI('पहले इसी पुराने Sync Code से connect करें।');return;}
- const wanted=new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55']);
+ const wanted=new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55','DIVA-56']);
  const rows=(Array.isArray(db.stock)?db.stock:[]).filter(x=>wanted.has(String(x?.sku||x?.skuId||'').trim().toUpperCase()));
  if(!rows.length){cloudUI('इस डिवाइस के Stock में बताए गए SKU नहीं मिले। कोई डेटा नहीं बदला।');return;}
  if(!confirm('इस डिवाइस से '+rows.length+' stock row(s) उसी Cloud में भेजें? पहले से मौजूद stock quantity नहीं बदली जाएगी; केवल recovery history जोड़ी जाएगी।'))return;
@@ -1422,7 +1422,7 @@ async function repairMissingSkus(){
  if(cloudBusy){cloudUI('Sync चल रहा है — पूरा होने दें।');return;}
  const code=cloudCode();
  if(!code){cloudUI('पहले अपना पुराना Sync Code connect करें।');return;}
- const wanted=new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55']);
+ const wanted=new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55','DIVA-56']);
  cloudBusy=true;cloudUI('Cloud history से बताए गए SKU खोजे जा रहे हैं…');
  try{
   await initCloud();
