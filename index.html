@@ -157,7 +157,8 @@ function code128Svg(value,opts={}){
 
 <section id="stock" class="page">
 <div class="card"><h2>📦 CURRENT STOCK</h2><p>यहाँ केवल <b>वर्तमान उपलब्ध stock</b> दिखेगा। नया माल जोड़ने के लिए <b>Purchase / Stock Add</b> इस्तेमाल करें.</p>
-<div class="grid"><input id="stockSearch" placeholder="Search Product / SKU / Colour / Size" oninput="renderStock()"><select id="stockCatFilter" onchange="renderStock()"><option value="">All Categories</option></select></div></div>
+<div class="grid"><input id="stockSearch" placeholder="Search Product / SKU / Colour / Size" oninput="renderStock()"><select id="stockCatFilter" onchange="renderStock()"><option value="">All Categories</option></select></div>
+<div class="grid" style="margin-top:8px"><button type="button" class="gray" onclick="quickFindSku(\'DIVA-5\')">🔎 DIVA-5</button><button type="button" class="gray" onclick="quickFindSku(\'DIVA-6\')">🔎 DIVA-6</button><button type="button" class="gray" onclick="quickFindSku(\'DIVA-10\')">🔎 DIVA-10</button><button type="button" class="gray" onclick="quickFindSku(\'DIVA-12\')">🔎 DIVA-12</button></div></div>
 <div class="card"><h3>🗂️ Product Folders</h3><p class="small">हर folder में product photo, उसके अंदर colours और हर colour में size-wise stock है। Photo जोड़ने के लिए 📷 Photo दबाएँ।</p><div id="productFolders"></div><div id="stockTable" style="display:none"></div></div></section>
 
 <section id="purchase" class="page"><div class="card"><h2>📥 PURCHASE / STOCK ADD</h2>
@@ -459,15 +460,16 @@ function toggleProductFolder(head){
  const open=details.style.display!=='block';details.style.display=open?'block':'none';
  const arrow=head.querySelector('.folder-arrow');if(arrow)arrow.textContent=open?'⌃':'⌄';
 }
+function quickFindSku(sku){menuPage('stock');const search=document.getElementById('stockSearch');if(search){search.value=sku;renderStock();}const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===String(sku).toUpperCase());const status=document.getElementById('cloudStatus');if(status)status.textContent=rows.length?sku+': '+rows.length+' stock row(s) local data में मिलीं।':'इस डिवाइस के local stock data में '+sku+' नहीं मिली।';}
 function renderStock(){
  const el=document.getElementById('productFolders'),mainEl=document.getElementById('productMainFolders');if(!el&&!mainEl)return;
  const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
  const cats=[...new Set((db.categories||[]).concat((db.stock||[]).map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
  if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');if(cats.includes(old))cf.value=old;}
- const matches=(db.stock||[]).filter(x=>(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
+ const matches=(db.stock||[]).filter(x=>(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.skuId,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
  if(!matches.length){const empty='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';if(el)el.innerHTML=empty;if(mainEl)mainEl.innerHTML=empty;return}
  const map=new Map();
- matches.forEach(x=>{const k=productFolderKey(x);if(!map.has(k))map.set(k,{key:k,category:x.category||'Other',sku:x.sku||'',name:x.name||x.sku||'Product',rows:[]});map.get(k).rows.push(x)});
+ matches.forEach(x=>{const k=productFolderKey(x);if(!map.has(k))map.set(k,{key:k,category:x.category||'Other',sku:x.sku||x.skuId||'',name:x.name||x.sku||x.skuId||'Product',rows:[]});map.get(k).rows.push(x)});
  const groups=[...map.values()].sort((a,b)=>{
   const an=Number((a.sku.match(/^DIVA-(\d+)$/i)||[])[1]),bn=Number((b.sku.match(/^DIVA-(\d+)$/i)||[])[1]);
   if(an&&bn)return an-bn;if(an)return -1;if(bn)return 1;return String(a.name).localeCompare(String(b.name));
@@ -1418,12 +1420,12 @@ async function sendMissingSkusFromThisDevice(){
   cloudUI('Cloud में SKU भेजना असफल रहा। कोई local stock नहीं बदला; internet/login जाँचें।');
  }finally{cloudBusy=false;}
 }
-async function repairMissingSkus(){
+async function repairMissingSkus(targetSku){
  if(cloudBusy){cloudUI('Sync चल रहा है — पूरा होने दें।');return;}
  const code=cloudCode();
  if(!code){cloudUI('पहले अपना पुराना Sync Code connect करें।');return;}
- const wanted=new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55','DIVA-56']);
- cloudBusy=true;cloudUI('Cloud history से बताए गए SKU खोजे जा रहे हैं…');
+ const wanted=targetSku?new Set([String(targetSku).trim().toUpperCase()]):new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55','DIVA-56']);
+ cloudBusy=true;cloudUI((targetSku?targetSku+' की':'चुने गए SKU की')+' Cloud history खोजी जा रही है…');
  try{
   await initCloud();
   const root=cloudDb.collection('cloudShops').doc(code),states=new Map();
