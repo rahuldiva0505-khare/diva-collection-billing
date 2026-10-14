@@ -158,7 +158,7 @@ function code128Svg(value,opts={}){
 <section id="stock" class="page">
 <div class="card"><h2>📦 CURRENT STOCK</h2><p>यहाँ केवल <b>वर्तमान उपलब्ध stock</b> दिखेगा। नया माल जोड़ने के लिए <b>Purchase / Stock Add</b> इस्तेमाल करें.</p>
 <div class="grid"><input id="stockSearch" placeholder="Search Product / SKU / Colour / Size" oninput="renderStock()"><select id="stockCatFilter" onchange="renderStock()"><option value="">All Categories</option></select></div>
-<div class="grid" style="margin-top:8px"><button type="button" class="gray" onclick="quickFindSku(\'DIVA-5\')">🔎 DIVA-5</button><button type="button" class="gray" onclick="quickFindSku(\'DIVA-6\')">🔎 DIVA-6</button><button type="button" class="gray" onclick="quickFindSku(\'DIVA-10\')">🔎 DIVA-10</button><button type="button" class="gray" onclick="quickFindSku(\'DIVA-12\')">🔎 DIVA-12</button></div></div>
+<div class="grid" style="margin-top:8px"><button type="button" class="gray" onclick="quickFindSku('DIVA-5')">🔎 DIVA-5</button><button type="button" class="gray" onclick="quickFindSku('DIVA-6')">🔎 DIVA-6</button><button type="button" class="gray" onclick="quickFindSku('DIVA-10')">🔎 DIVA-10</button><button type="button" class="gray" onclick="quickFindSku('DIVA-12')">🔎 DIVA-12</button></div></div>
 <div class="card"><h3>🗂️ Product Folders</h3><p class="small">हर folder में product photo, उसके अंदर colours और हर colour में size-wise stock है। Photo जोड़ने के लिए 📷 Photo दबाएँ।</p><div id="productFolders"></div><div id="stockTable" style="display:none"></div></div></section>
 
 <section id="purchase" class="page"><div class="card"><h2>📥 PURCHASE / STOCK ADD</h2>
