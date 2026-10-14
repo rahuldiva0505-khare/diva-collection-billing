@@ -591,9 +591,7 @@ function refreshUnusedSkuOptions(){
  sel.innerHTML='<option value="">Auto SKU (आगे की सीरीज़)</option>';
  for(const n of [5,6,10,12]){
   const sku='DIVA-'+n;
-  if(!skuAlreadyUsed(sku)){
-   const opt=document.createElement('option');opt.value=sku;opt.textContent=sku+' — खाली';sel.appendChild(opt);
-  }
+  const opt=document.createElement('option');opt.value=sku;opt.textContent=sku+' — नया product';sel.appendChild(opt);
  }
  if([...sel.options].some(o=>o.value===current))sel.value=current;
 }
@@ -652,7 +650,7 @@ function saveNewPurchaseProduct(){
  const cat=newcat || document.getElementById('pcat').value.trim() || searchCat;
  const selectedSku=document.getElementById('unusedSkuSelect')?.value||'';
  const sku=selectedSku||nextDivaSku();
- if(selectedSku&&skuAlreadyUsed(selectedSku)){alert(selectedSku+' पहले से इस्तेमाल है। कृपया खाली SKU चुनें।');refreshUnusedSkuOptions();return}
+ if(selectedSku&&(db.stock||[]).some(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===selectedSku.toUpperCase())){alert(selectedSku+' अभी stock में मौजूद है। पहले stock में खोज लें; duplicate SKU से बचने के लिए दूसरा SKU चुनें।');refreshUnusedSkuOptions();return}
  const skuEl=document.getElementById('psku'); if(skuEl) skuEl.value=sku;
  const name=document.getElementById('pname').value.trim() || sku;
  const sizes=selectedPurchaseSizes();
