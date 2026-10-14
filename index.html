@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=162',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=163',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -464,7 +464,7 @@ function renderStock(){
  const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
  const cats=[...new Set((db.categories||[]).concat((db.stock||[]).map(x=>x.category).filter(Boolean)))],cf=document.getElementById('stockCatFilter');
  if(cf){const old=cf.value;cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');if(cats.includes(old))cf.value=old;}
- const matches=(db.stock||[]).filter(x=>Number(x.qty)>0&&(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
+ const matches=(db.stock||[]).filter(x=>(!cat||x.category===cat)&&(!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q))));
  if(!matches.length){const empty='<div class="empty">कोई available stock नहीं है. Purchase / Stock Add से माल add करें.</div>';if(el)el.innerHTML=empty;if(mainEl)mainEl.innerHTML=empty;return}
  const map=new Map();
  matches.forEach(x=>{const k=productFolderKey(x);if(!map.has(k))map.set(k,{key:k,category:x.category||'Other',sku:x.sku||'',name:x.name||x.sku||'Product',rows:[]});map.get(k).rows.push(x)});
@@ -1339,7 +1339,7 @@ function syncOpsFromDiff(prev,next){
     else ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
    }else ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
   }
-  for(const [k] of pm)if(!nm.has(k))ops.push({kind:'delete',entity:type,key:k});
+  for(const [k] of pm)if(type!=='stock'&&!nm.has(k))ops.push({kind:'delete',entity:type,key:k});
  }
  return ops;
 }
