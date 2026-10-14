@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=166',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=167',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1423,16 +1423,15 @@ async function repairMissingSkus(){
  const code=cloudCode();
  if(!code){cloudUI('पहले अपना पुराना Sync Code connect करें।');return;}
  const wanted=new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55']);
- cloudBusy=true;cloudUI('Cloud history से केवल बताए गए गायब SKU खोजे जा रहे हैं…');
+ cloudBusy=true;cloudUI('Cloud history से बताए गए SKU खोजे जा रहे हैं…');
  try{
   await initCloud();
-  const root=cloudDb.collection('cloudShops').doc(code);
-  const states=new Map();
+  const root=cloudDb.collection('cloudShops').doc(code),states=new Map();
   const snap=await root.collection('changes').get();
   const ops=snap.docs.map(d=>d.data()).filter(o=>o&&o.entity==='stock'&&o.key).sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
   for(const op of ops){
    const key=String(op.key);
-   if(op.kind==='delete')continue; // Recovery deliberately does not replay old deletes.
+   if(op.kind==='delete')continue;
    if(op.kind==='set'&&op.payload&&typeof op.payload==='object'){
     const sku=String(op.payload.sku||op.payload.skuId||'').trim().toUpperCase();
     if(wanted.has(sku))states.set(key,syncClone(op.payload));
@@ -1444,8 +1443,7 @@ async function repairMissingSkus(){
     states.set(key,{...(prior||meta),...meta,qty:Number(prior?.qty??0)+Number(op.delta||0)});
    }
   }
-  const legacy=await root.get();
-  const remote=legacy.exists?legacy.data():null;
+  const legacy=await root.get(),remote=legacy.exists?legacy.data():null;
   const legacyStock=Array.isArray(remote?.data?.stock)?remote.data.stock:[];
   for(const x of legacyStock){
    const sku=String(x?.sku||x?.skuId||'').trim().toUpperCase();
@@ -1456,21 +1454,35 @@ async function repairMissingSkus(){
   }
   const before=syncClone(db);
   if(!Array.isArray(db.stock))db.stock=[];
+  const variantKey=x=>[String(x?.sku||x?.skuId||'').trim().toUpperCase(),String(x?.color||'').trim().toLowerCase(),String(x?.size||'').trim().toLowerCase()].join('|');
+  const localVariants=new Set(db.stock.map(variantKey));
   const localKeys=new Set(db.stock.map(x=>syncRecordKey('stock',x)));
-  let added=0;
-  for(const [key,item] of states){
-   const sku=String(item?.sku||item?.skuId||'').trim().toUpperCase();
-   if(!wanted.has(sku)||localKeys.has(key))continue;
-   db.stock.push(syncClone(item));localKeys.add(key);added++;
+  let added=0,alreadyPresent=0,keyCollisions=0;
+  for(const [cloudKey,raw] of states){
+   const item=syncClone(raw),sku=String(item?.sku||item?.skuId||'').trim().toUpperCase();
+   if(!wanted.has(sku))continue;
+   const variant=variantKey(item);
+   if(localVariants.has(variant)){alreadyPresent++;continue;}
+   let key=syncRecordKey('stock',item);
+   if(localKeys.has(key)){
+    keyCollisions++;
+    item.key='recovered-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);
+    key=syncRecordKey('stock',item);
+    while(localKeys.has(key)){item.key='recovered-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);key=syncRecordKey('stock',item);}
+   }
+   db.stock.push(item);localKeys.add(key);localVariants.add(variant);added++;
   }
   if(!added){
-   cloudUI('Cloud history/snapshot में इन SKU की कोई नई missing entry नहीं मिली। आपका local stock नहीं बदला।');
+   renderStock();
+   cloudUI(states.size
+    ? 'Cloud में '+states.size+' matching SKU row(s) मिलीं; '+alreadyPresent+' variants मोबाइल में पहले से हैं। कोई quantity नहीं बदली। Stock में search करके SKU जाँचें।'
+    : 'Cloud history/snapshot में इन SKU की rows नहीं मिलीं। लैपटॉप पर “📤 लैपटॉप के SKU Cloud में भेजें” फिर दबाएँ और success message देखें।');
    return;
   }
   const uploadOps=syncOpsFromDiff(before,db);
   const uploaded=await syncUploadOps(code,uploadOps);
   saveLocalOnly();refreshCloudApp();
-  cloudUI('✅ '+added+' missing stock row(s) वापस जोड़ीं; '+uploaded+' सुरक्षित cloud update भेजे। अब stock list में जाँचें।');
+  cloudUI('✅ '+added+' missing stock row(s) वापस जोड़ीं; '+alreadyPresent+' पहले से मौजूद थीं; '+uploaded+' cloud updates भेजे। कोई पुरानी quantity overwrite नहीं की।');
  }catch(e){
   console.error('DIVA SKU RECOVERY ERROR',e);
   cloudUI('SKU recovery नहीं हो पाई। Data नहीं मिटाया गया; internet/login और Firebase rules जाँचें।');
