@@ -140,12 +140,12 @@ function code128Svg(value,opts={}){
 <input id="brate" type="number" min="0" placeholder="Selling Price">
 <input id="bdiscount" type="number" min="0" placeholder="Discount ₹">
 </div><div id="binfo" class="small" style="margin-top:8px"></div><br><button onclick="addItem()">➕ Add Item</button></div>
-<div class="card"><h3>Current Bill</h3><div id="cart"></div><div class="totalbox">Total ₹<span id="total">0</span></div><div style="margin-top:12px"><label><b>💳 Payment Mode</b></label><select id="paymentMode" style="margin-top:6px"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI / Online</option><option value="Card">💳 Card</option></select></div><br>
+<div class="card"><h3>Current Bill</h3><div id="cart"></div><div class="totalbox">Total ₹<span id="total">0</span></div><div style="margin-top:12px"><label><b>💳 Payment Mode</b></label><select id="paymentMode" style="margin-top:6px"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI / Online</option><option value="Card">💳 Card</option><option value="Udhari">🧾 उधारी</option></select><div class="grid" style="margin-top:8px"><input id="amountPaid" type="number" min="0" step="0.01" placeholder="Amount Paid (blank = full payment)"></div><small class="small">उधारी में भुगतान 0 रहेगा; आंशिक भुगतान हो तो राशि भरें।</small></div><br>
 <button onclick="completeSale()">💾 Complete Sale</button> <button class="green" onclick="printCurrentBill()">🖨️ Print Bill</button></div></section>
 
 <section id="billHistory" class="page">
 <div class="card"><h2>📚 पुरानी Bill History</h2><p class="small">पुराने bills यहाँ सुरक्षित रहेंगे। Bill No., customer name या mobile से खोजें और किसी भी पुराने bill को फिर से print करें.</p>
-<div class="grid"><input id="billHistorySearch" placeholder="Search Bill No / Customer / Mobile" oninput="renderBillHistory()"><select id="billHistoryPeriod" onchange="renderBillHistory()"><option value="all">All Time</option><option value="day">Today</option><option value="month">This Month</option><option value="year">This Year</option></select><button class="gray" onclick="renderBillHistory()">🔄 Refresh</button></div></div>
+<div class="grid"><input id="billHistorySearch" placeholder="Search Bill No / Customer / Mobile" oninput="renderBillHistory()"><select id="billHistoryPeriod" onchange="renderBillHistory()"><option value="all">All Time</option><option value="day">Today</option><option value="month">This Month</option><option value="year">This Year</option></select><button class="gray" onclick="renderBillHistory()">🔄 Refresh</button><button class="green" onclick="promptWhatsAppDue()">🟢 WhatsApp बकाया संदेश</button></div></div>
 <div class="card"><div id="billHistoryTable"></div></div></section>
 
 <section id="customers" class="page">
@@ -1104,6 +1104,10 @@ function completeSale(){
  try{
   const paymentMode=document.getElementById("paymentMode")?.value||"Cash";
   const soldItems=JSON.parse(JSON.stringify(cart));
+  const saleTotal=soldItems.reduce((s,x)=>s+Number(x.qty)*Math.max(0,Number(x.rate)-Number(x.discount)),0);
+  const paidInput=String(document.getElementById("amountPaid")?.value??"").trim();
+  const paidAmount=paidInput===""?(paymentMode==="Udhari"?0:saleTotal):Number(paidInput);
+  if(!Number.isFinite(paidAmount)||paidAmount<0||paidAmount>saleTotal){alert("Paid amount कुल बिल से अधिक या गलत है.");return;}
   // Decrement the exact stock rows referenced by the cart, then persist immediately.
   for(const a of soldItems){
    const x=(db.stock||[]).find(z=>String(z.key)===String(a.key));
@@ -1111,13 +1115,13 @@ function completeSale(){
    x.qty=Number(x.qty)-Number(a.qty);
   }
   const billNo="DC-"+Date.now().toString().slice(-8);
-  const saved={billNo,date:new Date().toISOString(),customer:document.getElementById("cust").value,phone:document.getElementById("phone").value,items:soldItems,total:soldItems.reduce((s,x)=>s+Number(x.qty)*Math.max(0,Number(x.rate)-Number(x.discount)),0),paymentMode};
+  const saved={billNo,date:new Date().toISOString(),customer:document.getElementById("cust").value,phone:document.getElementById("phone").value,items:soldItems,total:saleTotal,paymentMode,paidAmount,balanceDue:Math.max(0,Number((saleTotal-paidAmount).toFixed(2)))};
   db.sales=db.sales||[];
   db.sales.push(saved);
   saveCustomerFromSale(saved);
   // Write the changed stock and bill to this device before starting asynchronous cloud sync.
   localStorage.setItem(KEY,JSON.stringify(db));
-  cart=[];renderCart();loadBillProducts();renderStock();renderCustomers();renderDashboard();renderBillHistory();
+  cart=[];renderCart();if(document.getElementById("amountPaid"))document.getElementById("amountPaid").value="";loadBillProducts();renderStock();renderCustomers();renderDashboard();renderBillHistory();
   save();
   alert("Sale save हो गई. Stock अपडेट किया गया. Payment: "+paymentMode+" • Bill No: "+billNo);
   printSale(saved);
@@ -1195,6 +1199,18 @@ function renderPurchase(){refreshQuickSkuSelect();const sel=document.getElementB
 function loadPurchaseStock(){const key=document.getElementById('purchaseStockKey')?.value,x=db.stock.find(a=>a.key===key);const el=document.getElementById('purchaseStockInfo');if(el)el.textContent=x?`Current Stock: ${x.qty} | Cost: ₹${x.cost||0} | ${x.name} | ${x.color} | Size ${x.size}`:''}
 function savePurchase(){const key=document.getElementById('purchaseStockKey').value,qty=Number(document.getElementById('purchaseQty').value)||0,x=db.stock.find(a=>a.key===key),cost=Number(document.getElementById('purchaseCost').value)||0;if(!x){alert('Product / Colour / Size select करें');return}if(qty<=0){alert('Purchase quantity भरें');return}if(cost>0)x.cost=cost;x.qty+=qty;db.purchases=db.purchases||[];db.purchases.push({date:new Date().toISOString(),key,xid:x.id||'',name:x.name,sku:x.sku,color:x.color,size:x.size,qty,cost:cost||x.cost||0,supplier:document.getElementById('purchaseSupplier').value.trim(),invoice:document.getElementById('purchaseInvoice').value.trim()});save();document.getElementById('purchaseQty').value='';document.getElementById('purchaseSupplier').value='';document.getElementById('purchaseInvoice').value='';renderPurchase();renderStock();renderDashboard();alert('Purchase save हो गया और stock बढ़ गया.')}
 
+function sendWhatsAppDue(billNo){
+ const b=getSavedBill(billNo);if(!b){alert('Bill नहीं मिला');return}
+ const due=Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0));
+ if(!(due>0)){alert('इस bill पर कोई बकाया नहीं है।');return}
+ let phone=String(b.phone||'').replace(/\D/g,'');
+ if(phone.length===10)phone='91'+phone;
+ if(phone.length<11||phone.length>15){alert('इस bill में सही ग्राहक मोबाइल नंबर नहीं है। Bill में मोबाइल जाँचें।');return}
+ const items=(b.items||[]).map(x=>String(x.name||'Product')+' ('+String(x.size||'')+') × '+Number(x.qty||0)).join(', ');
+ const msg='नमस्ते '+String(b.customer||'जी')+' जी,\nDiva Collection की ओर से आपके bill की जानकारी:\nBill No: '+String(b.billNo||'')+'\nतारीख: '+new Date(b.date).toLocaleDateString('en-IN')+'\nसामान: '+items+'\nकुल बिल: ₹'+Number(b.total||0).toFixed(2)+'\nजमा राशि: ₹'+Number(b.paidAmount??((b.paymentMode==='Udhari')?0:(b.total||0))).toFixed(2)+'\nबाकी राशि: ₹'+due.toFixed(2)+'\nकृपया सुविधानुसार भुगतान कर दें। धन्यवाद!\nDiva Collection';
+ window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank','noopener');
+}
+function promptWhatsAppDue(){const billNo=prompt('जिस bill का बकाया संदेश भेजना है, उसका Bill No. डालें (जैसे DC-12345678):');if(billNo)sendWhatsAppDue(billNo.trim())}
 function renderBillHistory(){
  db.sales=db.sales||[];
  const q=String(document.getElementById('billHistorySearch')?.value||'').trim().toLowerCase();
@@ -1205,9 +1221,9 @@ function renderBillHistory(){
  }).slice().reverse();
  const el=document.getElementById('billHistoryTable'); if(!el)return;
  if(!arr.length){el.innerHTML='<div class="empty">इस search/period में कोई पुराना bill नहीं मिला.</div>';return}
- el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>Items</th><th>Total</th><th>Status</th><th>Action</th></tr>'+arr.map(b=>{
+ el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>Items</th><th>Total</th><th>Paid</th><th>बकाया</th><th>Status</th><th>Action</th></tr>'+arr.map(b=>{
    const units=(b.items||[]).reduce((a,i)=>a+Number(i.qty||0),0);
-   return `<tr><td>${new Date(b.date).toLocaleString()}</td><td><b>#${esc(b.billNo||'')}</b></td><td>${esc(b.customer||'Walk-in Customer')}</td><td>${esc(b.phone||'')}</td><td>${units}</td><td>₹${Number(b.total||0).toFixed(2)}</td><td>${b.isTest?'<b style="color:#b45309">🧪 TEST — Sale से अलग</b>':'Sale'}</td><td><button class="gray" onclick="toggleTestBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">${b.isTest?'↩️ Sale में जोड़ें':'🧪 Test में अलग करें'}</button> <button class="green" onclick="printSavedBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">🖨️ Print</button> <button class="gray" onclick="viewSavedBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">👁️ View</button></td></tr>`;
+   return `<tr><td>${new Date(b.date).toLocaleString()}</td><td><b>#${esc(b.billNo||'')}</b></td><td>${esc(b.customer||'Walk-in Customer')}</td><td>${esc(b.phone||'')}</td><td>${units}</td><td>₹${Number(b.total||0).toFixed(2)}</td><td>₹${Number(b.paidAmount??((b.paymentMode==="Udhari")?0:(b.total||0))).toFixed(2)}</td><td><b style="color:${Number(b.balanceDue??((b.paymentMode==="Udhari")?(b.total||0):0))>0?"#b91c1c":"#166534"}">₹${Number(b.balanceDue??((b.paymentMode==="Udhari")?(b.total||0):0)).toFixed(2)}</b></td><td>${b.isTest?'<b style="color:#b45309">🧪 TEST — Sale से अलग</b>':'Sale'}</td><td><button class="gray" onclick="toggleTestBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">${b.isTest?'↩️ Sale में जोड़ें':'🧪 Test में अलग करें'}</button> <button class="green" onclick="printSavedBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">🖨️ Print</button> <button class="gray" onclick="viewSavedBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">👁️ View</button></td></tr>`;
  }).join('')+'</table></div>';
 }
 function toggleTestBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill नहीं मिला');return}const next=!b.isTest;const msg=next?'इस bill को TEST में अलग करें? यह Dashboard, Sales और Profit reports में नहीं गिना जाएगा। Bill History में सुरक्षित रहेगा।':'इस bill को वापस Sales और Profit reports में जोड़ें?';if(!confirm(msg))return;b.isTest=next;save();renderBillHistory();renderDashboard();renderReport();alert(next?'Bill TEST में अलग कर दिया गया।':'Bill वापस Sales में जोड़ दिया गया।')}
