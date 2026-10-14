@@ -1339,7 +1339,7 @@ function syncOpsFromDiff(prev,next){
     else ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
    }else ops.push({kind:'set',entity:type,key:k,payload:syncClone(x)});
   }
-  // Missing local records are not treated as deletions: a stale/incomplete device must not erase cloud stock.
+  for(const [k] of pm)if(type!=='stock'&&!nm.has(k))ops.push({kind:'delete',entity:type,key:k});
  }
  return ops;
 }
