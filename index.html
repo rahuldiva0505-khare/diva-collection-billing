@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=163',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=164',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -287,7 +287,7 @@ function code128Svg(value,opts={}){
 <p class="small" style="margin-top:10px">नोट: यह browser से <b>BLE</b> printers के लिए है. पुराने Classic Bluetooth / SPP printers को Chrome web app सीधे control नहीं कर सकता; ऐसे printer में Android system print या manufacturer app की जरूरत पड़ सकती है.</p>
 </div></section>
 
-<section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Laptop aur mobile par apne Firebase Email/Password account se login karein. App ka 4–6 digit PIN lock pehle ki tarah rahega.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" type="button" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" type="button" onclick="syncCloudNow()">🔄 Sync Now</button><button id="generateSyncCodeBtn" type="button" style="background:#b72d70;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation" onclick="createCloudCode()">➕ Generate New Sync Code</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #9f174d;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
+<section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Laptop aur mobile par apne Firebase Email/Password account se login karein. App ka 4–6 digit PIN lock pehle ki tarah rahega.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" type="button" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" type="button" onclick="syncCloudNow()">🔄 Sync Now</button><button class="gray" type="button" onclick="repairMissingSkus()">🛠️ गायब SKU वापस लाएँ</button><button id="generateSyncCodeBtn" type="button" style="background:#b72d70;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation" onclick="createCloudCode()">➕ Generate New Sync Code</button></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #9f174d;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
 <div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
 <div id="report" style="margin-top:12px"></div></div></section>
 </main>
@@ -1398,6 +1398,64 @@ async function syncPullAndMerge(code){
  try{for(const op of docs){syncApplyOp(op);syncRemember(op.id);}}
  finally{syncApplying=false;}
  return docs.length;
+}
+async function repairMissingSkus(){
+ if(cloudBusy){cloudUI('Sync चल रहा है — पूरा होने दें।');return;}
+ const code=cloudCode();
+ if(!code){cloudUI('पहले अपना पुराना Sync Code connect करें।');return;}
+ const wanted=new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55']);
+ cloudBusy=true;cloudUI('Cloud history से केवल बताए गए गायब SKU खोजे जा रहे हैं…');
+ try{
+  await initCloud();
+  const root=cloudDb.collection('cloudShops').doc(code);
+  const states=new Map();
+  const snap=await root.collection('changes').get();
+  const ops=snap.docs.map(d=>d.data()).filter(o=>o&&o.entity==='stock'&&o.key).sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
+  for(const op of ops){
+   const key=String(op.key);
+   if(op.kind==='delete')continue; // Recovery deliberately does not replay old deletes.
+   if(op.kind==='set'&&op.payload&&typeof op.payload==='object'){
+    const sku=String(op.payload.sku||op.payload.skuId||'').trim().toUpperCase();
+    if(wanted.has(sku))states.set(key,syncClone(op.payload));
+   }else if(op.kind==='stockDelta'){
+    const meta=op.meta&&typeof op.meta==='object'?syncClone(op.meta):{};
+    const sku=String(meta.sku||meta.skuId||states.get(key)?.sku||'').trim().toUpperCase();
+    if(!wanted.has(sku))continue;
+    const prior=states.get(key);
+    states.set(key,{...(prior||meta),...meta,qty:Number(prior?.qty??0)+Number(op.delta||0)});
+   }
+  }
+  const legacy=await root.get();
+  const remote=legacy.exists?legacy.data():null;
+  const legacyStock=Array.isArray(remote?.data?.stock)?remote.data.stock:[];
+  for(const x of legacyStock){
+   const sku=String(x?.sku||x?.skuId||'').trim().toUpperCase();
+   if(wanted.has(sku)){
+    const key=syncRecordKey('stock',x);
+    if(!states.has(key))states.set(key,syncClone(x));
+   }
+  }
+  const before=syncClone(db);
+  if(!Array.isArray(db.stock))db.stock=[];
+  const localKeys=new Set(db.stock.map(x=>syncRecordKey('stock',x)));
+  let added=0;
+  for(const [key,item] of states){
+   const sku=String(item?.sku||item?.skuId||'').trim().toUpperCase();
+   if(!wanted.has(sku)||localKeys.has(key))continue;
+   db.stock.push(syncClone(item));localKeys.add(key);added++;
+  }
+  if(!added){
+   cloudUI('Cloud history/snapshot में इन SKU की कोई नई missing entry नहीं मिली। आपका local stock नहीं बदला।');
+   return;
+  }
+  const uploadOps=syncOpsFromDiff(before,db);
+  const uploaded=await syncUploadOps(code,uploadOps);
+  saveLocalOnly();refreshCloudApp();
+  cloudUI('✅ '+added+' missing stock row(s) वापस जोड़ीं; '+uploaded+' सुरक्षित cloud update भेजे। अब stock list में जाँचें।');
+ }catch(e){
+  console.error('DIVA SKU RECOVERY ERROR',e);
+  cloudUI('SKU recovery नहीं हो पाई। Data नहीं मिटाया गया; internet/login और Firebase rules जाँचें।');
+ }finally{cloudBusy=false;}
 }
 async function syncPullLegacySnapshot(code){
  try{
