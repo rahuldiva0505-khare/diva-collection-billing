@@ -35,7 +35,7 @@ nav{display:flex;gap:8px;background:#fff;padding:10px;position:sticky;top:0;z-in
 .side-menu-backup .green{width:100%;margin-top:6px}
 @media(prefers-reduced-motion:reduce){#sideMenuPanel{transition:none}}
 button{border:0;border-radius:8px;padding:13px 16px;background:#9f174d;color:#fff;font-size:16px;min-height:46px}
-#dashboard .grid button{min-height:58px;padding:14px 16px;font-size:16px;font-weight:600;line-height:1.3}.gray{background:#f8dce8;color:#222}.red{background:#d93025}.green{background:#b51d5b}
+#dashboardTools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}#dashboardTools button{flex:1;min-width:135px}#calcOverlay{display:none;position:fixed;inset:0;background:#0009;z-index:1000;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}#calcOverlay.open{display:flex}#calcBox{width:min(100%,360px);background:#fff0f6;border:2px solid #9f174d;border-radius:16px;padding:14px;box-shadow:0 8px 35px #0005}#calcDisplay{width:100%;box-sizing:border-box;font-size:28px;text-align:right;padding:14px;margin-bottom:10px;background:#fff}#calcKeys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}#calcKeys button{padding:12px 4px;font-size:19px;min-height:48px}#calcKeys .calcOp{background:#6b1740}#calcKeys .calcEqual{background:#147a42}#calcClose{float:right;background:#222;padding:7px 12px;min-height:36px}#dashboard .grid button{min-height:58px;padding:14px 16px;font-size:16px;font-weight:600;line-height:1.3}.gray{background:#f8dce8;color:#222}.red{background:#d93025}.green{background:#b51d5b}
 main{max-width:1200px;margin:auto;padding:12px}.page{display:none}.page.active{display:block}.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 7px #0001}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}input,select{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;font-size:15px;box-sizing:border-box}
 table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}.tablewrap{overflow:auto}.empty{text-align:center;padding:25px;color:#777}
@@ -124,9 +124,10 @@ function code128Svg(value,opts={}){
 <div class="side-menu-backup"><b>🛡️ Data Backup</b><p class="small">इस डिवाइस के ऐप डेटा की JSON कॉपी डाउनलोड करें।</p><button type="button" class="green" onclick="downloadDivaBackup()">⬇️ Download JSON Backup</button><button type="button" class="gray" onclick="document.getElementById('divaRestoreFile').click()">📥 Restore Backup (खाली ऐप में)</button><input id="divaRestoreFile" type="file" accept=".json,application/json" style="display:none" onchange="restoreDivaBackupFile(this)"><div id="divaBackupStatus" class="small" aria-live="polite"></div><div class="small">सुरक्षा: Restore तभी होगा जब इस डिवाइस में कोई bill/stock न हो। यह Cloud/Firebase डेटा नहीं बदलता।</div></div>
 </div></aside>
 <div id="ganeshMusicPlayer" style="display:none;max-width:700px;margin:8px auto;padding:0 10px"></div>
+<div id="calcOverlay" role="dialog" aria-modal="true" aria-label="Calculator" onclick="if(event.target===this)closeCalculator()"><div id="calcBox"><button id="calcClose" type="button" onclick="closeCalculator()">✕</button><h2>🧮 Calculator</h2><input id="calcDisplay" inputmode="decimal" aria-label="Calculator display" value="0" onkeydown="calculatorKey(event)"><div id="calcKeys"><button type="button" class="gray" onclick="calcClear()">C</button><button type="button" class="gray" onclick="calcBack()">⌫</button><button type="button" class="calcOp" onclick="calcAdd('%')">%</button><button type="button" class="calcOp" onclick="calcAdd('/')">÷</button><button type="button" onclick="calcAdd('7')">7</button><button type="button" onclick="calcAdd('8')">8</button><button type="button" onclick="calcAdd('9')">9</button><button type="button" class="calcOp" onclick="calcAdd('*')">×</button><button type="button" onclick="calcAdd('4')">4</button><button type="button" onclick="calcAdd('5')">5</button><button type="button" onclick="calcAdd('6')">6</button><button type="button" class="calcOp" onclick="calcAdd('-')">−</button><button type="button" onclick="calcAdd('1')">1</button><button type="button" onclick="calcAdd('2')">2</button><button type="button" onclick="calcAdd('3')">3</button><button type="button" class="calcOp" onclick="calcAdd('+')">+</button><button type="button" onclick="calcAdd('(')">(</button><button type="button" onclick="calcAdd('0')">0</button><button type="button" onclick="calcAdd('.')">.</button><button type="button" class="calcEqual" onclick="calcEquals()">=</button></div></div></div>
 <main>
 <section id="dashboard" class="page">
-<div class="card"><h2>🏠 Dashboard</h2><div class="grid" id="dashCards"></div></div>
+<div class="card"><h2>🏠 Dashboard</h2><div id="dashboardTools"><button type="button" class="gray" onclick="changeAppZoom(-1)">A− छोटा</button><button type="button" class="gray" onclick="changeAppZoom(1)">A+ बड़ा</button><button type="button" onclick="toggleAppFullscreen()">⛶ Full Screen</button><button type="button" class="green" onclick="openCalculator()">🧮 Calculator</button></div><div class="grid" id="dashCards"></div></div>
 <div class="card"><h3>🧾 Recent Bills</h3><div id="recentBills"></div></div></section>
 
 <section id="billing" class="page active">
@@ -1276,6 +1277,16 @@ function periodProfit(period){
  const expenses=(db.expenses||[]).filter(e=>inPeriod(e.date,period)).reduce((s,e)=>s+Number(e.amount||0),0);
  return {revenue,cost,gross,expenses,net:gross-expenses};
 }
+function changeAppZoom(delta){let z=Number(localStorage.getItem('divaAppZoom')||100);z=Math.max(80,Math.min(150,z+delta*10));localStorage.setItem('divaAppZoom',String(z));document.documentElement.style.zoom=(z/100);}
+function toggleAppFullscreen(){if(!document.fullscreenElement){document.documentElement.requestFullscreen?.().catch(()=>alert('इस विंडो में Full Screen उपलब्ध नहीं है।'));}else{document.exitFullscreen?.();}}
+function openCalculator(){const o=document.getElementById('calcOverlay');if(o)o.classList.add('open');const d=document.getElementById('calcDisplay');if(d){d.focus();d.select();}}
+function closeCalculator(){document.getElementById('calcOverlay')?.classList.remove('open');}
+function calcAdd(v){const d=document.getElementById('calcDisplay');if(!d)return;if(d.value==='0'||d.value==='Error')d.value='';d.value+=v;}
+function calcClear(){const d=document.getElementById('calcDisplay');if(d)d.value='0';}
+function calcBack(){const d=document.getElementById('calcDisplay');if(d)d.value=d.value.length>1?d.value.slice(0,-1):'0';}
+function calcEquals(){const d=document.getElementById('calcDisplay');if(!d)return;const expr=d.value.replace(/×/g,'*').replace(/÷/g,'/');if(!/^[0-9+*/().%\s-]+$/.test(expr)){d.value='Error';return;}try{const val=Function('"use strict";return ('+expr+')')();d.value=Number.isFinite(val)?String(Math.round((val+Number.EPSILON)*1e8)/1e8):'Error';}catch(e){d.value='Error';}}
+function calculatorKey(e){if(e.key==='Enter'){e.preventDefault();calcEquals();}else if(e.key==='Escape')closeCalculator();}
+(function(){const z=Math.max(80,Math.min(150,Number(localStorage.getItem('divaAppZoom')||100)));document.documentElement.style.zoom=z/100;})();
 function renderDashboard(){
  const allSales=db.sales||[],sales=allSales.filter(x=>!x.isTest),today=sales.filter(x=>inPeriod(x.date,'day')),month=sales.filter(x=>inPeriod(x.date,'month'));
  const soldUnits=today.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
