@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=176',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=177',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -301,9 +301,15 @@ try{
   db=raw?JSON.parse(raw):{stock:[],sales:[],categories:["Suits","Kurtis","Lehenga","Saree","Dresses","Other"]};
   if(!db||typeof db!=="object"||Array.isArray(db))throw new Error("Invalid billing data");
 }catch(e){
-  console.warn("Diva Billing data reset:",e);
+  console.warn("Diva Billing data could not be read; preserving the original local data for recovery:",e);
+  // Keep a one-time copy before the app continues with an in-memory empty workspace.
+  // Never overwrite the original key merely because JSON parsing failed.
+  try{
+    const damaged=localStorage.getItem(KEY);
+    if(damaged && !localStorage.getItem("DIVA_V5_DATA_RECOVERY"))
+      localStorage.setItem("DIVA_V5_DATA_RECOVERY",damaged);
+  }catch(_){}
   db={stock:[],sales:[],categories:["Suits","Kurtis","Lehenga","Saree","Dresses","Other"]};
-  try{localStorage.setItem(KEY,JSON.stringify(db))}catch(_){}
 }
 if(!Array.isArray(db.categories))db.categories=[]; db.categories=[...new Set(db.categories.concat(["Saree","Silk Saree","Cotton Saree","Designer Saree","Ready-Made Saree","Lehenga Choli","Bridal Lehenga","Crop Top Lehenga","Sharara Set","Gharara Set","Anarkali Suit","Straight Suit","Palazzo Suit","Pant Suit","Peplum Set","Indo-Western","Ready-Made Suit","Three-Piece Suit","Kurti","Kurta Set","Long Kurti","Short Kurti","A-Line Kurti","Straight Kurti","Shirt Kurti","Kaftan","Kaftan Suit","Angrakha Suit","Afghani Suit","Aliya Set","Nayera Set","Dhoti Set","Gown","Party Wear Gown","Maxi Dress","Midi Dress","Mini Dress","Frock","Dress","Jumpsuit","Co-Ord Set","Top","T-Shirt","Shirt","Crop Top","Blouse","Tunics","Jeans","Jeggings","Trousers","Pants","Palazzo","Leggings","Track Pants","Skirt","Shorts","Dupatta","Stole","Shrug","Jacket","Cardigan","Sweater","Sweatshirt","Night Suit","Nightwear","Maternity Wear","Abaya","Hijab","Modest Wear","Innerwear","Heels","Platform Heels","High Heels","Block Heels","Wedges","Kitten Heels","Sandals","Flats","Jutti","Mojari","Slippers","Shoes","Sneakers","Boots","Sports Shoes","Handbags","Sling Bags","Clutches","Wallets","Belts","Sunglasses","Watches","Jewellery","Earrings","Necklace","Bracelet","Bangles","Rings","Anklets","Hair Accessories","Makeup","Skincare","Beauty Accessories","Home & Kitchen","Other"]))];
 if(!Array.isArray(db.stock))db.stock=[]; if(!Array.isArray(db.productPhotos))db.productPhotos=[]; if(!Array.isArray(db.sales))db.sales=[]; if(!Array.isArray(db.expenses))db.expenses=[]; if(!Array.isArray(db.stockReturns))db.stockReturns=[]; if(!Array.isArray(db.purchases))db.purchases=[]; if(!Array.isArray(db.salesReturns))db.salesReturns=[];
@@ -311,7 +317,20 @@ db.stock=db.stock.map(x=>({...x,category:x.category||"Other",mrp:Number(x.mrp)||
 let cart=[];
 function makeCode(cat,sku,color,size){return ['DC',cat,sku,color,size].map(v=>String(v||'').trim().replace(/\s+/g,'-')).filter(Boolean).join('|').toUpperCase()}
 function parseCode(code){let parts=String(code||'').split('|');return {category:parts[1]||'',sku:parts[2]||'',color:parts[3]||'',size:parts[4]||''}}
-function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+let divaSaveWarningShown=false;
+function save(){
+ try{
+  localStorage.setItem(KEY,JSON.stringify(db));
+  return true;
+ }catch(e){
+  console.error("Diva Billing local save failed; in-memory data has not been cleared:",e);
+  if(!divaSaveWarningShown){
+   divaSaveWarningShown=true;
+   alert("⚠️ डेटा सेव नहीं हो पाया। ऐप का डेटा अभी साफ न करें और ऐप अनइंस्टॉल न करें। जगह खाली करके तुरंत Data Backup डाउनलोड करें।");
+  }
+  return false;
+ }
+}
 let lakshmiMantraActive=false, lakshmiMantraTimer=null, lakshmiAudioCtx=null, lakshmiOscillators=[];
 function stopLakshmiMantra(){
  lakshmiMantraActive=false;
@@ -1697,6 +1716,7 @@ function divaAutoSyncTick(){
  window.addEventListener('online',()=>setTimeout(divaAutoSyncTick,1000));
 })();
 async function createCloudCode(){
+ if(!confirm('⚠️ नया Sync Code बनाने से यह डिवाइस आपके मौजूदा Cloud workspace से अलग हो सकता है। आपका पुराना Sync Code नहीं बदला जाएगा जब तक आप पुष्टि नहीं करते। क्या आप सच में नया Sync Code बनाना चाहते हैं?'))return;
  const code=randomCloudCode();
  localStorage.setItem('DIVA_CLOUD_CODE',code);
  localStorage.removeItem(SYNC_BASELINE_KEY);
