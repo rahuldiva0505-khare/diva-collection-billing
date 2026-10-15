@@ -150,7 +150,8 @@ function code128Svg(value,opts={}){
 <div class="card"><div id="billHistoryTable"></div></div></section>
 
 <section id="customers" class="page">
-<div class="card"><h2>👤 Customers</h2><p class="small">Bill complete karte hi customer ka naam aur mobile number yahan automatically save/update hoga.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button></div></div>
+<div class="card"><h2>👤 Customers</h2><p class="small">Bill complete karte hi customer ka naam aur mobile number yahan automatically save/update hoga.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button><button class="green" onclick="renderDueReminders()">⏰ 30+ दिन बकाया देखें</button></div></div>
+<div class="card"><h3>🟢 WhatsApp बकाया Reminder</h3><p class="small">यहाँ 30 दिन या उससे पुराने unpaid/partial-paid bills दिखेंगे। WhatsApp संदेश भेजने से पहले आप उसे देख और खुद भेज सकते हैं; कोई automatic/paid API नहीं है।</p><div id="dueReminderList"><div class="empty">सूची देखने के लिए “30+ दिन बकाया देखें” दबाएँ।</div></div></div>
 <div class="card"><div id="customerTable"></div></div>
 </section>
 
@@ -1231,6 +1232,23 @@ function sendWhatsAppDue(billNo){
  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank','noopener');
 }
 function promptWhatsAppDue(){const billNo=prompt('जिस bill का बकाया संदेश भेजना है, उसका Bill No. डालें (जैसे DC-12345678):');if(billNo)sendWhatsAppDue(billNo.trim())}
+function renderDueReminders(){
+ const el=document.getElementById('dueReminderList');if(!el)return;
+ const now=Date.now();
+ const overdue=(db.sales||[]).filter(b=>{
+  if(b.isTest)return false;
+  const due=Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0));
+  const date=Date.parse(b.date||'');
+  return due>0&&Number.isFinite(date)&&Math.floor((now-date)/86400000)>=30;
+ }).sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
+ if(!overdue.length){el.innerHTML='<div class="empty">अभी 30 दिन या उससे पुराने बकाया bills नहीं मिले।</div>';return;}
+ el.innerHTML='<div class="tablewrap"><table><tr><th>Bill Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>बकाया</th><th>दिन</th><th>Action</th></tr>'+overdue.map(b=>{
+  const due=Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0));
+  const days=Math.max(0,Math.floor((now-Date.parse(b.date))/86400000));
+  const bill=String(b.billNo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return '<tr><td>'+esc(new Date(b.date).toLocaleDateString('en-IN'))+'</td><td><b>'+esc(b.billNo||'')+'</b></td><td>'+esc(b.customer||'Walk-in Customer')+'</td><td>'+esc(b.phone||'')+'</td><td><b>₹'+due.toFixed(2)+'</b></td><td>'+days+'</td><td><button type="button" class="green" onclick="sendWhatsAppDue(\''+bill+'\')">🟢 WhatsApp</button></td></tr>';
+ }).join('')+'</table></div>';
+}
 function renderBillHistory(){
  db.sales=db.sales||[];
  const q=String(document.getElementById('billHistorySearch')?.value||'').trim().toLowerCase();
