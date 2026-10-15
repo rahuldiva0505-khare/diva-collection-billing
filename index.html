@@ -791,7 +791,7 @@ function printCheckedLabelRows(){let checks=[...document.querySelectorAll('.labe
 function renderSkuLabelOptions(){
  const sel=document.getElementById('labelSkuSelect');if(!sel)return;
  const old=[...sel.selectedOptions].map(o=>o.value),groups=new Map();
- (db.stock||[]).filter(x=>Number(x.qty)>0).forEach(x=>{
+ (db.stock||[]).forEach(x=>{
   const key=productFolderKey(x);
   if(!groups.has(key))groups.set(key,{key,name:x.name||'Product',sku:x.sku||'No SKU',category:x.category||''});
  });
