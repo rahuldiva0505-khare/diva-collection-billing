@@ -145,7 +145,7 @@ function code128Svg(value,opts={}){
 
 <section id="billHistory" class="page">
 <div class="card"><h2>📚 पुरानी Bill History</h2><p class="small">पुराने bills यहाँ सुरक्षित रहेंगे। Bill No., customer name या mobile से खोजें और किसी भी पुराने bill को फिर से print करें.</p>
-<div class="grid"><input id="billHistorySearch" placeholder="Search Bill No / Customer / Mobile" oninput="renderBillHistory()"><select id="billHistoryPeriod" onchange="renderBillHistory()"><option value="all">All Time</option><option value="day">Today</option><option value="month">This Month</option><option value="year">This Year</option></select><button class="gray" onclick="renderBillHistory()">🔄 Refresh</button><button class="green" onclick="promptWhatsAppDue()">🟢 WhatsApp बकाया संदेश</button><button class="green" onclick="promptWhatsAppDue()">🟢 WhatsApp बकाया संदेश</button></div></div>
+<div class="grid"><input id="billHistorySearch" placeholder="Search Bill No / Customer / Mobile" oninput="renderBillHistory()"><select id="billHistoryPeriod" onchange="renderBillHistory()"><option value="all">All Time</option><option value="day">Today</option><option value="month">This Month</option><option value="year">This Year</option></select><button class="gray" onclick="renderBillHistory()">🔄 Refresh</button><button class="green" onclick="promptWhatsAppDue()">🟢 WhatsApp बकाया संदेश</button></div></div>
 <div class="card"><div id="billHistoryTable"></div></div></section>
 
 <section id="customers" class="page">
