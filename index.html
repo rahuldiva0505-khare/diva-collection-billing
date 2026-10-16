@@ -150,7 +150,7 @@ function code128Svg(value,opts={}){
 <div class="card"><div id="billHistoryTable"></div></div></section>
 
 <section id="customers" class="page">
-<div class="card"><h2>👤 Customers</h2><p class="small">Bill complete karte hi customer ka naam aur mobile number yahan automatically save/update hoga.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button><button class="green" onclick="renderDueReminders()">⏰ 30+ दिन बकाया देखें</button></div></div>
+<div class="card"><h2>👤 Customers</h2><p class="small">Bill complete karte hi customer ka naam aur mobile number yahan automatically save/update hoga.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button><button class="green" onclick="renderAllDueLedger()">📒 पूरा उधार लेजर</button><button class="green" onclick="renderDueReminders()">⏰ 30+ दिन बकाया देखें</button></div></div><div class="card"><div id="allDueLedger"><div class="empty">सभी बकाया देखने के लिए “पूरा उधार लेजर” दबाएँ।</div></div></div>
 <div class="card"><h3>🟢 WhatsApp बकाया Reminder</h3><p class="small">यहाँ 30 दिन या उससे पुराने unpaid/partial-paid bills दिखेंगे। WhatsApp संदेश भेजने से पहले आप उसे देख और खुद भेज सकते हैं; कोई automatic/paid API नहीं है।</p><div id="dueReminderList"><div class="empty">सूची देखने के लिए “30+ दिन बकाया देखें” दबाएँ।</div></div></div>
 <div class="card"><div id="customerTable"></div></div>
 </section>
@@ -159,7 +159,7 @@ function code128Svg(value,opts={}){
 
 <section id="stock" class="page">
 <div class="card"><h2>📦 CURRENT STOCK</h2><p>यहाँ केवल <b>वर्तमान उपलब्ध stock</b> दिखेगा। नया माल जोड़ने के लिए <b>Purchase / Stock Add</b> इस्तेमाल करें.</p>
-<div class="grid"><input id="stockSearch" placeholder="Search Product / SKU / Colour / Size" oninput="renderStock()"><select id="stockCatFilter" onchange="renderStock()"><option value="">All Categories</option></select></div>
+<div class="grid"><input id="stockSearch" placeholder="Search Product / SKU / Colour / Size" oninput="renderStock()"><select id="stockCatFilter" onchange="renderStock()"><option value="">All Categories</option></select><button type="button" class="green" onclick="renderLowStockList()">⚠️ Low Stock List</button></div><div id="lowStockList" style="margin-top:10px"></div>
 <div class="card" style="margin-top:10px;background:#fff7fa;border:1px solid #e7b7ca"><h3>🔎 SKU ID खोजें / वापस लाएँ</h3><p class="small">जिस SKU का नंबर नहीं मिल रहा, यहाँ लिखें। पहले current stock में खोजें; न मिले तो Cloud history से खोजें।</p><div class="grid"><input id="skuIdLookupInput" placeholder="SKU ID, जैसे DIVA-33" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSkuIdFromInput()}"><button type="button" class="gray" onclick="searchSkuIdFromInput()">🔎 SKU खोजें</button><button type="button" class="green" onclick="recoverSkuIdFromInput()">☁️ Cloud से वापस खोजें</button></div><div id="skuRecoveryStatus" class="small" role="status" aria-live="polite" style="margin-top:10px;padding:10px;border:1px solid #e7b7ca;border-radius:8px;background:#fff">SKU की स्थिति यहाँ दिखाई देगी।</div></div>
 <div class="card"><h3>🗂️ Product Folders</h3><p class="small">हर folder में product photo, उसके अंदर colours और हर colour में size-wise stock है। Photo जोड़ने के लिए 📷 Photo दबाएँ।</p><div id="productFolders"></div><div id="stockTable" style="display:none"></div></div></section>
 
@@ -292,7 +292,7 @@ function code128Svg(value,opts={}){
 
 <section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Laptop aur mobile par apne Firebase Email/Password account se login karein. App ka 4–6 digit PIN lock pehle ki tarah rahega.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" type="button" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" type="button" onclick="syncCloudNow()">🔄 Sync Now</button><button class="gray" type="button" onclick="sendMissingSkusFromThisDevice()">📤 लैपटॉप के SKU Cloud में भेजें</button><button id="generateSyncCodeBtn" type="button" style="background:#b72d70;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation" onclick="createCloudCode()">➕ Generate New Sync Code</button></div><div class="card" style="margin-top:12px;border:1px solid #e7b7ca;background:#fff7fa"><h3>🔎 Cloud में किसी SKU को खोजें / वापस लाएँ</h3><p class="small">केवल वही SKU नंबर डालें जो स्टॉक में नहीं मिल रहा। वापस लाने से पहले पुष्टि पूछी जाएगी।</p><div class="grid"><input id="cloudSkuLookupInput" placeholder="SKU ID, जैसे DIVA-5" onkeydown="if(event.key==='Enter'){event.preventDefault();recoverCloudSkuFromInput()}"><button type="button" class="gray" onclick="recoverCloudSkuFromInput()">☁️ इस SKU को Cloud में खोजें</button></div><div id="cloudSkuRecoveryStatus" class="small" role="status" aria-live="polite" style="margin-top:8px">यहाँ खोज का नतीजा दिखाई देगा।</div></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #9f174d;border-radius:10px;background:#fff0f6"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
 <div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">आज / Day</option><option value="month">यह महीना / Month</option><option value="year">यह साल / Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="आज का Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" onclick="downloadSalesReportCsv()">⬇️ Sales Report CSV</button><button type="button" class="gray" onclick="downloadStockReportCsv()">⬇️ Stock/SKU CSV</button><button type="button" class="gray" onclick="downloadExpenseReportCsv()">⬇️ Expense CSV</button></div><div id="report" style="margin-top:12px"></div></div></section>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" onclick="downloadSalesReportCsv()">⬇️ Sales Report CSV</button><button type="button" class="gray" onclick="downloadStockReportCsv()">⬇️ Stock/SKU CSV</button><button type="button" class="gray" onclick="downloadExpenseReportCsv()">⬇️ Expense CSV</button><button type="button" class="green" onclick="renderSupplierLedger()">🏭 Supplier Purchase Ledger</button></div><div id="supplierLedger" style="margin-top:12px"></div><div id="report" style="margin-top:12px"></div></div></section>
 </main>
 <script>
 const KEY="DIVA_V5_DATA";
@@ -1232,6 +1232,33 @@ function sendWhatsAppDue(billNo){
  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank','noopener');
 }
 function promptWhatsAppDue(){const billNo=prompt('जिस bill का बकाया संदेश भेजना है, उसका Bill No. डालें (जैसे DC-12345678):');if(billNo)sendWhatsAppDue(billNo.trim())}
+function renderAllDueLedger(){
+ const el=document.getElementById('allDueLedger');if(!el)return;
+ const rows=(db.sales||[]).filter(b=>!b.isTest&&Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0))>0)
+  .sort((a,b)=>Date.parse(a.date||0)-Date.parse(b.date||0));
+ if(!rows.length){el.innerHTML='<div class="empty">अभी कोई बकाया bill नहीं मिला।</div>';return;}
+ const total=rows.reduce((s,b)=>s+Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0)),0);
+ el.innerHTML='<h3>कुल बकाया: ₹'+total.toFixed(2)+'</h3><div class="tablewrap"><table><tr><th>तारीख</th><th>Bill No.</th><th>ग्राहक</th><th>मोबाइल</th><th>कुल बिल</th><th>जमा</th><th>बकाया</th><th>Action</th></tr>'+rows.map(b=>{
+ const due=Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0)),paid=Number(b.paidAmount??Math.max(0,Number(b.total||0)-due));
+ const bill=String(b.billNo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+ return '<tr><td>'+esc(new Date(b.date).toLocaleDateString('en-IN'))+'</td><td>'+esc(b.billNo||'')+'</td><td>'+esc(b.customer||'Walk-in Customer')+'</td><td>'+esc(b.phone||'')+'</td><td>₹'+Number(b.total||0).toFixed(2)+'</td><td>₹'+paid.toFixed(2)+'</td><td><b>₹'+due.toFixed(2)+'</b></td><td><button type="button" class="green" onclick="sendWhatsAppDue(\\''+bill+'\\')">WhatsApp</button></td></tr>';
+ }).join('')+'</table></div>';
+}
+function renderLowStockList(){
+ const el=document.getElementById('lowStockList');if(!el)return;
+ const rows=(db.stock||[]).filter(x=>Number(x.qty||0)<=5).sort((a,b)=>Number(a.qty||0)-Number(b.qty||0));
+ if(!rows.length){el.innerHTML='<div class="empty">Low stock नहीं मिला।</div>';return;}
+ el.innerHTML='<h3>⚠️ Low Stock (5 या कम)</h3><div class="tablewrap"><table><tr><th>SKU</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th></tr>'+rows.map(x=>'<tr><td>'+esc(x.sku||x.skuId||'')+'</td><td>'+esc(x.name||'')+'</td><td>'+esc(x.color||'')+'</td><td>'+esc(x.size||'')+'</td><td><b>'+Number(x.qty||0)+'</b></td></tr>').join('')+'</table></div>';
+}
+function renderSupplierLedger(){
+ const el=document.getElementById('supplierLedger');if(!el)return;
+ const rows=(db.purchases||[]).slice().sort((a,b)=>Date.parse(b.date||0)-Date.parse(a.date||0));
+ if(!rows.length){el.innerHTML='<div class="empty">Purchase history नहीं मिली। Supplier details अगली purchase entry में भरें।</div>';return;}
+ const total=rows.reduce((s,p)=>s+Number(p.qty||0)*Number(p.cost||0),0);
+ const suppliers=new Map();
+ rows.forEach(p=>{const n=String(p.supplier||'Supplier not entered').trim()||'Supplier not entered';const v=suppliers.get(n)||{count:0,amount:0};v.count++;v.amount+=Number(p.qty||0)*Number(p.cost||0);suppliers.set(n,v);});
+ el.innerHTML='<h3>Supplier Purchase Summary — कुल दर्ज खरीद: ₹'+total.toFixed(2)+'</h3><div class="tablewrap"><table><tr><th>Supplier</th><th>Entries</th><th>Purchase Value</th></tr>'+Array.from(suppliers.entries()).sort((a,b)=>b[1].amount-a[1].amount).map(([n,v])=>'<tr><td>'+esc(n)+'</td><td>'+v.count+'</td><td>₹'+v.amount.toFixed(2)+'</td></tr>').join('')+'</table></div><h3>Purchase Details</h3><div class="tablewrap"><table><tr><th>Date</th><th>Supplier</th><th>Invoice</th><th>SKU</th><th>Product</th><th>Qty</th><th>Cost</th><th>Value</th></tr>'+rows.map(p=>'<tr><td>'+esc(p.date?new Date(p.date).toLocaleDateString('en-IN'):'')+'</td><td>'+esc(p.supplier||'')+'</td><td>'+esc(p.invoice||'')+'</td><td>'+esc(p.sku||'')+'</td><td>'+esc(p.name||'')+'</td><td>'+Number(p.qty||0)+'</td><td>₹'+Number(p.cost||0).toFixed(2)+'</td><td>₹'+(Number(p.qty||0)*Number(p.cost||0)).toFixed(2)+'</td></tr>').join('')+'</table></div>';
+}
 function renderDueReminders(){
  const el=document.getElementById('dueReminderList');if(!el)return;
  const now=Date.now();
