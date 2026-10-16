@@ -1241,7 +1241,7 @@ function renderAllDueLedger(){
  el.innerHTML='<h3>कुल बकाया: ₹'+total.toFixed(2)+'</h3><div class="tablewrap"><table><tr><th>तारीख</th><th>Bill No.</th><th>ग्राहक</th><th>मोबाइल</th><th>कुल बिल</th><th>जमा</th><th>बकाया</th><th>Action</th></tr>'+rows.map(b=>{
  const due=Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0)),paid=Number(b.paidAmount??Math.max(0,Number(b.total||0)-due));
  const bill=String(b.billNo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
- return '<tr><td>'+esc(new Date(b.date).toLocaleDateString('en-IN'))+'</td><td>'+esc(b.billNo||'')+'</td><td>'+esc(b.customer||'Walk-in Customer')+'</td><td>'+esc(b.phone||'')+'</td><td>₹'+Number(b.total||0).toFixed(2)+'</td><td>₹'+paid.toFixed(2)+'</td><td><b>₹'+due.toFixed(2)+'</b></td><td><button type="button" class="green" onclick="sendWhatsAppDue(\\''+bill+'\\')">WhatsApp</button></td></tr>';
+ return '<tr><td>'+esc(new Date(b.date).toLocaleDateString('en-IN'))+'</td><td>'+esc(b.billNo||'')+'</td><td>'+esc(b.customer||'Walk-in Customer')+'</td><td>'+esc(b.phone||'')+'</td><td>₹'+Number(b.total||0).toFixed(2)+'</td><td>₹'+paid.toFixed(2)+'</td><td><b>₹'+due.toFixed(2)+'</b></td><td><button type="button" class="green" onclick="sendWhatsAppDue(&quot;'+esc(b.billNo||'')+'&quot;)">WhatsApp</button></td></tr>';
  }).join('')+'</table></div>';
 }
 function renderLowStockList(){
