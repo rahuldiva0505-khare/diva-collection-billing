@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=180',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=181',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -965,18 +965,30 @@ async function startCameraScan(){
   let modal=document.getElementById('cameraScanner');
   if(!modal){
     modal=document.createElement('div');modal.id='cameraScanner';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-sizing:border-box';
-    modal.innerHTML='<div style="color:#fff;font-size:19px;font-weight:bold;margin-bottom:6px">📷 Fast Barcode Scanner</div><div style="color:#ddd;font-size:12px;margin-bottom:7px">पूरा barcode frame में रखें • 15–30 cm • phone स्थिर रखें</div><div style="position:relative;width:min(97vw,640px);height:56vh"><video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;background:#111;border:2px solid #fff;border-radius:10px"></video><div style="position:absolute;left:3%;right:3%;top:40%;height:4px;background:#9f174d;box-shadow:0 0 10px #9f174d"></div></div><div id="cameraMsg" style="color:#fff;margin:8px;text-align:center">Black lines orange line के बीच रखें…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 24px;border:0;border-radius:8px">✕ Close</button></div>';
+    modal.innerHTML='<div style="color:#fff;font-size:19px;font-weight:bold;margin-bottom:6px">📷 Fast Barcode Scanner</div><div style="color:#ddd;font-size:12px;margin-bottom:7px">पूरा barcode frame में रखें • 15–30 cm • phone स्थिर रखें</div><div style="position:relative;width:min(97vw,640px);height:56vh"><video id="cameraVideo" autoplay playsinline muted webkit-playsinline="true" style="width:100%;height:100%;object-fit:contain;background:#111;border:2px solid #fff;border-radius:10px"></video><div style="position:absolute;left:3%;right:3%;top:40%;height:4px;background:#9f174d;box-shadow:0 0 10px #9f174d"></div></div><div id="cameraMsg" style="color:#fff;margin:8px;text-align:center">कैमरा शुरू हो रहा है…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 24px;border:0;border-radius:8px">✕ Close</button></div>';
     document.body.appendChild(modal);
   }else modal.style.display='flex';
   const video=document.getElementById('cameraVideo'),msg=document.getElementById('cameraMsg');
   try{
     window.__scanStop=false; window.__zxingReader=null;
-    window.__scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
-    video.srcObject=window.__scanStream; await video.play();
+    video.muted=true;video.autoplay=true;video.playsInline=true;
+    let stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+    window.__scanStream=stream;video.srcObject=stream;
+    await new Promise(resolve=>{if(video.readyState>=2&&video.videoWidth){resolve();return}let done=false;const finish=()=>{if(done)return;done=true;video.removeEventListener('loadeddata',finish);resolve()};video.addEventListener('loadeddata',finish);setTimeout(finish,1800)});
+    try{await video.play()}catch(e){}
+    // Some Android browsers select a camera track that returns no video frames; retry with the browser's default camera.
+    if(!video.videoWidth||video.readyState<2){
+      stream.getTracks().forEach(t=>t.stop());window.__scanStream=null;video.srcObject=null;
+      msg.textContent='कैमरा दोबारा शुरू हो रहा है…';
+      stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+      window.__scanStream=stream;video.srcObject=stream;
+      await new Promise(resolve=>{if(video.readyState>=2&&video.videoWidth){resolve();return}let done=false;const finish=()=>{if(done)return;done=true;video.removeEventListener('loadeddata',finish);resolve()};video.addEventListener('loadeddata',finish);setTimeout(finish,2500)});
+      await video.play();
+    }
+    if(!video.videoWidth){msg.textContent='कैमरा चालू है लेकिन वीडियो नहीं मिल रहा। मोबाइल Settings > Apps > Chrome > Permissions > Camera Allow करें, फिर दोबारा खोलें.';return}
     try{
       const track=window.__scanStream.getVideoTracks()[0],caps=track.getCapabilities?track.getCapabilities():{};
       if(caps.focusMode&&caps.focusMode.includes('continuous')) await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
-      if(caps.zoom){const z=Math.min(caps.zoom.max,Math.max(caps.zoom.min,(caps.zoom.min+caps.zoom.max)/2));await track.applyConstraints({advanced:[{zoom:z}]})}
     }catch(e){}
     msg.textContent='⚡ Fast scanning…';
     if('BarcodeDetector' in window){
@@ -985,15 +997,9 @@ async function startCameraScan(){
       let busy=false,last='';
       const loop=async()=>{
         if(window.__scanStop)return;
-        if(!busy){busy=true;try{
-          const codes=await detector.detect(video);
-          if(codes&&codes.length){
-            const code=String(codes[0].rawValue||'').trim();
-            if(code&&code!==last){last=code;stopCameraScan();fillFromCode(code);return}
-          }
-        }catch(e){}busy=false}
-        setTimeout(()=>requestAnimationFrame(loop),60);
-      }; loop();
+        if(!busy){busy=true;try{const codes=await detector.detect(video);if(codes&&codes.length){const code=String(codes[0].rawValue||'').trim();if(code&&code!==last){last=code;stopCameraScan();fillFromCode(code);return}}}catch(e){}busy=false}
+        setTimeout(()=>requestAnimationFrame(loop),100);
+      };loop();
     }else if(window.ZXingBrowser){
       try{
         window.__zxingReader=new ZXingBrowser.BrowserMultiFormatReader();
@@ -1001,9 +1007,9 @@ async function startCameraScan(){
           if(window.__scanStop)return;
           if(result&&result.text){const code=String(result.text).trim();if(code){stopCameraScan();fillFromCode(code)}}
         });
-      }catch(e){msg.textContent='Scanner start नहीं हुआ. Internet/Camera permission check करें.'}
-    }else msg.textContent='इस browser में barcode decoder उपलब्ध नहीं है.';
-  }catch(e){if(msg)msg.textContent='Camera शुरू नहीं हुआ: Camera permission Allow करें और दोबारा Scan दबाएँ.';console.error(e)}
+      }catch(e){msg.textContent='Scanner शुरू नहीं हुआ। Internet और Camera permission जाँचें.'}
+    }else msg.textContent='Barcode decoder उपलब्ध नहीं है। Internet चालू करके ऐप फिर खोलें.';
+  }catch(e){if(msg)msg.textContent='कैमरा शुरू नहीं हुआ: '+(e&&e.name==='NotAllowedError'?'Camera permission Allow करें.':(e&&e.message||'Camera दोबारा खोलें.'));console.error(e)}
 }
 function stopCameraScan(){window.__scanStop=true;try{if(window.__zxingReader)window.__zxingReader.reset()}catch(e){}if(window.__scanStream){window.__scanStream.getTracks().forEach(t=>t.stop());window.__scanStream=null}const m=document.getElementById('cameraScanner');if(m)m.style.display='none'}
 function renderSalesReturn(){
@@ -1089,13 +1095,21 @@ function addSalesReturnToStock(){
 }
 async function startSalesReturnCameraScan(){
  if(!navigator.mediaDevices?.getUserMedia){alert('Camera access उपलब्ध नहीं है. HTTPS या localhost पर खोलें.');return}
- let modal=document.getElementById('srCamera');if(!modal){modal=document.createElement('div');modal.id='srCamera';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Sales Return Barcode Scan</div><video id="srVideo" autoplay playsinline muted style="width:min(92vw,520px);height:55vh;object-fit:cover;background:#111;border:2px solid #fff;border-radius:12px"></video><div id="srCameraMsg" style="color:#fff;margin:12px;text-align:center">Barcode camera के सामने रखें…</div><button type="button" onclick="stopSalesReturnCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';document.body.appendChild(modal)}else modal.style.display='flex';
- try{window.__srStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});const v=document.getElementById('srVideo');v.srcObject=window.__srStream;await v.play();window.__srStop=false;
- if('BarcodeDetector' in window){const d=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']});const loop=async()=>{if(window.__srStop)return;try{const c=await d.detect(v);if(c.length){const code=c[0].rawValue;stopSalesReturnCameraScan();fillSalesReturnFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();}
- else {document.getElementById('srCameraMsg').textContent='इस browser में camera barcode detector नहीं है. USB/Bluetooth scanner या barcode input box इस्तेमाल करें.';}
- }catch(e){stopSalesReturnCameraScan();alert('Camera permission नहीं मिली. Browser settings में Camera Allow करें.')}
+ let modal=document.getElementById('srCamera');if(!modal){modal=document.createElement('div');modal.id='srCamera';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Sales Return Barcode Scan</div><video id="srVideo" autoplay playsinline muted webkit-playsinline="true" style="width:min(92vw,520px);height:55vh;object-fit:contain;background:#111;border:2px solid #fff;border-radius:12px"></video><div id="srCameraMsg" style="color:#fff;margin:12px;text-align:center">कैमरा शुरू हो रहा है…</div><button type="button" onclick="stopSalesReturnCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';document.body.appendChild(modal)}else modal.style.display='flex';
+ const v=document.getElementById('srVideo'),msg=document.getElementById('srCameraMsg');
+ try{
+  window.__srStop=false;v.muted=true;v.autoplay=true;v.playsInline=true;
+  let stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});window.__srStream=stream;v.srcObject=stream;
+  await new Promise(resolve=>{if(v.readyState>=2&&v.videoWidth){resolve();return}let done=false;const finish=()=>{if(done)return;done=true;v.removeEventListener('loadeddata',finish);resolve()};v.addEventListener('loadeddata',finish);setTimeout(finish,1800)});
+  try{await v.play()}catch(e){}
+  if(!v.videoWidth||v.readyState<2){stream.getTracks().forEach(t=>t.stop());window.__srStream=null;v.srcObject=null;msg.textContent='कैमरा दोबारा शुरू हो रहा है…';stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});window.__srStream=stream;v.srcObject=stream;await new Promise(resolve=>{if(v.readyState>=2&&v.videoWidth){resolve();return}let done=false;const finish=()=>{if(done)return;done=true;v.removeEventListener('loadeddata',finish);resolve()};v.addEventListener('loadeddata',finish);setTimeout(finish,2500)});await v.play()}
+  if(!v.videoWidth){msg.textContent='वीडियो नहीं मिल रहा। Chrome की Camera permission Allow करें.';return}
+  if('BarcodeDetector' in window){let d;try{d=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']})}catch(e){d=new BarcodeDetector()}const loop=async()=>{if(window.__srStop)return;try{const c=await d.detect(v);if(c.length){const code=c[0].rawValue;stopSalesReturnCameraScan();fillSalesReturnFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();}
+  else if(window.ZXingBrowser){window.__srReader=new ZXingBrowser.BrowserMultiFormatReader();window.__srReader.decodeFromVideoDevice(null,v,(result,err)=>{if(window.__srStop)return;if(result&&result.text){const code=String(result.text).trim();stopSalesReturnCameraScan();fillSalesReturnFromCode(code)}})}
+  else msg.textContent='इस browser में barcode decoder उपलब्ध नहीं है. Internet चालू करें.';
+ }catch(e){stopSalesReturnCameraScan();alert('कैमरा शुरू नहीं हुआ: '+(e&&e.name==='NotAllowedError'?'Camera permission Allow करें.':(e&&e.message||'दोबारा कोशिश करें.')))}
 }
-function stopSalesReturnCameraScan(){window.__srStop=true;if(window.__srStream){window.__srStream.getTracks().forEach(t=>t.stop());window.__srStream=null}const m=document.getElementById('srCamera');if(m)m.style.display='none'}
+function stopSalesReturnCameraScan(){window.__srStop=true;try{if(window.__srReader)window.__srReader.reset()}catch(e){}if(window.__srStream){window.__srStream.getTracks().forEach(t=>t.stop());window.__srStream=null}const m=document.getElementById('srCamera');if(m)m.style.display='none'}
 function addItem(){
  let p=document.getElementById("bproduct").value,sizeKey=document.getElementById("bsize").value,q=Number(document.getElementById("bqty").value)||1,rate=Number(document.getElementById("brate").value)||0,discount=Number(document.getElementById("bdiscount").value)||0;
  if(!p||!sizeKey||rate<=0){alert("Product, Size और Selling Price चुनें");return}
