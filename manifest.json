@@ -2,7 +2,7 @@
   "name": "Diva Collection Billing",
   "short_name": "Diva Billing",
   "description": "Diva Collection offline billing, stock and customer management",
-  "start_url": "./?app_version=77",
+  "start_url": "./?app_version=78",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
