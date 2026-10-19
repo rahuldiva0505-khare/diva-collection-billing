@@ -1,7 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Diva Collection">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0ad"/><stop offset=".5" stop-color="#d9ad45"/><stop offset="1" stop-color="#b88624"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1e6544"/><stop offset="1" stop-color="#092d20"/></linearGradient></defs>
-<rect width="512" height="512" rx="84" fill="url(#b)"/><circle cx="256" cy="220" r="164" fill="#0b3525" stroke="url(#g)" stroke-width="10"/>
-<path d="M184 94 204 121 229 91 256 121 283 91 308 121 328 94 317 141 195 141Z" fill="url(#g)"/>
-<circle cx="184" cy="91" r="7" fill="#fff0ad"/><circle cx="229" cy="88" r="7" fill="#fff0ad"/><circle cx="256" cy="116" r="7" fill="#fff0ad"/><circle cx="283" cy="88" r="7" fill="#fff0ad"/><circle cx="328" cy="91" r="7" fill="#fff0ad"/>
-<text x="276" y="304" text-anchor="middle" font-family="Georgia,serif" font-size="218" font-weight="bold" fill="url(#g)">D</text><path d="M161 163 C122 212 141 280 176 316 C156 267 171 224 196 191" fill="none" stroke="url(#g)" stroke-width="14" stroke-linecap="round"/><path d="M174 337 Q196 315 218 337 Q196 359 174 337Z" fill="#79bd79"/>
-<text x="256" y="430" text-anchor="middle" font-family="Georgia,serif" font-size="56" font-weight="bold" fill="#fff">DIVA</text><text x="256" y="474" text-anchor="middle" font-family="Georgia,serif" font-size="25" letter-spacing="3" fill="url(#g)">COLLECTION</text></svg>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#164b32"/><stop offset="1" stop-color="#071e15"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4bf"/><stop offset=".48" stop-color="#d7ad49"/><stop offset="1" stop-color="#fff0a6"/></linearGradient></defs>
+<rect width="512" height="512" rx="72" fill="url(#bg)"/>
+<path d="M256 28 454 164 402 390 256 484 110 390 58 164Z" fill="none" stroke="url(#gold)" stroke-width="8"/>
+<path d="M256 48 432 170 390 370 256 455 122 370 80 170Z" fill="none" stroke="#d7ad49" stroke-opacity=".5" stroke-width="2"/>
+<path d="M256 48V455M80 170H432M122 370H390M80 170 256 300 432 170M122 370 256 300 390 370" fill="none" stroke="#d7ad49" stroke-opacity=".28" stroke-width="2"/>
+<path d="M192 128H270C339 128 377 170 377 230S339 332 270 332H192ZM231 164V296H268C313 296 338 271 338 230S313 164 268 164Z" fill="url(#gold)" fill-rule="evenodd"/>
+<text x="256" y="382" text-anchor="middle" font-family="Georgia,serif" font-size="39" letter-spacing="4" font-weight="bold" fill="#fff">DIVA</text>
+<text x="256" y="420" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" letter-spacing="5" font-weight="bold" fill="url(#gold)">COLLECTION</text>
+</svg>
