@@ -1,11 +1,11 @@
-const CACHE = 'diva-billing-v190';
-const CORE = ['./','./index.html','./manifest.json','./sw.js','./icon-192.png','./icon-512.png','./diva-logo.svg'];
+const CACHE = 'diva-billing-v191';
+const CORE = ['./','./index.html','./manifest.json','./sw.js','./diva-logo.svg','./diva-logo-v2.svg'];
 self.addEventListener('message', event => { if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting(); });
 
 const LAKSHMI_AUDIO_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Aarti_Puja,_Lakshmi_Laxmi.ogg';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(async cache => {
-    await cache.addAll(CORE).catch(()=>{});
+    await Promise.all(CORE.map(async path => { try { const response = await fetch(path, {cache:'reload'}); if (response && response.ok) await cache.put(path, response); } catch (e) {} }));
     try {
       const response = await fetch(LAKSHMI_AUDIO_URL, {mode:'no-cors', cache:'no-store'});
       if (response && (response.type === 'opaque' || response.ok)) await cache.put('./lakshmi-aarti.ogg', response);
