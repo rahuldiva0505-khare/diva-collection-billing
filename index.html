@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=192',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=197',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -303,6 +303,17 @@ body nav,body nav button,body button,body input[type=button],body input[type=sub
 body .card,body .product-folder,body .labelcard,body #sideMenuPanel,body .modal,body .dialog,body .folder-card{background-color:#fff4e8!important;color:#4b240b!important}
 body .side-menu-list,body .side-menu-list>button,body .folder-head,body .new-product-photo-box,body .photo-pick,body .scanbox,body .gray,body button.gray{background-color:#ffead6!important;color:#a63d00!important;border-color:#f5c79e!important}
 body .folder-number,body .folder-arrow,body .folder-title{color:#a63d00!important}
+</style>
+
+<style id="diva-orange-theme-final">
+/* Final orange theme override */
+html,body,#app,main,.page.active,#dashboard,#billing,#stock,#reports,#settings { background-color:#a63d00 !important; }
+header,#sideMenuToggle { background-color:#a63d00 !important; color:#fff !important; }
+nav { background-color:#b84e00 !important; }
+nav button,button,.green,.design-print-button { background-color:#e66a00 !important; color:#fff !important; }
+.card,.product-folder,.labelcard,#sideMenuPanel,.folder-head,.new-product-photo-box { background-color:#fff4e8 !important; }
+.side-menu-list,.side-menu-list>button,.gray,button.gray,.photo-pick,.scanbox { background-color:#ffead6 !important; color:#a63d00 !important; border-color:#f5c79e !important; }
+.folder-number,.folder-arrow,.folder-title,.side-menu-list>button { color:#a63d00 !important; }
 </style>
 </body></html>');
     w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
