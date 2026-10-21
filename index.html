@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=189',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=190',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -65,6 +65,15 @@ button.gray,.gray{background:#ffead6!important;color:#e66a00!important}
 .folder-head,.new-product-photo-box{background:#fff4e8!important}
 .folder-color,.colorbox{background:#f8fbf8;border-color:#f5c79e}
 input,select,textarea{background:#fff;color:#222}
+
+
+/* FORCE ORANGE THEME across the whole app */
+html,body,#app,main,.page{background:#a63d00!important}
+header,#sideMenuToggle{background:#a63d00!important;color:#fff!important}
+nav,nav button,button,.green,.design-print-button{background:#e66a00!important;color:#fff!important}
+.card,.product-folder,.labelcard,#sideMenuPanel{background:#fff4e8!important}
+.side-menu-list,.side-menu-list>button,.folder-head,.new-product-photo-box,.photo-pick,.scanbox,.gray,button.gray{background:#ffead6!important;color:#a63d00!important;border-color:#f5c79e!important}
+.folder-number,.folder-arrow,.folder-title,.side-menu-list>button{color:#a63d00!important}
 
 </style>
 <script>
