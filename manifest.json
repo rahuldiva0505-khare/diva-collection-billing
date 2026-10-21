@@ -2,12 +2,12 @@
   "name": "Diva Collection Billing",
   "short_name": "Diva Billing",
   "description": "Diva Collection offline billing, stock and customer management",
-  "start_url": "./?app_version=93",
+  "start_url": "./?app_version=94",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f47700",
-  "theme_color": "#f47700",
+  "background_color": "#ffffff",
+  "theme_color": "#ff7900",
   "categories": [
     "business",
     "productivity",
@@ -16,7 +16,7 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "./diva-logo-v2.svg?v=93",
+      "src": "./diva-logo-v2.svg?v=94",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
