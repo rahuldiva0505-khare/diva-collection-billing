@@ -1,13 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Demand Diva Collection">
-<rect width="512" height="512" rx="76" fill="#f47700"/>
-<path d="M256 24 447 135 418 342 256 475 94 342 65 135Z" fill="none" stroke="#fff3c4" stroke-width="8"/>
-<rect x="111" y="72" width="290" height="202" rx="38" fill="#fffaf0"/>
-<path d="M180 111 212 88M332 111 300 88" stroke="#fffaf0" stroke-width="12" stroke-linecap="round"/>
-<circle cx="208" cy="87" r="10" fill="#fffaf0"/><circle cx="304" cy="87" r="10" fill="#fffaf0"/>
-<path d="M166 111H245C289 111 316 136 316 173S289 235 245 235H166Z" fill="#f47700"/>
-<path d="M197 139V207H243C268 207 283 194 283 173S268 139 243 139Z" fill="#fffaf0"/>
-<path d="M151 245Q245 216 354 98Q320 189 240 234Q193 261 151 245Z" fill="#ffc928"/>
-<text x="256" y="330" text-anchor="middle" font-family="Arial,sans-serif" font-size="46" font-weight="900" letter-spacing="1" fill="#fff">Demand</text>
-<text x="256" y="383" text-anchor="middle" font-family="Arial,sans-serif" font-size="57" font-weight="900" letter-spacing="2" fill="#fff5d7">DIVA</text>
-<text x="256" y="421" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" letter-spacing="3" fill="#fff5d7">COLLECTION</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Diva Collection diamond D logo">
+<rect width="512" height="512" rx="76" fill="#ffffff"/>
+<circle cx="256" cy="256" r="225" fill="#ffffff" stroke="#ff7900" stroke-width="24"/>
+<path d="M256 94 397 207 256 354 115 207Z" fill="#fffaf4" stroke="#ff7900" stroke-width="13" stroke-linejoin="round"/>
+<path d="M256 111 366 207 256 328 146 207Z" fill="#fff" stroke="#ffd2a3" stroke-width="3" stroke-linejoin="round"/>
+<path d="M216 158H257C303 158 329 183 329 222S303 286 257 286H216Z" fill="#ff7900"/>
+<path d="M244 184V260H257C281 260 299 246 299 222S281 184 257 184Z" fill="#ffffff"/>
+<path d="M173 272Q250 250 337 145Q310 219 244 267Q204 290 173 272Z" fill="#ff7900"/>
+<text x="256" y="402" text-anchor="middle" font-family="Georgia,serif" font-size="57" font-weight="bold" letter-spacing="1" fill="#ff7900">DIVA</text>
+<text x="256" y="437" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="4" fill="#ff7900">COLLECTION</text>
 </svg>
