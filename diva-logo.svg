@@ -1,10 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Diva Collection">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Demand Diva Collection">
 <rect width="512" height="512" rx="76" fill="#f47700"/>
 <path d="M256 24 447 135 418 342 256 475 94 342 65 135Z" fill="none" stroke="#fff3c4" stroke-width="8"/>
-<rect x="111" y="96" width="290" height="226" rx="42" fill="#fffaf0"/>
-<path d="M180 137H242C292 137 322 166 322 209S292 281 242 281H180Z" fill="#f47700"/>
-<path d="M214 169V249H241C270 249 288 233 288 209S270 169 241 169Z" fill="#fffaf0"/>
-<path d="M153 302Q246 273 355 146Q321 237 241 282Q194 309 153 302Z" fill="#ffc928"/>
-<text x="256" y="382" text-anchor="middle" font-family="Arial,sans-serif" font-size="47" font-weight="900" letter-spacing="1" fill="#fff">DIVA</text>
-<text x="256" y="420" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#fff5d7">COLLECTION</text>
+<rect x="111" y="72" width="290" height="202" rx="38" fill="#fffaf0"/>
+<path d="M180 111 212 88M332 111 300 88" stroke="#fffaf0" stroke-width="12" stroke-linecap="round"/>
+<circle cx="208" cy="87" r="10" fill="#fffaf0"/><circle cx="304" cy="87" r="10" fill="#fffaf0"/>
+<path d="M166 111H245C289 111 316 136 316 173S289 235 245 235H166Z" fill="#f47700"/>
+<path d="M197 139V207H243C268 207 283 194 283 173S268 139 243 139Z" fill="#fffaf0"/>
+<path d="M151 245Q245 216 354 98Q320 189 240 234Q193 261 151 245Z" fill="#ffc928"/>
+<text x="256" y="330" text-anchor="middle" font-family="Arial,sans-serif" font-size="46" font-weight="900" letter-spacing="1" fill="#fff">Demand</text>
+<text x="256" y="383" text-anchor="middle" font-family="Arial,sans-serif" font-size="57" font-weight="900" letter-spacing="2" fill="#fff5d7">DIVA</text>
+<text x="256" y="421" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" letter-spacing="3" fill="#fff5d7">COLLECTION</text>
 </svg>
