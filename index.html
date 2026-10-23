@@ -423,7 +423,7 @@ function toggleGaneshMantra(){
  audio.play().then(()=>{if(status)status.textContent='🔊 आरती चल रही है';}).catch(()=>{if(status)status.textContent='आरती सुनने के लिए Play दबाएँ। पहली बार इंटरनेट चालू रखें ताकि ऑडियो सेव हो सके।';});
 }
 function openCloudSync(){try{const overlay=document.getElementById("appLockOverlay");if(overlay&&getComputedStyle(overlay).display!=="none"){alert("पहले App PIN से Unlock करें, फिर Cloud Sync दबाएँ।");return;}document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const target=document.getElementById("cloudSync");if(!target){alert("Cloud Sync page नहीं मिला। App को reload करें।");return;}target.classList.add("active");const code=document.getElementById("cloudCode");if(code&&!code.value&&typeof cloudCode==="function")code.value=cloudCode();if(typeof updateCloudAuthStatus==="function"&&typeof cloudAuth!=="undefined")updateCloudAuthStatus(cloudAuth&&cloudAuth.currentUser);window.scrollTo(0,0);}catch(e){console.error("Open Cloud Sync failed",e);alert("Cloud Sync खोलने में समस्या हुई। App को बंद करके दोबारा खोलें।");}}
-function toggleSideMenu(){var m=document.getElementById('sideMenuPanel'),b=document.getElementById('sideMenuBackdrop'),t=document.getElementById('sideMenuToggle');if(!m||!b)return;var open=!m.classList.contains('open');m.classList.toggle('open',open);b.classList.toggle('open',open);if(t)t.setAttribute('aria-expanded',open?'true':'false');}
+function toggleSideMenu(){var m=document.getElementById('sideMenuPanel'),b=document.getElementById('sideMenuBackdrop'),t=document.getElementById('sideMenuToggle');if(!m||!b)return;var open=!m.classList.contains('open');m.classList.toggle('open',open);b.classList.toggle('open',open);if(t)t.setAttribute('aria-expanded',open?'true':'false');if(open){setTimeout(function(){var first=m.querySelector('.side-menu-list>button');if(first)first.focus();},30);}}
 function closeSideMenu(){var m=document.getElementById('sideMenuPanel'),b=document.getElementById('sideMenuBackdrop'),t=document.getElementById('sideMenuToggle');if(m)m.classList.remove('open');if(b)b.classList.remove('open');if(t)t.setAttribute('aria-expanded','false');}
 function menuPage(id){closeSideMenu();page(id);}
 (function(){
@@ -435,14 +435,25 @@ function menuPage(id){closeSideMenu();page(id);}
   if(e.key==='F2'){
    e.preventDefault();e.stopImmediatePropagation();toggleSideMenu();return;
   }
+  const panel=document.getElementById('sideMenuPanel');
   if(e.key==='Escape'){
-   const panel=document.getElementById('sideMenuPanel');
    if(panel&&panel.classList.contains('open')){e.preventDefault();e.stopImmediatePropagation();closeSideMenu();}
    return;
   }
-  const panel=document.getElementById('sideMenuPanel');
-  if(panel&&panel.classList.contains('open')&&Object.prototype.hasOwnProperty.call(menuKeys,e.key)){
-   e.preventDefault();e.stopImmediatePropagation();menuPage(menuKeys[e.key]);
+  if(panel&&panel.classList.contains('open')){
+   const items=Array.from(panel.querySelectorAll('.side-menu-list>button'));
+   const idx=items.indexOf(document.activeElement);
+   if((e.key==='ArrowDown'||e.key==='ArrowUp')&&items.length){
+    e.preventDefault();e.stopImmediatePropagation();
+    let next=idx<0?0:(idx+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;
+    items[next].focus();items[next].scrollIntoView({block:'nearest'});return;
+   }
+   if(e.key==='Home'&&items.length){e.preventDefault();e.stopImmediatePropagation();items[0].focus();return;}
+   if(e.key==='End'&&items.length){e.preventDefault();e.stopImmediatePropagation();items[items.length-1].focus();return;}
+   if(e.key==='Enter'&&items.includes(document.activeElement)){e.preventDefault();e.stopImmediatePropagation();document.activeElement.click();return;}
+   if(Object.prototype.hasOwnProperty.call(menuKeys,e.key)){
+    e.preventDefault();e.stopImmediatePropagation();menuPage(menuKeys[e.key]);return;
+   }
   }
  },true);
 })();
