@@ -265,8 +265,8 @@ function code128Svg(value,opts={}){
 <div class="card" style="margin-top:10px;background:#a63d00">
 <h3>🖨️ Printer / Label Paper Setting</h3>
 <div class="grid">
-<label>Paper Width (inch)<input id="lpPaperW" type="number" min="1" step="0.1" value="2"></label>
-<label>Paper Height (inch)<input id="lpPaperH" type="number" min="1" step="0.1" value="1.5"></label>
+<label>Paper Width (inch)<input id="lpPaperW" type="number" min="1" step="0.1" value="4"></label>
+<label>Paper Height (inch)<input id="lpPaperH" type="number" min="1" step="0.1" value="6"></label>
 <label>Label Width (inch)<input id="lpLabelW" type="number" min="0.5" step="0.01" value="2"></label>
 <label>Label Height (inch)<input id="lpLabelH" type="number" min="0.5" step="0.01" value="1.5"></label>
 <label>Horizontal Gap (inch)<input id="lpGapX" type="number" min="0" step="0.05" value="0"></label>
@@ -779,13 +779,13 @@ function saveNewPurchaseProduct(){
 
 }
 function getLabelPrintSettings(){
- const d={paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0};
+ const d={paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0};
  try{
   const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
   const s=raw?JSON.parse(raw):{};
-  if(localStorage.getItem('DIVA_LABEL_FORMAT_V5')!=='1'){
-   Object.assign(s,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
-   localStorage.setItem('DIVA_LABEL_FORMAT_V5','1');
+  if(localStorage.getItem('DIVA_LABEL_FORMAT_V6')!=='1'){
+   Object.assign(s,{paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0});
+   localStorage.setItem('DIVA_LABEL_FORMAT_V6','1');
    localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));
   }
   Object.assign(d,s);
@@ -2227,9 +2227,9 @@ setTimeout(function(){
    try {
      const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
      const old=raw?JSON.parse(raw):{};
-     if(localStorage.getItem('DIVA_LABEL_FORMAT_V5')!=='1'){
+     if(localStorage.getItem('DIVA_LABEL_FORMAT_V6')!=='1'){
        Object.assign(old,{paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0});
-       localStorage.setItem('DIVA_LABEL_FORMAT_V5','1');
+       localStorage.setItem('DIVA_LABEL_FORMAT_V6','1');
        localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(old));
      }
      Object.assign(d,old);
