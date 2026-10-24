@@ -2228,12 +2228,13 @@ setTimeout(function(){
    try {
      const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
      const old=raw?JSON.parse(raw):{};
-     if(localStorage.getItem('DIVA_LABEL_FORMAT_V7')!=='1'){
+     if(localStorage.getItem('DIVA_LABEL_FORMAT_V8')!=='1'){
        Object.assign(old,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
-       localStorage.setItem('DIVA_LABEL_FORMAT_V7','1');
+       localStorage.setItem('DIVA_LABEL_FORMAT_V8','1');
        localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(old));
      }
      Object.assign(d,old);
+     Object.assign(d,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
    } catch(e){}
    return d;
  };
