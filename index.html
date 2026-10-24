@@ -909,7 +909,7 @@ function renderSkuLabelVariants(){
  bySku.forEach((items,key)=>{
   const first=items[0];
   html+='<h4 style="margin:12px 0 5px">'+esc(first.sku||'No SKU')+' — '+esc(first.name||'Product')+'</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Select</th><th>Colour</th><th>Size</th><th>Stock</th><th>Print Qty</th></tr></thead><tbody>';
-  html+=items.map(x=>'<tr><td><input type="checkbox" class="sku-label-check" data-stock-key="'+esc(x.key)+'" checked></td><td>'+esc(x.color||'No Colour')+'</td><td>'+esc(x.size||'-')+'</td><td>'+Number(x.qty||0)+'</td><td><input type="number" class="sku-label-qty" data-stock-key="'+esc(x.key)+'" min="1" max="'+Number(x.qty||0)+'" value="1" style="width:76px"></td></tr>').join('');
+  html+=items.map(x=>'<tr><td><input type="checkbox" class="sku-label-check" data-stock-key="'+esc(x.key)+'"></td><td>'+esc(x.color||'No Colour')+'</td><td>'+esc(x.size||'-')+'</td><td>'+Number(x.qty||0)+'</td><td><input type="number" class="sku-label-qty" data-stock-key="'+esc(x.key)+'" min="1" max="'+Number(x.qty||0)+'" value="1" style="width:76px"></td></tr>').join('');
   html+='</tbody></table></div>';
  });
  el.innerHTML='<p class="small">'+keys.length+' SKU चुने गए. जिन Colour/Size के labels चाहिए, उन्हें select करें और Print Qty सेट करें.</p>'+html;
