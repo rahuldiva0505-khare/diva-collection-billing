@@ -271,6 +271,7 @@ function code128Svg(value,opts={}){
 <label>Label Height (inch)<input id="lpLabelH" type="number" min="0.5" step="0.01" value="1.5"></label>
 <label>Horizontal Gap (inch)<input id="lpGapX" type="number" min="0" step="0.05" value="0"></label>
 <label>Vertical Gap (inch)<input id="lpGapY" type="number" min="0" step="0.05" value="0"></label>
+<label>Print Orientation<select id="lpOrientation"><option value="portrait">Portrait — सीधा</option><option value="landscape">Landscape — आड़ा</option></select></label>
 </div>
 <div id="lpLayoutInfo" class="small" style="margin-top:8px"></div>
 <button class="green" onclick="saveLabelPrintSettings()">💾 Save Printer Setting</button>
@@ -2247,42 +2248,66 @@ setTimeout(function(){
  };
 })();;
 
-/* Direct 2x1.5 inch label paper */
+/* Custom paper size settings: preserve SKU, stock and Firebase sync */
 (function(){
- const originalSettings = window.getLabelPrintSettings;
- window.getLabelPrintSettings = function(){
-   const d={paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0};
-   try {
+ window.getLabelPrintSettings=function(){
+   const d={paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0,orientation:'portrait'};
+   try{
      const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
      const old=raw?JSON.parse(raw):{};
-     if(localStorage.getItem('DIVA_LABEL_FORMAT_V8')!=='1'){
-       Object.assign(old,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
-       localStorage.setItem('DIVA_LABEL_FORMAT_V8','1');
+     if(localStorage.getItem('DIVA_LABEL_FORMAT_V9')!=='1'){
+       Object.assign(old,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0,orientation:'portrait'});
+       localStorage.setItem('DIVA_LABEL_FORMAT_V9','1');
        localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(old));
      }
      Object.assign(d,old);
-     Object.assign(d,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
-   } catch(e){}
+   }catch(e){}
    return d;
  };
- window.labelPrintStyle = function(){
+ window.loadLabelPrintSettings=function(){
    const s=window.getLabelPrintSettings();
-   const cols=Math.max(1,Math.floor((s.paperW+s.gapX)/(s.labelW+s.gapX)));
-   const rows=Math.max(1,Math.floor((s.paperH+s.gapY)/(s.labelH+s.gapY)));
-   const perPage=cols*rows;
-   const css='@page{size:'+s.paperW+'in '+s.paperH+'in;margin:0}*{box-sizing:border-box}html,body{margin:0!important;padding:0!important;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:'+s.paperW+'in!important;min-width:'+s.paperW+'in!important;max-width:'+s.paperW+'in!important}@media print{html,body{width:'+s.paperW+'in!important;height:auto!important;margin:0!important;padding:0!important}.printbar{display:none!important}}.sheet{display:grid!important;grid-template-columns:repeat('+cols+','+s.labelW+'in);grid-template-rows:repeat('+rows+','+s.labelH+'in);column-gap:'+s.gapX+'in;row-gap:'+s.gapY+'in;align-content:start;justify-content:start;width:'+s.paperW+'in!important;height:'+s.paperH+'in!important;min-width:'+s.paperW+'in!important;max-width:'+s.paperW+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}.sheet:last-child{break-after:auto;page-break-after:auto}.label{position:relative;display:block!important;width:'+s.labelW+'in!important;height:'+s.labelH+'in!important;min-width:'+s.labelW+'in!important;max-width:'+s.labelW+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;text-align:center;border:0;break-inside:avoid;page-break-inside:avoid}.label .prices{position:absolute;top:2%;left:2%;right:2%;height:11%;font-size:9px!important;line-height:1.1!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:14%;left:0;right:0;height:9%;font-size:8px;line-height:1.1;font-weight:900;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:24%;left:2%;right:2%;height:8%;font-size:8px;line-height:1.1;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:33%;left:2%;right:2%;height:8%;font-size:7px;line-height:1.1;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:43%;left:3%;width:94%!important;height:53%!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
-   return {s,cols,rows,perPage,css};
+   const map={lpPaperW:s.paperW,lpPaperH:s.paperH,lpLabelW:s.labelW,lpLabelH:s.labelH,lpGapX:s.gapX,lpGapY:s.gapY};
+   Object.keys(map).forEach(id=>{const e=document.getElementById(id);if(e)e.value=map[id]});
+   const o=document.getElementById('lpOrientation');if(o)o.value=s.orientation||'portrait';
+   if(window.updateLabelLayoutInfo)window.updateLabelLayoutInfo();
  };
- window.printAllSpecificLabels = function(arr){
-   if(!arr||!arr.length){alert('Print quantity 0 है');return}
-   /* Always open the label preview so the user can choose OpenLabel or standard print. */
-   const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
-   const lp=window.labelPrintStyle(),s=lp.s;let cards='';const shareData=encodeURIComponent(JSON.stringify(arr));
-   arr.forEach((x,i)=>{if(i%lp.perPage===0)cards+='<div class="sheet">';const code=window.makeCode(x.category,x.sku,x.color,x.size);cards+='<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+window.esc(x.name)+'</div><div class="meta">'+window.esc(x.sku)+' | '+window.esc(x.color)+' | Size '+window.esc(x.size)+'</div>'+window.code128Svg(code)+'</div>';if(i%lp.perPage===lp.perPage-1||i===arr.length-1)cards+='</div>'});
-   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+' .printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}@page{size:2in 1.5in;margin:0}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button id="openLabelShareBtn" type="button">OpenLabel में भेजें</button><button onclick="window.close()">Close</button><span>Paper: '+s.paperW+'×'+s.paperH+' inch | Label: '+s.labelW+'×'+s.labelH+' inch</span></div>'+cards+'</body></html>');w.document.close();const olb=w.document.getElementById('openLabelShareBtn');if(olb){olb.disabled=true;olb.textContent='Labels तैयार हो रहे हैं…';window.prepareOpenLabelFiles(arr).then(files=>{w._openLabelFiles=files;olb.disabled=false;olb.textContent='OpenLabel में भेजें'}).catch(e=>{olb.disabled=false;olb.textContent='OpenLabel में भेजें';olb.onclick=null;alert('Label image तैयार नहीं हुई: '+(e&&e.message?e.message:e))});olb.addEventListener('click',function(){try{if(!w._openLabelFiles){alert('थोड़ा इंतज़ार करें, labels तैयार हो रहे हैं।');return}const sh=w.navigator;if(!sh.share||!sh.canShare||!sh.canShare({files:w._openLabelFiles})){alert('इस Chrome में image share उपलब्ध नहीं है। OpenLabel को अलग से खोलकर देखें।');return}sh.share.call(sh,{title:'Diva Collection Barcode Labels',text:'OpenLabel में 2 × 1.5 inch labels print करें',files:w._openLabelFiles}).catch(e=>alert('Share नहीं हुआ: '+(e&&e.message?e.message:e)))}catch(e){alert('OpenLabel share error: '+(e&&e.message?e.message:e))}})}
+ window.saveLabelPrintSettings=function(){
+   const get=id=>Number(document.getElementById(id)?.value);
+   const ids=['lpPaperW','lpPaperH','lpLabelW','lpLabelH'];
+   for(const id of ids){const e=document.getElementById(id);if(!e||!Number.isFinite(get(id))||get(id)<=0){alert('Paper/Label Width और Height में 0 से बड़ी सही संख्या डालें.');return;}}
+   const s={paperW:get('lpPaperW'),paperH:get('lpPaperH'),labelW:get('lpLabelW'),labelH:get('lpLabelH'),gapX:Math.max(0,get('lpGapX')||0),gapY:Math.max(0,get('lpGapY')||0),orientation:document.getElementById('lpOrientation')?.value||'portrait'};
+   try{localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));localStorage.setItem('DIVA_LABEL_FORMAT_V9','1');}
+   catch(e){alert('Setting save नहीं हुई: '+e.message);return;}
+   if(window.updateLabelLayoutInfo)window.updateLabelLayoutInfo();
+   alert('✅ Custom printer setting save हो गई. Print Preview खोलकर size जाँचें; Android/Printer driver में भी यही paper size चुनना पड़ सकता है.');
  };
- window.printAllLabels = function(){
-   const arr=(typeof db!=='undefined'&&db.stock)?db.stock:[];if(!arr.length){alert('Stock खाली है');return}
+ window.labelPrintStyle=function(){
+   const s=window.getLabelPrintSettings();
+   const pw=Math.max(.2,Number(s.paperW)||2),ph=Math.max(.2,Number(s.paperH)||1.5);
+   const lw=Math.min(pw,Math.max(.2,Number(s.labelW)||pw)),lh=Math.min(ph,Math.max(.2,Number(s.labelH)||ph));
+   const gx=Math.max(0,Number(s.gapX)||0),gy=Math.max(0,Number(s.gapY)||0);
+   const cols=Math.max(1,Math.floor((pw+gx)/(lw+gx))),rows=Math.max(1,Math.floor((ph+gy)/(lh+gy))),perPage=cols*rows;
+   const orient=s.orientation==='landscape'?'landscape':'portrait';
+   const css='@page{size:'+pw+'in '+ph+'in;margin:0}*{box-sizing:border-box}html,body{margin:0!important;padding:0!important;width:'+pw+'in!important;min-width:'+pw+'in!important;max-width:'+pw+'in!important;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}@media print{.printbar{display:none!important}}.sheet{display:grid!important;grid-template-columns:repeat('+cols+','+lw+'in);grid-auto-rows:'+lh+'in;column-gap:'+gx+'in;row-gap:'+gy+'in;align-content:start;justify-content:start;width:'+pw+'in!important;height:'+ph+'in!important;min-width:'+pw+'in!important;max-width:'+pw+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}.sheet:last-child{break-after:auto;page-break-after:auto}.label{position:relative;display:block!important;width:'+lw+'in!important;height:'+lh+'in!important;min-width:'+lw+'in!important;max-width:'+lw+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;text-align:center;border:0;break-inside:avoid;page-break-inside:avoid}.label .prices{position:absolute;top:2%;left:2%;right:2%;height:11%;font-size:clamp(5px, '+(lw*4)+'px, 10px)!important;line-height:1.1!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:15%;left:0;right:0;height:9%;font-size:clamp(5px, '+(lw*3.5)+'px, 9px);line-height:1.1;font-weight:900;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:26%;left:2%;right:2%;font-size:clamp(5px, '+(lw*3.5)+'px, 9px);line-height:1.1;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:35%;left:2%;right:2%;font-size:clamp(4px, '+(lw*3)+'px, 8px);line-height:1.1;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:44%;left:3%;width:94%!important;height:53%!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
+   return {s,cols,rows,perPage,css,orientation:orient};
+ };
+ window.printAllSpecificLabels=function(arr){
+   if(!arr||!arr.length){alert('Print quantity 0 है');return;}
+   const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return;}
+   const lp=window.labelPrintStyle();let cards='';
+   arr.forEach((x,i)=>{
+     if(i%lp.perPage===0)cards+='<div class="sheet">';
+     const code=window.makeCode(x.category,x.sku,x.color,x.size);
+     cards+='<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+window.esc(x.name)+'</div><div class="meta">'+window.esc(x.sku)+' | '+window.esc(x.color)+' | Size '+window.esc(x.size)+'</div>'+window.code128Svg(code)+'</div>';
+     if(i%lp.perPage===lp.perPage-1||i===arr.length-1)cards+='</div>';
+   });
+   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+'.printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button id="openLabelShareBtn" type="button">OpenLabel में भेजें</button><button onclick="window.close()">Close</button><span>Paper: '+lp.s.paperW+' × '+lp.s.paperH+' inch | Label: '+lp.s.labelW+' × '+lp.s.labelH+' inch | '+lp.orientation+'</span></div>'+cards+'</body></html>');
+   w.document.close();
+   const olb=w.document.getElementById('openLabelShareBtn');
+   if(olb){olb.disabled=true;olb.textContent='Labels तैयार हो रहे हैं…';window.prepareOpenLabelFiles(arr).then(files=>{w._openLabelFiles=files;olb.disabled=false;olb.textContent='OpenLabel में भेजें'}).catch(e=>{olb.disabled=false;olb.textContent='OpenLabel में भेजें';alert('Label image तैयार नहीं हुई: '+(e&&e.message?e.message:e))});olb.addEventListener('click',function(){try{if(!w._openLabelFiles){alert('थोड़ा इंतज़ार करें, labels तैयार हो रहे हैं।');return;}const sh=w.navigator;if(!sh.share||!sh.canShare||!sh.canShare({files:w._openLabelFiles})){alert('इस Chrome में image share उपलब्ध नहीं है। OpenLabel को अलग से खोलकर देखें।');return;}sh.share.call(sh,{title:'Diva Collection Barcode Labels',text:'Diva Collection custom-size barcode labels',files:w._openLabelFiles}).catch(e=>alert('Share नहीं हुआ: '+(e&&e.message?e.message:e)));}catch(e){alert('OpenLabel share error: '+(e&&e.message?e.message:e));}});}
+ };
+ window.printAllLabels=function(){
+   const arr=(typeof db!=='undefined'&&db.stock)?db.stock:[];if(!arr.length){alert('Stock खाली है');return;}
    const withCodes=arr.flatMap(x=>Array.from({length:Math.max(1,Number(x.qty)||1)},()=>x));
    window.printAllSpecificLabels(withCodes);
  };
