@@ -2220,6 +2220,41 @@ setTimeout(function(){
 })();
 </script>
 <script>
+
+/* OpenLabel share bridge: one PNG per requested label; leaves stock and sync untouched */
+(function(){
+ window.shareLabelsToOpenLabel = async function(arr){
+   if(!Array.isArray(arr)||!arr.length){alert('Print Qty 0 है');return}
+   if(!navigator.share||!navigator.canShare||typeof File==='undefined'){
+     alert('इस मोबाइल ब्राउज़र में OpenLabel share उपलब्ध नहीं है। Chrome में ऐप खोलकर कोशिश करें।');return;
+   }
+   const files=[];
+   for(let i=0;i<arr.length;i++){
+     const x=arr[i],code=window.makeCode(x.category,x.sku,x.color,x.size);
+     const svgBarcode=window.code128Svg(code);
+     const canvas=document.createElement('canvas');canvas.width=600;canvas.height=450;
+     const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,600,450);
+     ctx.fillStyle='#000';ctx.textAlign='center';ctx.font='bold 25px Arial';
+     ctx.fillText('MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2),300,32);
+     ctx.font='bold 23px Arial';ctx.fillText('Diva Collection',300,68);
+     ctx.font='bold 20px Arial';ctx.fillText(String(x.name||'').slice(0,42),300,103);
+     ctx.font='18px Arial';ctx.fillText(String(x.sku||'')+' | '+String(x.color||'')+' | Size '+String(x.size||''),300,135);
+     const blobSvg=new Blob([svgBarcode.replace(/width="100%"/,'width="540"').replace(/height="1.15in"/,'height="250"')],{type:'image/svg+xml;charset=utf-8'});
+     const url=URL.createObjectURL(blobSvg);
+     try{
+       const img=new Image();
+       await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});
+       ctx.drawImage(img,25,150,550,260);
+     } finally {URL.revokeObjectURL(url)}
+     const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+     if(!png)throw new Error('PNG conversion failed');
+     files.push(new File([png],'Diva_Label_'+(i+1)+'.png',{type:'image/png'}));
+   }
+   if(!navigator.canShare({files})){alert('OpenLabel को एक साथ कई PNG भेजना इस मोबाइल पर समर्थित नहीं है।');return}
+   await navigator.share({title:'Diva Collection Barcode Labels',text:'OpenLabel में 2 × 1.5 inch labels print करें',files});
+ };
+})();
+
 /* Direct 2x1.5 inch label paper */
 (function(){
  const originalSettings = window.getLabelPrintSettings;
