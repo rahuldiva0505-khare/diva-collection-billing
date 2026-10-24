@@ -2221,13 +2221,10 @@ setTimeout(function(){
 </script>
 <script>
 
-/* OpenLabel share bridge: one PNG per requested label; leaves stock and sync untouched */
+/* Prepare label images before the user taps Share; preserves SKU/stock/sync */
 (function(){
- window.shareLabelsToOpenLabel = async function(arr){
-   if(!Array.isArray(arr)||!arr.length){alert('Print Qty 0 है');return}
-   if(!navigator.share||!navigator.canShare||typeof File==='undefined'){
-     alert('इस मोबाइल ब्राउज़र में OpenLabel share उपलब्ध नहीं है। Chrome में ऐप खोलकर कोशिश करें।');return;
-   }
+ window.prepareOpenLabelFiles = async function(arr){
+   if(!Array.isArray(arr)||!arr.length) throw new Error('Print Qty 0 है');
    const files=[];
    for(let i=0;i<arr.length;i++){
      const x=arr[i],code=window.makeCode(x.category,x.sku,x.color,x.size);
@@ -2241,19 +2238,14 @@ setTimeout(function(){
      ctx.font='18px Arial';ctx.fillText(String(x.sku||'')+' | '+String(x.color||'')+' | Size '+String(x.size||''),300,135);
      const blobSvg=new Blob([svgBarcode.replace(/width="100%"/,'width="540"').replace(/height="1.15in"/,'height="250"')],{type:'image/svg+xml;charset=utf-8'});
      const url=URL.createObjectURL(blobSvg);
-     try{
-       const img=new Image();
-       await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});
-       ctx.drawImage(img,25,150,550,260);
-     } finally {URL.revokeObjectURL(url)}
+     try{const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});ctx.drawImage(img,25,150,550,260)}finally{URL.revokeObjectURL(url)}
      const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
      if(!png)throw new Error('PNG conversion failed');
      files.push(new File([png],'Diva_Label_'+(i+1)+'.png',{type:'image/png'}));
    }
-   if(!navigator.canShare({files})){alert('OpenLabel को एक साथ कई PNG भेजना इस मोबाइल पर समर्थित नहीं है।');return}
-   await navigator.share({title:'Diva Collection Barcode Labels',text:'OpenLabel में 2 × 1.5 inch labels print करें',files});
+   return files;
  };
-})();
+})();;
 
 /* Direct 2x1.5 inch label paper */
 (function(){
@@ -2287,7 +2279,7 @@ setTimeout(function(){
    const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
    const lp=window.labelPrintStyle(),s=lp.s;let cards='';const shareData=encodeURIComponent(JSON.stringify(arr));
    arr.forEach((x,i)=>{if(i%lp.perPage===0)cards+='<div class="sheet">';const code=window.makeCode(x.category,x.sku,x.color,x.size);cards+='<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+window.esc(x.name)+'</div><div class="meta">'+window.esc(x.sku)+' | '+window.esc(x.color)+' | Size '+window.esc(x.size)+'</div>'+window.code128Svg(code)+'</div>';if(i%lp.perPage===lp.perPage-1||i===arr.length-1)cards+='</div>'});
-   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+' .printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}@page{size:2in 1.5in;margin:0}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button id="openLabelShareBtn" type="button">OpenLabel में भेजें</button><button onclick="window.close()">Close</button><span>Paper size: 2×1.5 inch</span></div>'+cards+'</body></html>');w.document.close();const olb=w.document.getElementById('openLabelShareBtn');if(olb)olb.addEventListener('click',function(){try{if(w.opener&&typeof w.opener.shareLabelsToOpenLabel==='function'){w.opener.shareLabelsToOpenLabel(arr)}else{alert('Diva app ka connection nahi mila. Main app ko Chrome mein kholkar dobara Print Label karein.')}}catch(e){alert('OpenLabel share error: '+(e&&e.message?e.message:e))}});
+   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+' .printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}@page{size:2in 1.5in;margin:0}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button id="openLabelShareBtn" type="button">OpenLabel में भेजें</button><button onclick="window.close()">Close</button><span>Paper size: 2×1.5 inch</span></div>'+cards+'</body></html>');w.document.close();const olb=w.document.getElementById('openLabelShareBtn');if(olb){olb.disabled=true;olb.textContent='Labels तैयार हो रहे हैं…';window.prepareOpenLabelFiles(arr).then(files=>{w._openLabelFiles=files;olb.disabled=false;olb.textContent='OpenLabel में भेजें'}).catch(e=>{olb.disabled=false;olb.textContent='OpenLabel में भेजें';olb.onclick=()=>alert('Label तैयार नहीं हुए: '+(e&&e.message?e.message:e))});olb.addEventListener('click',function(){try{if(!w._openLabelFiles){alert('थोड़ा इंतज़ार करें, labels तैयार हो रहे हैं।');return}if(!w.navigator.share||!w.navigator.canShare||!w.navigator.canShare({files:w._openLabelFiles})){alert('इस Chrome में image share उपलब्ध नहीं है।');return}w.navigator.share({title:'Diva Collection Barcode Labels',text:'OpenLabel में 2 × 1.5 inch labels print करें',files:w._openLabelFiles}).catch(e=>alert('Share नहीं हुआ: '+(e&&e.message?e.message:e)))}catch(e){alert('OpenLabel share error: '+(e&&e.message?e.message:e))}})}
  };
  window.printAllLabels = function(){
    const arr=(typeof db!=='undefined'&&db.stock)?db.stock:[];if(!arr.length){alert('Stock खाली है');return}
