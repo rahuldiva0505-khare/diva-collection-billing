@@ -2283,8 +2283,9 @@ setTimeout(function(){
  };
  window.labelPrintStyle=function(){
    const s=window.getLabelPrintSettings();
-   const pw=Math.max(.2,Number(s.paperW)||2),ph=Math.max(.2,Number(s.paperH)||1.5);
-   const lw=Math.min(pw,Math.max(.2,Number(s.labelW)||pw)),lh=Math.min(ph,Math.max(.2,Number(s.labelH)||ph));
+   const isLandscape=s.orientation==='landscape';
+   const pw=Math.max(.2,Number(isLandscape?s.paperH:s.paperW)||2),ph=Math.max(.2,Number(isLandscape?s.paperW:s.paperH)||1.5);
+   const lw=Math.min(pw,Math.max(.2,Number(isLandscape?s.labelH:s.labelW)||pw)),lh=Math.min(ph,Math.max(.2,Number(isLandscape?s.labelW:s.labelH)||ph));
    const gx=Math.max(0,Number(s.gapX)||0),gy=Math.max(0,Number(s.gapY)||0);
    const cols=Math.max(1,Math.floor((pw+gx)/(lw+gx))),rows=Math.max(1,Math.floor((ph+gy)/(lh+gy))),perPage=cols*rows;
    const orient=s.orientation==='landscape'?'landscape':'portrait';
