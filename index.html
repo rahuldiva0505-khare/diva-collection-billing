@@ -779,13 +779,13 @@ function saveNewPurchaseProduct(){
 
 }
 function getLabelPrintSettings(){
- const d={paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0};
+ const d={paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0};
  try{
   const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
   const s=raw?JSON.parse(raw):{};
-  if(localStorage.getItem('DIVA_LABEL_FORMAT_V6')!=='1'){
-   Object.assign(s,{paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0});
-   localStorage.setItem('DIVA_LABEL_FORMAT_V6','1');
+  if(localStorage.getItem('DIVA_LABEL_FORMAT_V7')!=='1'){
+   Object.assign(s,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
+   localStorage.setItem('DIVA_LABEL_FORMAT_V7','1');
    localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));
   }
   Object.assign(d,s);
@@ -2220,17 +2220,17 @@ setTimeout(function(){
 })();
 </script>
 <script>
-/* 4x6 inch roll: print 2x1.5 inch labels in a 2-column x 4-row layout */
+/* Direct 2x1.5 inch label paper */
 (function(){
  const originalSettings = window.getLabelPrintSettings;
  window.getLabelPrintSettings = function(){
-   const d={paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0};
+   const d={paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0};
    try {
      const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
      const old=raw?JSON.parse(raw):{};
-     if(localStorage.getItem('DIVA_LABEL_FORMAT_V6')!=='1'){
-       Object.assign(old,{paperW:4,paperH:6,labelW:2,labelH:1.5,gapX:0,gapY:0});
-       localStorage.setItem('DIVA_LABEL_FORMAT_V6','1');
+     if(localStorage.getItem('DIVA_LABEL_FORMAT_V7')!=='1'){
+       Object.assign(old,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
+       localStorage.setItem('DIVA_LABEL_FORMAT_V7','1');
        localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(old));
      }
      Object.assign(d,old);
@@ -2251,7 +2251,7 @@ setTimeout(function(){
    const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
    const lp=window.labelPrintStyle(),s=lp.s;let cards='';
    arr.forEach((x,i)=>{if(i%lp.perPage===0)cards+='<div class="sheet">';const code=window.makeCode(x.category,x.sku,x.color,x.size);cards+='<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' | SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+window.esc(x.name)+'</div><div class="meta">'+window.esc(x.sku)+' | '+window.esc(x.color)+' | Size '+window.esc(x.size)+'</div>'+window.code128Svg(code)+'</div>';if(i%lp.perPage===lp.perPage-1||i===arr.length-1)cards+='</div>'});
-   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+' .printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}@page{size:4in 6in portrait;margin:0}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button onclick="window.close()">Close</button><span>Label size: 2×1.5 inch • 4×6 roll</span></div>'+cards+'</body></html>');w.document.close();
+   w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+' .printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}@page{size:2in 1.5in portrait;margin:0}</style></head><body><div class="printbar"><button onclick="window.print()">🖨️ Print Labels</button><button onclick="window.close()">Close</button><span>Paper size: 2×1.5 inch</span></div>'+cards+'</body></html>');w.document.close();
  };
  window.printAllLabels = function(){
    const arr=(typeof db!=='undefined'&&db.stock)?db.stock:[];if(!arr.length){alert('Stock खाली है');return}
