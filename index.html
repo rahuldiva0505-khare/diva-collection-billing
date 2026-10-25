@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=219',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=220',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -1019,7 +1019,8 @@ function fillFromCode(code){
  }
  if(!x){
    const p=parseCode(code);
-   const exact=(db.stock||[]).filter(a=>norm(a.category)===norm(p.category)&&norm(skuOf(a))===norm(p.sku)&&norm(a.color)===norm(p.color)&&norm(a.size)===norm(p.size));
+   const codePart=v=>String(v??'').trim().toUpperCase().replace(/[\s_-]+/g,'').replace(/[^A-Z0-9]/g,'');
+   const exact=(db.stock||[]).filter(a=>codePart(a.category)===codePart(p.category)&&codePart(skuOf(a))===codePart(p.sku)&&codePart(a.color)===codePart(p.color)&&codePart(a.size)===codePart(p.size));
    if(exact.length===1)x=exact[0];
  }
  if(!x){document.getElementById('scanStatus').textContent='❌ इस पूरे Barcode ID से product नहीं मिला: '+code+' — कृपया उसी size/colour का label दोबारा print करें.';return false}
