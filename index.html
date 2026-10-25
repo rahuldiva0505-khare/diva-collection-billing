@@ -1007,7 +1007,9 @@ function fillFromCode(code){
  const skuOf=a=>a.sku??a.skuId??a.skuID??a.sku_id??'';
  const matches=(db.stock||[]).filter(a=>{
    const base=a.code||makeCode(a.category,skuOf(a),a.color,a.size);
-   const candidates=[norm(a.code),norm(a.barcode),clean(a.code),clean(a.barcode),norm(base),clean(base),ean13ForCode(base),barcodeKey(base)].filter(Boolean);
+   // Accept barcode values saved by older app versions as well as current generated EAN.
+   const saved=[a.code,a.barcode,a.barcodeId,a.barcodeID,a.barcode_id,a.barcodeValue,a.barcode_value,a.ean,a.ean13,a.upc].filter(v=>v!==undefined&&v!==null&&String(v).trim()!=='');
+   const candidates=[...saved.flatMap(v=>[norm(v),clean(v),String(v).replace(/\\D/g,'')]),norm(base),clean(base),ean13ForCode(base),barcodeKey(base)].filter(Boolean);
    return candidates.some(v=>variants.has(v));
  });
  let x=null;
