@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=218',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=219',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -780,13 +780,13 @@ function saveNewPurchaseProduct(){
 
 }
 function getLabelPrintSettings(){
- const d={paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0};
+ const d={paperW:1.97,paperH:1.30,labelW:1.97,labelH:1.30,gapX:0,gapY:0};
  try{
   const raw=localStorage.getItem('DIVA_LABEL_PRINT_SETTINGS');
   const s=raw?JSON.parse(raw):{};
-  if(localStorage.getItem('DIVA_LABEL_FORMAT_V7')!=='1'){
-   Object.assign(s,{paperW:2,paperH:1.5,labelW:2,labelH:1.5,gapX:0,gapY:0});
-   localStorage.setItem('DIVA_LABEL_FORMAT_V7','1');
+  if(localStorage.getItem('DIVA_LABEL_FORMAT_V8')!=='1'){
+   Object.assign(s,{paperW:1.97,paperH:1.30,labelW:1.97,labelH:1.30,gapX:0,gapY:0});
+   localStorage.setItem('DIVA_LABEL_FORMAT_V8','1');
    localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));
   }
   Object.assign(d,s);
@@ -2292,7 +2292,7 @@ setTimeout(function(){
    const gx=Math.max(0,Number(s.gapX)||0),gy=Math.max(0,Number(s.gapY)||0);
    const cols=Math.max(1,Math.floor((pw+gx)/(lw+gx))),rows=Math.max(1,Math.floor((ph+gy)/(lh+gy))),perPage=cols*rows;
    const orient=s.orientation==='landscape'?'landscape':'portrait';
-   const css='@page{size:'+pw+'in '+ph+'in;margin:0}*{box-sizing:border-box}html,body{margin:0!important;padding:0!important;width:'+pw+'in!important;min-width:'+pw+'in!important;max-width:'+pw+'in!important;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}@media print{.printbar{display:none!important}}.sheet{display:grid!important;grid-template-columns:repeat('+cols+','+lw+'in);grid-auto-rows:'+lh+'in;column-gap:'+gx+'in;row-gap:'+gy+'in;align-content:start;justify-content:start;width:'+pw+'in!important;height:'+ph+'in!important;min-width:'+pw+'in!important;max-width:'+pw+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}.sheet:last-child{break-after:auto;page-break-after:auto}.label{position:relative;display:block!important;width:'+lw+'in!important;height:'+lh+'in!important;min-width:'+lw+'in!important;max-width:'+lw+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;text-align:center;border:0;break-inside:avoid;page-break-inside:avoid}.label .prices{position:absolute;top:2%;left:2%;right:2%;height:11%;font-size:clamp(5px, '+(lw*4)+'px, 10px)!important;line-height:1.1!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:15%;left:0;right:0;height:9%;font-size:clamp(5px, '+(lw*3.5)+'px, 9px);line-height:1.1;font-weight:900;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:26%;left:2%;right:2%;font-size:clamp(5px, '+(lw*3.5)+'px, 9px);line-height:1.1;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:35%;left:2%;right:2%;font-size:clamp(4px, '+(lw*3)+'px, 8px);line-height:1.1;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:44%;left:3%;width:94%!important;height:53%!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
+   const css='@page{size:'+pw+'in '+ph+'in;margin:0}*{box-sizing:border-box}html,body{margin:0!important;padding:0!important;width:'+pw+'in!important;min-width:'+pw+'in!important;max-width:'+pw+'in!important;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}@media print{.printbar{display:none!important}}.sheet{display:grid!important;grid-template-columns:repeat('+cols+','+lw+'in);grid-auto-rows:'+lh+'in;column-gap:'+gx+'in;row-gap:'+gy+'in;align-content:start;justify-content:start;width:'+pw+'in!important;height:'+ph+'in!important;min-width:'+pw+'in!important;max-width:'+pw+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}.sheet:last-child{break-after:auto;page-break-after:auto}.label{position:relative;display:block!important;width:'+lw+'in!important;height:'+lh+'in!important;min-width:'+lw+'in!important;max-width:'+lw+'in!important;margin:0!important;padding:0!important;overflow:hidden!important;text-align:center;border:0;break-inside:avoid;page-break-inside:avoid}.label .prices{position:absolute;top:2%;left:2%;right:2%;height:11%;font-size:clamp(5px, '+(lw*4)+'px, 10px)!important;line-height:1.1!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:15%;left:0;right:0;height:9%;font-size:clamp(5px, '+(lw*3.5)+'px, 9px);line-height:1.1;font-weight:900;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:26%;left:2%;right:2%;font-size:clamp(5px, '+(lw*3.5)+'px, 9px);line-height:1.1;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:35%;left:2%;right:2%;font-size:clamp(4px, '+(lw*3)+'px, 8px);line-height:1.1;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:46%;left:6%;width:88%!important;height:40%!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
    return {s,cols,rows,perPage,css,orientation:orient};
  };
  window.printAllSpecificLabels=function(arr){
