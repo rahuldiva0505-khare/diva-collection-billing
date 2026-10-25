@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=216',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=217',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -2328,7 +2328,7 @@ setTimeout(function(){
    }
    function downloadFiles(files){if(!files||!files.length){w.alert('PNG नहीं बनी। फिर कोशिश करें।');return;}files.forEach((f,i)=>{const url=URL.createObjectURL(f);const a=w.document.createElement('a');a.href=url;a.download=f.name||('Diva_Label_'+(i+1)+'.png');a.style.display='none';w.document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);});w.alert('PNG डाउनलोड शुरू हुआ। मोबाइल के Downloads में देखें।');}
    saveBtn.onclick=async()=>{const files=await getFiles();downloadFiles(files);};
-   shareBtn.onclick=async()=>{const files=await getFiles();if(!files.length)return;try{if(navigator.share&&navigator.canShare&&navigator.canShare({files})){await navigator.share({title:'Diva Collection Barcode Labels',text:'लेबल PNG फाइलें',files});}else{downloadFiles(files);}}catch(e){if(e&&e.name!=='AbortError')downloadFiles(files);}};
+   shareBtn.onclick=()=>{const files=w._openLabelFiles;if(!files||!files.length){w.alert('लेबल अभी तैयार हो रहे हैं। 2 सेकंड बाद फिर Share दबाएँ।');return;}if(!navigator.share){w.alert('इस ब्राउज़र में Share सुविधा उपलब्ध नहीं है। PNG सेव करें से फाइल डाउनलोड करें।');return;}try{const p=navigator.share({title:'Diva Collection Barcode Labels',text:'Diva Collection barcode label PNG files',files:files});if(p&&typeof p.catch==='function')p.catch(e=>{if(e&&e.name!=='AbortError')w.alert('Share नहीं खुला: '+(e.message||e.name));});}catch(e){w.alert('Share नहीं खुला: '+(e&&e.message?e.message:String(e)));}};
    getFiles();
  };
  window.printAllLabels=function(){
