@@ -2349,13 +2349,6 @@ setTimeout(function(){
    w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+lp.css+'.printbar{font:16px Arial;padding:12px;background:#eee;display:flex;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:9}.printbar button{font-size:17px;padding:10px 18px}@media print{.printbar{display:none!important}}
 /* DIVA_BARCODE_SHARE_VISIBLE_V2 */
 .printbar #sharePngBtn{display:inline-flex!important;align-items:center;justify-content:center;min-height:44px;padding:10px 18px;border:0;border-radius:8px;background:#167d3f!important;color:#fff!important;font-weight:800;visibility:visible!important;opacity:1!important}
-/* DIVA_PRODUCT_PHOTO_ZOOM_V1 */
-#divaPhotoZoomOverlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:18px;touch-action:manipulation}
-#divaPhotoZoomOverlay.open{display:flex}
-#divaPhotoZoomOverlay img{display:block;max-width:100%;max-height:88vh;object-fit:contain;transform-origin:center center;touch-action:pinch-zoom;user-select:none;-webkit-user-drag:none}
-#divaPhotoZoomClose{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;width:44px;height:44px;border:0;border-radius:50%;background:#fff;color:#111;font-size:28px;font-weight:700;z-index:2}
-#divaPhotoZoomHint{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;color:#fff;font-size:13px;pointer-events:none}
-.folder-photo{cursor:zoom-in}
 </style></head><body><div class="printbar"><button id="doPrintBtn" type="button">🖨️ Print Labels</button><button id="savePngBtn" type="button">लेबल PNG सेव करें</button><button id="sharePngBtn" type="button" style="background:#167d3f;color:#fff;font-weight:700">📤 OpenLabel में भेजें / Share</button><button id="closePreviewBtn" type="button">Close</button><span>Paper: '+lp.s.paperW+' × '+lp.s.paperH+' inch | Label: '+lp.s.labelW+' × '+lp.s.labelH+' inch | '+lp.orientation+'</span></div>'+cards+'</body></html>');
    w.document.close();
    const printBtn=w.document.getElementById('doPrintBtn');
