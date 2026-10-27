@@ -419,7 +419,7 @@ function toggleGaneshMantra(){
  const status=document.getElementById('mantraOfflineStatus');
  if(!audio)return;
  audio.loop=true;
- audio.addEventListener('playing',()=>{if(status)status.textContent='🔊 लक्ष्मी माता की Aarti is playing';});
+ audio.addEventListener('playing',()=>{if(status)status.textContent='🔊 Lakshmi Mata Aarti is playing';});
  audio.addEventListener('error',()=>{if(status)status.textContent='Audio is not available yet. Connect to the internet once and reopen the app.';});
  audio.play().then(()=>{if(status)status.textContent='🔊 Aarti is playing';}).catch(()=>{if(status)status.textContent='Select Play to listen to the Aarti. Keep the internet on the first time so the audio can be saved.';});
 }
@@ -1198,7 +1198,7 @@ function addItem(){
  if(!p||!sizeKey||rate<=0){alert("Select product, size, and selling price");return}
  let x=db.stock.find(a=>a.key===sizeKey); if(!x){alert("Stock not found");return}
  let already=cart.find(a=>a.key===x.key),wanted=q+(already?already.qty:0);
- if(x.qty<wanted){alert("Available stock is only "+x.qty+" है");return}
+ if(x.qty<wanted){alert("Available stock is only "+x.qty");return}
  if(already){already.qty+=q;already.rate=rate;already.discount=discount}else cart.push({key:x.key,category:x.category,sku:x.sku,name:x.name,color:x.color,size:x.size,qty:q,mrp:x.mrp,rate,discount,cost:Number(x.cost)||0,gst:Number(x.gst)||0,hsn:x.hsn||"",sac:x.sac||"",uqc:x.uqc||"PCS"});
  renderCart();
 }
@@ -1641,7 +1641,7 @@ async function sendMissingSkusFromThisDevice(){
  const wanted=new Set(['DIVA-1','DIVA-2','DIVA-4','DIVA-7','DIVA-8','DIVA-9','DIVA-11','DIVA-13','DIVA-14','DIVA-15','DIVA-17','DIVA-21','DIVA-22']);
  const rows=(Array.isArray(db.stock)?db.stock:[]).filter(x=>wanted.has(String(x?.sku||x?.skuId||'').trim().toUpperCase()));
  if(!rows.length){cloudUI('The specified SKUs were not found in this device's stock. No data was changed.');return;}
- if(!confirm('Send '+rows.length+' stock row(s) उसी In Cloud, भेजें? पहले से मौजूद stock quantity नहीं बदली जाएगी; केवल recovery history जोड़ी जाएगी।'))return;
+ if(!confirm('Send '+rows.length+' stock row(s) to the same Cloud? Existing stock quantities will not change; only recovery history will be added.'))return;
  cloudBusy=true;cloudUI('Sending the selected SKUs from this device to Cloud…');
  try{
   await initCloud();
