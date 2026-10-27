@@ -1998,6 +1998,43 @@ setTimeout(function(){
     document.getElementById('unlockBtn').onclick=unlockApp;
     const unlockInput=document.getElementById('unlockPin'); let autoUnlockLast=''; function tryAutoUnlock(){const pin=unlockInput.value.trim();if(/^\d{4,6}$/.test(pin)&&pin!==autoUnlockLast){autoUnlockLast=pin;unlockApp();}else if(!pin||pin.length<4)autoUnlockLast='';} ['input','change','keyup','paste'].forEach(function(ev){unlockInput.addEventListener(ev,function(){setTimeout(tryAutoUnlock,ev==='paste'?80:0)});}); unlockInput.addEventListener('input',function(){if(this.value.length<4)autoUnlockLast=''}); unlockInput.onkeydown=e=>{if(e.key==='Enter')unlockApp()};
   }
+  // Keep a second, independent copy of the App PIN in IndexedDB.
+  // This prevents a browser/PWA localStorage reset from repeatedly asking to create a new PIN.
+  function pinVault(mode, value){
+    return new Promise(function(resolve){
+      try{
+        if(!window.indexedDB){resolve('');return}
+        const req=indexedDB.open('DIVA_BILLING_SECURITY',1);
+        req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains('settings'))req.result.createObjectStore('settings')};
+        req.onerror=function(){resolve('')};
+        req.onsuccess=function(){
+          let db=req.result;
+          try{
+            const tx=db.transaction('settings',mode==='read'?'readonly':'readwrite');
+            const store=tx.objectStore('settings');
+            if(mode==='read'){
+              const get=store.get('appPin');
+              get.onsuccess=function(){resolve(String(get.result||''))};
+              get.onerror=function(){resolve('')};
+            }else if(mode==='delete'){
+              store.delete('appPin');tx.oncomplete=function(){resolve('')};tx.onerror=function(){resolve('')};
+            }else{
+              store.put(String(value||''),'appPin');tx.oncomplete=function(){resolve('ok')};tx.onerror=function(){resolve('')};
+            }
+          }catch(e){resolve('')}
+          db.onversionchange=function(){db.close()};
+        };
+      }catch(e){resolve('')}
+    });
+  }
+  async function recoverPinBeforeStartup(){
+    let local='';
+    try{local=String(localStorage.getItem(LOCK_KEY)||'')}catch(e){}
+    const vault=await pinVault('read');
+    if(!local && vault){try{localStorage.setItem(LOCK_KEY,vault);local=vault}catch(e){}}
+    else if(local && !vault){await pinVault('write',local)}
+    return local||vault;
+  }
   function getPin(){return String(localStorage.getItem(LOCK_KEY)||'')}
   function setupPinOnFirstLaunch(){
     ensureLockUI();
@@ -2029,13 +2066,13 @@ setTimeout(function(){
     if(old && prompt('Current PIN डालें')!==old){alert('❌ Current PIN गलत है.');return}
     const p=prompt('नया 4–6 digit PIN बनाएं');
     if(!/^\d{4,6}$/.test(String(p||''))){alert('PIN 4 से 6 digits का होना चाहिए.');return}
-    localStorage.setItem(LOCK_KEY,p); alert('✅ App Lock PIN सेट हो गया.');
+    localStorage.setItem(LOCK_KEY,p); pinVault('write',p); alert('✅ App Lock PIN सेट हो गया.');
     startAutoLock();
   }
   function removePin(){
     const p=prompt('Current PIN डालें');
     if(p!==getPin()){alert('❌ PIN गलत है.');return}
-    localStorage.removeItem(LOCK_KEY);clearTimeout(lockTimer);alert('🔓 App Lock बंद हो गया.');
+    localStorage.removeItem(LOCK_KEY);pinVault('delete');clearTimeout(lockTimer);alert('🔓 App Lock बंद हो गया.');
   }
   function startAutoLock(){
     clearTimeout(lockTimer);
@@ -2091,9 +2128,10 @@ setTimeout(function(){
     localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));
     renderDraftBar();
   }
-  window.addEventListener('load',function(){
+  window.addEventListener('load',async function(){
     ensureLockUI();addHeaderButtons();initMulti();
-    if(getPin())lockApp(); else setupPinOnFirstLaunch();
+    const savedPin=await recoverPinBeforeStartup();
+    if(savedPin)lockApp(); else setupPinOnFirstLaunch();
   });
   setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
 })();
