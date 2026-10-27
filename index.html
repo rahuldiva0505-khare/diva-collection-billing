@@ -524,7 +524,7 @@ function toggleProductFolder(head){
  const arrow=head.querySelector('.folder-arrow');if(arrow)arrow.textContent=open?'⌃':'⌄';
 }
 function recoverCloudSkuFromInput(){let sku=String(document.getElementById("cloudSkuLookupInput")?.value||"").trim().toUpperCase();const status=document.getElementById("cloudSkuRecoveryStatus");if(!sku){if(status)status.textContent="Enter an SKU ID first, e.g. DIVA-5.";return;}if(!sku.startsWith("DIVA-"))sku="DIVA-"+sku;if(!/^DIVA-\d+$/.test(sku)){if(status)status.textContent="Invalid SKU ID. Example: DIVA-5";return;}const input=document.getElementById("cloudSkuLookupInput");if(input)input.value=sku;if(!confirm(sku+" Search Cloud history for this SKU and restore missing stock if a record is found? Existing quantities will not change.")){if(status)status.textContent="Cancelled — no recovery was started.";return;}if(status)status.textContent=sku+" Cloud history is being searched…";repairMissingSkus(sku).then(()=>{if(status)status.textContent="Search complete. Check Cloud Sync status and Current Stock for details.";}).catch(e=>{if(status)status.textContent="Search incomplete. Check your internet connection, login, and previous Sync Code.";});} function readSkuLookupInput(){let sku=String(document.getElementById('skuIdLookupInput')?.value||'').trim().toUpperCase();if(!sku){alert('Enter an SKU ID, e.g. DIVA-33');return '';}if(!sku.startsWith('DIVA-'))sku='DIVA-'+sku;if(!/^DIVA-\d+$/.test(sku)){alert('Enter an SKU ID such as DIVA-33.');return '';}return sku;}
-function searchSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;const search=document.getElementById('stockSearch');if(search)search.value=sku;renderStock();const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+' 's: '+rows.length+' stock row(s) found. See below.':'❌ '+sku+' not found in current stock. Select Recover from Cloud.';}
+function searchSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;const search=document.getElementById('stockSearch');if(search)search.value=sku;renderStock();const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+': '+rows.length+' stock row(s) found. See below.':'❌ '+sku+' not found in current stock. Select Recover from Cloud.';}
 async function recoverListedMissingSkus(){
  const ids=['DIVA-1','DIVA-2','DIVA-4','DIVA-7','DIVA-8','DIVA-9','DIVA-11','DIVA-13','DIVA-14','DIVA-15','DIVA-17','DIVA-21','DIVA-22'];
  const status=document.getElementById('skuRecoveryStatus');
@@ -798,7 +798,7 @@ function saveLabelPrintSettings(){
  const get=id=>Math.max(0.01,Number(document.getElementById(id)?.value)||0);
  const s={paperW:get('lpPaperW'),paperH:get('lpPaperH'),labelW:get('lpLabelW'),labelH:get('lpLabelH'),gapX:Math.max(0,Number(document.getElementById('lpGapX')?.value)||0),gapY:Math.max(0,Number(document.getElementById('lpGapY')?.value)||0)};
  localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));
- updateLabelLayoutInfo(); alert('✅ Printer/label paper settings saved. Barcodes will print according to the selected paper's rows and columns.');
+ updateLabelLayoutInfo(); alert('✅ Printer/label paper settings saved. Barcodes will print according to the selected paper dimensions, rows and columns.');
 }
 function labelPrintStyle(){
  const s=getLabelPrintSettings(); const cols=1,rows=1;
@@ -1628,7 +1628,7 @@ async function sendMissingSkusFromThisDevice(){
  if(!code){cloudUI('Connect using the same previous Sync Code first.');return;}
  const wanted=new Set(['DIVA-1','DIVA-2','DIVA-4','DIVA-7','DIVA-8','DIVA-9','DIVA-11','DIVA-13','DIVA-14','DIVA-15','DIVA-17','DIVA-21','DIVA-22']);
  const rows=(Array.isArray(db.stock)?db.stock:[]).filter(x=>wanted.has(String(x?.sku||x?.skuId||'').trim().toUpperCase()));
- if(!rows.length){cloudUI('The specified SKUs were not found in this device's stock. No data was changed.');return;}
+ if(!rows.length){cloudUI('The specified SKUs were not found in this device stock. No data was changed.');return;}
  if(!confirm('Send '+rows.length+' stock row(s) to the same Cloud? Existing stock quantities will not change; only recovery history will be added.'))return;
  cloudBusy=true;cloudUI('Sending the selected SKUs from this device to Cloud…');
  try{
