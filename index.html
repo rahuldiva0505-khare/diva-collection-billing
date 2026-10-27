@@ -291,32 +291,7 @@ function code128Svg(value,opts={}){
     var s=printerSettings();
     var w=window.open('','_blank','width=600,height=600');
     if(!w){alert('Popup blocked. Allow pop-ups in your browser.');return}
-    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div><script>function toggleSideMenu(){var m=document.getElementById("sideMenuPanel");if(m)m.classList.toggle("open")}function closeSideMenu(){var m=document.getElementById("sideMenuPanel");if(m)m.classList.remove("open")}document.addEventListener("click",function(e){var m=document.getElementById("sideMenuPanel"),b=document.getElementById("sideMenuToggle");if(m&&m.classList.contains("open")&&!m.contains(e.target)&&e.target!==b)closeSideMenu()});<\/script>
-
-
-
-
-<style id="diva-final-orange-theme">
-:root{color-scheme:light!important}
-html,body{background:#a63d00!important;color:#fff!important}
-body header,body #sideMenuToggle,body #sideMenuPanel>header{background:#a63d00!important;color:#fff!important}
-body nav,body nav button,body button,body input[type=button],body input[type=submit],body .green,body .design-print-button{background-color:#e66a00!important;color:#fff!important;border-color:#b84e00!important}
-body .card,body .product-folder,body .labelcard,body #sideMenuPanel,body .modal,body .dialog,body .folder-card{background-color:#fff4e8!important;color:#4b240b!important}
-body .side-menu-list,body .side-menu-list>button,body .folder-head,body .new-product-photo-box,body .photo-pick,body .scanbox,body .gray,body button.gray{background-color:#ffead6!important;color:#a63d00!important;border-color:#f5c79e!important}
-body .folder-number,body .folder-arrow,body .folder-title{color:#a63d00!important}
-</style>
-
-<style id="diva-orange-theme-final">
-/* Final orange theme override */
-html,body,#app,main,.page.active,#dashboard,#billing,#stock,#reports,#settings { background-color:#a63d00 !important; }
-header,#sideMenuToggle { background-color:#a63d00 !important; color:#fff !important; }
-nav { background-color:#b84e00 !important; }
-nav button,button,.green,.design-print-button { background-color:#e66a00 !important; color:#fff !important; }
-.card,.product-folder,.labelcard,#sideMenuPanel,.folder-head,.new-product-photo-box { background-color:#fff4e8 !important; }
-.side-menu-list,.side-menu-list>button,.gray,button.gray,.photo-pick,.scanbox { background-color:#ffead6 !important; color:#a63d00 !important; border-color:#f5c79e !important; }
-.folder-number,.folder-arrow,.folder-title,.side-menu-list>button { color:#a63d00 !important; }
-</style>
-</body></html>');
+    w.document.write('<!doctype html><html><head><title>JSC-9280 Test Print</title><style>@page{size:'+s.pw+'in '+s.ph+'in;margin:0}html,body{margin:0;padding:0}body{width:'+s.pw+'in;height:'+s.ph+'in;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}.test{width:'+s.lw+'in;height:'+s.lh+'in;border:1px dashed #000;box-sizing:border-box;padding:8px;text-align:center}.barcode{font-size:22px;font-weight:bold;margin-top:8px}</style></head><body><div class="test"><b>DIVA COLLECTION BILLING</b><div>JSC-9280 TEST PRINT</div><div style="margin-top:8px">'+code128Svg('DIVA9280TEST')+'</div><div style="font-size:12px">Paper '+s.pw+' × '+s.ph+' in | Label '+s.lw+' × '+s.lh+' in</div></div></body></html>');
     w.document.close();w.focus();setTimeout(function(){w.print();setTimeout(function(){w.close()},800)},300);
   };
   window.showJSCPrinterBox=function(){
