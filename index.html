@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=229',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=230',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -11,7 +11,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#a63d00;color:#222}
 .product-folder{border:1px solid #b84e00;border-radius:14px;margin:12px 0;overflow:hidden;background:#fff}
 .category-suggestions{position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #ff9d45;border-radius:4px;box-shadow:0 3px 8px #0002}.category-suggestion{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #eee;background:#fff;color:#222;font-size:16px;min-height:42px}.category-suggestion:active{background:#e8f5ec}.category-no-match{padding:10px;color:#777;font-size:13px}
 .new-product-photo-box{grid-column:1/-1;border:1px dashed #ff9d45;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff4e8}.new-photo-preview{width:86px;height:100px;border:1px solid #ddd;border-radius:9px;background:#ffead6;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;overflow:hidden;color:#777}.new-photo-preview img{width:100%;height:78px;object-fit:cover}.new-photo-preview span{font-size:27px}.new-photo-preview small{font-size:10px;text-align:center}.folder-head{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;background:#fff4e8}
-.folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5}
+.folder-photo{width:84px;height:96px;object-fit:cover;border-radius:10px;border:1px solid #ddd;flex-shrink:0;background:#f5f5f5;cursor:zoom-in}
 .folder-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#777}.folder-placeholder span{font-size:30px}.folder-placeholder small{font-size:10px}
 .folder-title{flex:1;min-width:0}.folder-title>b{display:block;font-size:16px;margin:4px 0;overflow-wrap:anywhere}.folder-number{font-size:11px;font-weight:800;color:#e66a00;letter-spacing:.7px}.folder-stats{font-size:12px;color:#444;margin-top:6px}.folder-arrow{font-size:24px;color:#e66a00}
 .folder-tools{padding:0 12px 12px;display:flex;gap:8px;flex-wrap:wrap}.folder-print-btn{font-size:13px;padding:8px 12px}.photo-pick{display:inline-flex;align-items:center;gap:6px;background:#ffead6;color:#123;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}.photo-pick input{display:none}
@@ -563,6 +563,19 @@ async function recoverListedMissingSkus(){
  if(status)status.textContent='Search complete. '+done+'/13 SKU SKUs checked. Check Cloud Sync status and Current Stock for results. If history is not in Cloud, sync it from the laptop first.';
 }
 async function recoverSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;await repairMissingSkus(sku);const search=document.getElementById('stockSearch');if(search){search.value=sku;renderStock();}const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+': '+rows.length+' stock row(s) found.':'No Cloud history entry found for this SKU, or Sync needs to be checked.';}
+function openProductPhoto(src,alt){
+ if(!src)return;
+ let overlay=document.getElementById('productPhotoLightbox');
+ if(!overlay){
+  overlay=document.createElement('div');overlay.id='productPhotoLightbox';
+  overlay.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+  overlay.innerHTML='<button type="button" aria-label="Close photo" style="position:absolute;top:12px;right:12px;z-index:2;background:#fff;color:#111;font-size:26px;min-width:48px;padding:6px 12px" onclick="closeProductPhoto()">×</button><div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px"><img id="productPhotoLarge" alt="Product photo enlarged" style="display:block;max-width:100%;max-height:calc(100dvh - 70px);width:auto;height:auto;object-fit:contain;border-radius:8px"><div id="productPhotoCaption" style="color:#fff;text-align:center;font-size:14px"></div></div>';
+  overlay.addEventListener('click',function(e){if(e.target===overlay)closeProductPhoto()});document.body.appendChild(overlay);
+ }
+ const img=document.getElementById('productPhotoLarge'),caption=document.getElementById('productPhotoCaption');img.src=src;img.alt=alt||'Product photo enlarged';caption.textContent=alt||'Product photo';overlay.style.display='flex';document.body.style.overflow='hidden';
+}
+function closeProductPhoto(){const overlay=document.getElementById('productPhotoLightbox');if(overlay)overlay.style.display='none';document.body.style.overflow='';}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeProductPhoto()});
 function renderStock(){
  const el=document.getElementById('productFolders'),mainEl=document.getElementById('productMainFolders');if(!el&&!mainEl)return;
  const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
@@ -579,12 +592,12 @@ function renderStock(){
  const markup=groups.map((g,index)=>{
   const id='pf'+index,photo=productPhotoFor(g.key),m=(g.sku.match(/^DIVA-(\d+)$/i)||[])[1],num=m?Number(m):index+1;
   const total=g.rows.reduce((n,x)=>n+Number(x.qty||0),0),colors=[...new Set(g.rows.map(x=>x.color||'No Colour'))];
-  const pic=photo?'<img class="folder-photo" src="'+photo+'" alt="Product photo">':'<div class="folder-photo folder-placeholder"><span>👗</span><small>No photo</small></div>';
+  const pic=photo?'<img class="folder-photo" src="'+photo+'" alt="Product photo" title="Tap to view photo clearly" onclick="event.stopPropagation();openProductPhoto(this.src,this.alt)">':'<div class="folder-photo folder-placeholder"><span>👗</span><small>No photo</small></div>';
   let detail='';
   colors.forEach(color=>{
    const rows=g.rows.filter(x=>(x.color||'No Colour')===color).sort((a,b)=>String(a.size).localeCompare(String(b.size),undefined,{numeric:true}));
    const colorPhotoKey=productColorPhotoKey(g,color),colorPhoto=productPhotoFor(colorPhotoKey);
-   detail+='<div class="folder-color"><h4>🎨 '+esc(color)+' <span class="pill">'+rows.reduce((n,x)=>n+Number(x.qty||0),0)+' pcs</span></h4><div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="width:72px;height:88px;border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center">'+(colorPhoto?'<img src="'+colorPhoto+'" alt="'+esc(color)+' photo" style="width:100%;height:100%;object-fit:contain">':'<small style="text-align:center">No colour photo</small>')+'</div><label class="photo-pick">📷 '+(colorPhoto?'Change '+esc(color)+' Photo':'Add '+esc(color)+' Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(colorPhotoKey)+'" onchange="saveProductPhoto(this)" onclick="event.stopPropagation()"></label></div><div class="tablewrap"><table class="folder-size-table"><tr><th>Size</th><th>Stock</th><th>MRP</th><th>Selling</th><th>Print Qty</th><th>Action</th></tr>';
+   detail+='<div class="folder-color"><h4>🎨 '+esc(color)+' <span class="pill">'+rows.reduce((n,x)=>n+Number(x.qty||0),0)+' pcs</span></h4><div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="width:72px;height:88px;border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center">'+(colorPhoto?'<img src="'+colorPhoto+'" alt="'+esc(color)+' photo" title="Tap to view photo clearly" onclick="event.stopPropagation();openProductPhoto(this.src,this.alt)" style="width:100%;height:100%;object-fit:contain;cursor:zoom-in">':'<small style="text-align:center">No colour photo</small>')+'</div><label class="photo-pick">📷 '+(colorPhoto?'Change '+esc(color)+' Photo':'Add '+esc(color)+' Photo')+'<input type="file" accept="image/*" capture="environment" data-photo-key="'+esc(colorPhotoKey)+'" onchange="saveProductPhoto(this)" onclick="event.stopPropagation()"></label></div><div class="tablewrap"><table class="folder-size-table"><tr><th>Size</th><th>Stock</th><th>MRP</th><th>Selling</th><th>Print Qty</th><th>Action</th></tr>';
    detail+=rows.map(x=>'<tr><td><b>'+esc(x.size||'-')+'</b></td><td><b>'+Number(x.qty||0)+'</b></td><td>₹'+Number(x.mrp||0).toFixed(2)+'</td><td>₹'+Number(x.selling||0).toFixed(2)+'</td><td><input class="design-print-qty" data-stock-key="'+esc(x.key)+'" type="number" min="0" max="'+Math.max(0,Number(x.qty)||0)+'" value="0" aria-label="Print quantity for '+esc(x.size||'size')+'" onclick="event.stopPropagation()"></td><td><button type="button" class="gray" onclick="event.stopPropagation();printLabelByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🏷️ 1 Label</button> <button type="button" class="gray" onclick="event.stopPropagation();editStockQtyByKey(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">✏️ Qty</button> <button type="button" class="red" onclick="event.stopPropagation();deleteStockRow(\''+String(x.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>').join('');
    detail+='</table></div></div>';
   });
