@@ -2,7 +2,7 @@
 <title>Diva Collection Billing • Barcode V2</title><script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js?v=231',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
+    navigator.serviceWorker.register('./sw.js?v=234',{updateViaCache:'none'}).then(function(reg){reg.update().catch(function(){});if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw)nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'});});});}).catch(function(){});
   });
 }
 </script>
@@ -399,7 +399,7 @@ function toggleGaneshMantra(){
  audio.play().then(()=>{if(status)status.textContent='🔊 Aarti is playing';}).catch(()=>{if(status)status.textContent='Select Play to listen to the Aarti. Keep the internet on the first time so the audio can be saved.';});
 }
 function openCloudSync(){try{const overlay=document.getElementById("appLockOverlay");if(overlay&&getComputedStyle(overlay).display!=="none"){alert("Unlock with your App PIN first, then select Cloud Sync.");return;}document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const target=document.getElementById("cloudSync");if(!target){alert("Cloud Sync page not found. Reload the app.");return;}target.classList.add("active");const code=document.getElementById("cloudCode");if(code&&!code.value&&typeof cloudCode==="function")code.value=cloudCode();if(typeof updateCloudAuthStatus==="function"&&typeof cloudAuth!=="undefined")updateCloudAuthStatus(cloudAuth&&cloudAuth.currentUser);window.scrollTo(0,0);}catch(e){console.error("Open Cloud Sync failed",e);alert("Could not open Cloud Sync. Close and reopen the app.");}}
-function toggleSideMenu(){var m=document.getElementById('sideMenuPanel'),b=document.getElementById('sideMenuBackdrop'),t=document.getElementById('sideMenuToggle');if(!m||!b)return;var open=!m.classList.contains('open');m.classList.toggle('open',open);b.classList.toggle('open',open);if(t)t.setAttribute('aria-expanded',open?'true':'false');if(open){setTimeout(function(){var first=m.querySelector('.side-menu-list>button');if(first)first.focus();},30);}}
+window.toggleSideMenu=function(){var m=document.getElementById('sideMenuPanel'),b=document.getElementById('sideMenuBackdrop'),t=document.getElementById('sideMenuToggle');if(!m||!b){alert('Menu panel is missing. Please reopen Diva Collection Billing.');return;}var open=!m.classList.contains('open');m.classList.toggle('open',open);b.classList.toggle('open',open);if(t)t.setAttribute('aria-expanded',open?'true':'false');if(open){setTimeout(function(){var first=m.querySelector('.side-menu-list>button');if(first)first.focus();},30);}};
 function closeSideMenu(){var m=document.getElementById('sideMenuPanel'),b=document.getElementById('sideMenuBackdrop'),t=document.getElementById('sideMenuToggle');if(m)m.classList.remove('open');if(b)b.classList.remove('open');if(t)t.setAttribute('aria-expanded','false');}
 function menuPage(id){closeSideMenu();page(id);}
 (function(){
