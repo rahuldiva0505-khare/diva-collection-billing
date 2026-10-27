@@ -1234,7 +1234,11 @@ function completeSale(){
  try{
   const paymentMode=document.getElementById("paymentMode")?.value||"Cash";
   const soldItems=JSON.parse(JSON.stringify(cart));
-  const subtotal=soldItems.reduce((s,x)=>s+Number(x.qty)*Math.max(0,Number(x.rate)-Number(x.discount)),0);\n  const billDiscount=getBillDiscount(subtotal);\n  const saleTotal=Math.max(0,subtotal-billDiscount);\n  const billDiscountType=document.getElementById("billDiscountType")?.value||"amount";\n  const billDiscountValue=Math.max(0,Number(document.getElementById("billDiscountValue")?.value)||0);
+  const subtotal=soldItems.reduce((s,x)=>s+Number(x.qty)*Math.max(0,Number(x.rate)-Number(x.discount)),0);
+  const billDiscount=getBillDiscount(subtotal);
+  const saleTotal=Math.max(0,subtotal-billDiscount);
+  const billDiscountType=document.getElementById("billDiscountType")?.value||"amount";
+  const billDiscountValue=Math.max(0,Number(document.getElementById("billDiscountValue")?.value)||0);
   const paidInput=String(document.getElementById("amountPaid")?.value??"").trim();
   const paidAmount=paidInput===""?(paymentMode==="Udhari"?0:saleTotal):Number(paidInput);
   if(!Number.isFinite(paidAmount)||paidAmount<0||paidAmount>saleTotal){alert("Paid amount कुल बिल से अधिक या गलत है.");return;}
