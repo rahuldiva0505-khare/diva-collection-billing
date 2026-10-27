@@ -132,7 +132,7 @@ function code128Svg(value,opts={}){
 <div id="sideMenuBackdrop" onclick="closeSideMenu()" aria-hidden="true"></div>
 <aside id="sideMenuPanel" aria-label="App menu">
 <div class="side-menu-head"><b>📋 Diva Collection Menu</b><button type="button" onclick="closeSideMenu()" aria-label="Menu band karein">✕</button></div>
-<div class="side-menu-keyhint">💻 Laptop shortcuts: <b>F2</b> = Menu Open/Close · <b>Esc</b> = Close · When menu is open, use <b>1–9, 0</b> to select an option</div>
+<div class="side-menu-keyhint">💻 Laptop shortcuts: <b>F2</b> = Menu Open/Close · <b>Esc</b> = Close · When the menu is open, use <b>1–9, 0</b> to select an option</div>
 <div class="side-menu-list">
 <button type="button" onclick="menuPage('dashboard')">🏠 Dashboard</button>
 <button type="button" onclick="menuPage('billing')">🧾 Billing / New Bill</button>
@@ -151,7 +151,7 @@ function code128Svg(value,opts={}){
 <button type="button" onclick="closeSideMenu();toggleLakshmiMantra()">🪷 Lakshmi Mantra</button>
 <button type="button" onclick="closeSideMenu();lockNow()">🔒 Lock App</button>
 <button type="button" onclick="closeSideMenu();appLockSettings()">🔐 Lock / Unlock / PIN Settings</button>
-<div class="side-menu-backup"><b>🛡️ Data Backup</b><p class="small">Download a JSON copy of this device's app data.</p><button type="button" class="green" onclick="downloadDivaBackup()">⬇️ Download JSON Backup</button><button type="button" class="gray" onclick="document.getElementById('divaRestoreFile').click()">📥 Restore Backup (empty app only)</button><input id="divaRestoreFile" type="file" accept=".json,application/json" style="display:none" onchange="restoreDivaBackupFile(this)"><div id="divaBackupStatus" class="small" aria-live="polite"></div><div class="small">सुरक्षा: Restore तभी होगा जब इस डिवाइस में कोई bill/stock न हो। यह Cloud/Firebase डेटा नहीं बदलता।</div></div>
+<div class="side-menu-backup"><b>🛡️ Data Backup</b><p class="small">Download a JSON copy of this device's app data.</p><button type="button" class="green" onclick="downloadDivaBackup()">⬇️ Download JSON Backup</button><button type="button" class="gray" onclick="document.getElementById('divaRestoreFile').click()">📥 Restore Backup (खाली ऐप में)</button><input id="divaRestoreFile" type="file" accept=".json,application/json" style="display:none" onchange="restoreDivaBackupFile(this)"><div id="divaBackupStatus" class="small" aria-live="polite"></div><div class="small">सुरक्षा: Restore तभी होगा जब इस डिवाइस में कोई bill/stock न हो। यह Cloud/Firebase डेटा नहीं बदलता।</div></div>
 </div></aside>
 <div id="ganeshMusicPlayer" style="display:none;max-width:700px;margin:8px auto;padding:0 10px"></div>
 <div id="calcOverlay" role="dialog" aria-modal="true" aria-label="Calculator" onclick="if(event.target===this)closeCalculator()"><div id="calcBox"><button id="calcClose" type="button" onclick="closeCalculator()">✕</button><h2>🧮 Calculator</h2><input id="calcDisplay" inputmode="decimal" aria-label="Calculator display" value="0" onkeydown="calculatorKey(event)"><div id="calcKeys"><button type="button" class="gray" onclick="calcClear()">C</button><button type="button" class="gray" onclick="calcBack()">⌫</button><button type="button" class="calcOp" onclick="calcPercent()">%</button><button type="button" class="calcOp" onclick="calcAdd('/')">÷</button><button type="button" onclick="calcAdd('7')">7</button><button type="button" onclick="calcAdd('8')">8</button><button type="button" onclick="calcAdd('9')">9</button><button type="button" class="calcOp" onclick="calcAdd('*')">×</button><button type="button" onclick="calcAdd('4')">4</button><button type="button" onclick="calcAdd('5')">5</button><button type="button" onclick="calcAdd('6')">6</button><button type="button" class="calcOp" onclick="calcAdd('-')">−</button><button type="button" onclick="calcAdd('1')">1</button><button type="button" onclick="calcAdd('2')">2</button><button type="button" onclick="calcAdd('3')">3</button><button type="button" class="calcOp" onclick="calcAdd('+')">+</button><button type="button" onclick="calcAdd('(')">(</button><button type="button" onclick="calcAdd('0')">0</button><button type="button" onclick="calcAdd('.')">.</button><button type="button" class="calcEqual" onclick="calcEquals()">=</button></div></div></div>
@@ -171,7 +171,7 @@ function code128Svg(value,opts={}){
 <input id="brate" type="number" min="0" placeholder="Selling Price">
 <input id="bdiscount" type="number" min="0" placeholder="Discount ₹">
 </div><div id="binfo" class="small" style="margin-top:8px"></div><br><button onclick="addItem()">➕ Add Item</button></div>
-<div class="card"><h3>Current Bill</h3><div id="cart"></div><div class="grid" style="margin:12px 0;padding:12px;background:#fff4e8;border:1px solid #f5c79e;border-radius:10px"><label style="font-weight:700;align-self:center">🏷️ Bill-level Discount</label><select id="billDiscountType" aria-label="Bill discount type" onchange="renderCart()"><option value="amount">₹ Amount</option><option value="percent">% Percent</option></select><input id="billDiscountValue" type="number" min="0" step="0.01" value="0" placeholder="Bill Discount ₹ / % " oninput="renderCart()"><div class="small" style="grid-column:1/-1">यह छूट सभी item discounts के बाद पूरे बिल पर लगेगी।</div></div><div class="small" style="text-align:right">Items Total: ₹<span id="itemsSubtotal">0.00</span> · Bill Discount: ₹<span id="billDiscountShown">0.00</span></div><div class="totalbox">Final Total ₹<span id="total">0</span></div><div style="margin-top:12px><label><b>💳 Payment Mode</b></label><select id="paymentMode" style="margin-top:6px"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI / Online</option><option value="Card">💳 Card</option><option value="Udhari">🧾 उधारी</option></select><div class="grid" style="margin-top:8px"><input id="amountPaid" type="number" min="0" step="0.01" placeholder="Amount Paid (blank = full payment)"></div><small class="small">For credit sales, payment remains 0. Enter an amount for partial payment.</small></div><br>
+<div class="card"><h3>Current Bill</h3><div id="cart"></div><div class="grid" style="margin:12px 0;padding:12px;background:#fff4e8;border:1px solid #f5c79e;border-radius:10px"><label style="font-weight:700;align-self:center">🏷️ Bill-level Discount</label><select id="billDiscountType" aria-label="Bill discount type" onchange="renderCart()"><option value="amount">₹ रुपये</option><option value="percent">% प्रतिशत</option></select><input id="billDiscountValue" type="number" min="0" step="0.01" value="0" placeholder="Bill Discount ₹ / % " oninput="renderCart()"><div class="small" style="grid-column:1/-1">यह छूट सभी item discounts के बाद पूरे बिल पर लगेगी।</div></div><div class="small" style="text-align:right">Items Total: ₹<span id="itemsSubtotal">0.00</span> · Bill Discount: ₹<span id="billDiscountShown">0.00</span></div><div class="totalbox">Final Total ₹<span id="total">0</span></div><div style="margin-top:12px><label><b>💳 Payment Mode</b></label><select id="paymentMode" style="margin-top:6px"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI / Online</option><option value="Card">💳 Card</option><option value="Udhari">🧾 उधारी</option></select><div class="grid" style="margin-top:8px"><input id="amountPaid" type="number" min="0" step="0.01" placeholder="Amount Paid (blank = full payment)"></div><small class="small">For credit sales, payment remains 0. Enter an amount for partial payment.</small></div><br>
 <button onclick="completeSale()">💾 Complete Sale</button> <button class="green" onclick="printCurrentBill()">🖨️ Print Bill</button></div></section>
 
 <section id="billHistory" class="page">
@@ -180,8 +180,8 @@ function code128Svg(value,opts={}){
 <div class="card"><div id="billHistoryTable"></div></div></section>
 
 <section id="customers" class="page">
-<div class="card"><h2>👤 Customers</h2><p class="small">Customer name and mobile number will be saved/updated automatically when a bill is completed.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button><button class="green" onclick="renderAllDueLedger()">📒 Full Due Ledger</button><button class="green" onclick="renderDueReminders()">⏰ View Overdue (30+ Days)</button></div></div><div class="card"><div id="allDueLedger"><div class="empty">सभी बकाया देखने के लिए “Full Due Ledger” दबाएँ।</div></div></div>
-<div class="card"><h3>🟢 WhatsApp Payment Reminder</h3><p class="small">Unpaid or partially paid bills that are 30 days old or older appear here. Review and send each WhatsApp message yourself; no automated or paid API is used.</p><div id="dueReminderList"><div class="empty">Select “View Overdue (30+ Days)” to view the list.</div></div></div>
+<div class="card"><h2>👤 Customers</h2><p class="small">Bill complete karte hi customer ka naam aur mobile number yahan automatically save/update hoga.</p><div class="grid"><input id="customerSearch" placeholder="Search Name / Mobile" oninput="renderCustomers()"><button class="gray" onclick="renderCustomers()">🔄 Refresh</button><button class="green" onclick="renderAllDueLedger()">📒 Full Due Ledger</button><button class="green" onclick="renderDueReminders()">⏰ View Overdue (30+ Days)</button></div></div><div class="card"><div id="allDueLedger"><div class="empty">सभी बकाया देखने के लिए “Full Due Ledger” दबाएँ।</div></div></div>
+<div class="card"><h3>🟢 WhatsApp Payment Reminder</h3><p class="small">Unpaid or partially paid bills that are 30 days old or older appear here. Review and send each WhatsApp message yourself; no automated or paid API is used.</p><div id="dueReminderList"><div class="empty">सूची देखने के लिए “View Overdue (30+ Days)” दबाएँ।</div></div></div>
 <div class="card"><div id="customerTable"></div></div>
 </section>
 
@@ -322,7 +322,7 @@ nav button,button,.green,.design-print-button { background-color:#e66a00 !import
   window.showJSCPrinterBox=function(){
     var labels=document.querySelector('#labels .card');if(!labels)return;
     if(document.getElementById('jscPrinterBox'))return;
-    var d=document.createElement('div');d.id='jscPrinterBox';d.className='card';d.style.background='#a63d00';d.innerHTML='<h3>🖨️ JSC-9280 Thermal Printer</h3><p class="small">JSC-9280 will print through the browser using your Windows driver. No separate printing app is needed.</p><button class="green" onclick="connectJSC9280()">🔌 Connect JSC-9280 USB</button> <button class="gray" onclick="disconnectJSC9280()">Disconnect</button> <button onclick="testJSC9280()">🧪 Test Print</button><div id="jscStatus" class="small" style="margin-top:8px">'+(localStorage.getItem('DIVA_JSC9280_CONNECTED')?'Printer permission saved — reconnect करने के लिए Connect दबाएँ.':'Not connected')+'</div><p class="small" style="margin-top:8px">Label size नीचे बदल सकते isं: 4×6 sheet या 2×1 inch roll. Columns/rows अपने-आप adjust होंगे.</p>';
+    var d=document.createElement('div');d.id='jscPrinterBox';d.className='card';d.style.background='#a63d00';d.innerHTML='<h3>🖨️ JSC-9280 Thermal Printer</h3><p class="small">JSC-9280 will print through the browser using your Windows driver. No separate printing app is needed.</p><button class="green" onclick="connectJSC9280()">🔌 Connect JSC-9280 USB</button> <button class="gray" onclick="disconnectJSC9280()">Disconnect</button> <button onclick="testJSC9280()">🧪 Test Print</button><div id="jscStatus" class="small" style="margin-top:8px">'+(localStorage.getItem('DIVA_JSC9280_CONNECTED')?'Printer permission saved — reconnect करने के लिए Connect दबाएँ.':'Not connected')+'</div><p class="small" style="margin-top:8px">Label size नीचे बदल सकते हैं: 4×6 sheet या 2×1 inch roll. Columns/rows अपने-आप adjust होंगे.</p>';
     labels.insertBefore(d,labels.children[2]||null);
   };
   var oldPage=window.page;
@@ -343,7 +343,7 @@ nav button,button,.green,.design-print-button { background-color:#e66a00 !import
 <p class="small" style="margin-top:10px">Note: This works with <b>BLE</b> printers in the browser. Chrome web apps cannot directly control older Classic Bluetooth/SPP printers; these may require Android system printing or the manufacturer's app.</p>
 </div></section>
 
-<section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Sign in on your laptop and mobile using your Firebase Email/Password account. The app's 4–6 digit PIN lock will remain unchanged.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" type="button" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" type="button" onclick="syncCloudNow()">🔄 Sync Now</button><button id="generateSyncCodeBtn" type="button" style="background:#e66a00;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation" onclick="createCloudCode()">➕ Generate New Sync Code</button></div><div class="card" style="margin-top:12px;border:1px solid #b84e00;background:#fff4e8"><h3>🔎 Cloud में किसी SKU को खोजें / वापस लाएँ</h3><p class="small">केवल वही SKU नंबर डालें जो स्टॉक में नहीं मिल रहा। वापस लाने से पहले पुष्टि पूछी जाएगी।</p><div class="grid"><input id="cloudSkuLookupInput" placeholder="SKU ID, जैसे DIVA-5" onkeydown="if(event.key==='Enter'){event.preventDefault();recoverCloudSkuFromInput()}"><button type="button" class="gray" onclick="recoverCloudSkuFromInput()">☁️ इस SKU को Cloud में खोजें</button></div><div id="cloudSkuRecoveryStatus" class="small" role="status" aria-live="polite" style="margin-top:8px">यहाँ खोज का नतीजा दिखाई देगा।</div></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #e66a00;border-radius:10px;background:#a63d00"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
+<section id="cloudSync" class="page"><div class="card"><h2>🔐 Shop Account Login</h2><p class="small">Sign in on your laptop and mobile using your Firebase Email/Password account. The app's 4–6 digit PIN lock will remain unchanged.</p><div class="grid"><input id="cloudEmail" type="email" autocomplete="username" placeholder="Firebase account email"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebase password"><button class="green" onclick="cloudAccountLogin()">🔐 Login</button><button class="gray" onclick="cloudAccountLogout()">Logout</button></div><div id="cloudAuthStatus" class="small" style="margin-top:8px">Cloud account login required for syncing. Local billing remains available.</div></div><div class="card"><h2>☁️ Cloud Sync</h2><p class="small">Isi Sync Code ko doosre phone/laptop par connect karke stock aur bills sync karein. Apna existing code hi use karein; New Sync Code banane se purane data se alag jagah ban sakti hai.</p><div class="grid"><input id="cloudCode" placeholder="DIVA-XXXXXXXX"><button class="green" type="button" onclick="connectCloudCode()">🔗 Connect / Sync</button><button class="gray" type="button" onclick="syncCloudNow()">🔄 Sync Now</button><button id="generateSyncCodeBtn" type="button" style="background:#e66a00;color:white;font-weight:800;padding:14px;min-height:48px;touch-action:manipulation" onclick="createCloudCode()">➕ Generate New Sync Code</button></div><div class="card" style="margin-top:12px;border:1px solid #b84e00;background:#fff4e8"><h3>🔎 In Cloud, किसी SKU को खोजें / वापस लाएँ</h3><p class="small">केवल वही SKU नंबर डालें जो स्टॉक में नहीं मिल रहा। वापस लाने से पहले पुष्टि पूछी जाएगी।</p><div class="grid"><input id="cloudSkuLookupInput" placeholder="SKU ID, जैसे DIVA-5" onkeydown="if(event.key==='Enter'){event.preventDefault();recoverCloudSkuFromInput()}"><button type="button" class="gray" onclick="recoverCloudSkuFromInput()">☁️ इस SKU को In Cloud, खोजें</button></div><div id="cloudSkuRecoveryStatus" class="small" role="status" aria-live="polite" style="margin-top:8px">यहाँ खोज का नतीजा दिखाई देगा।</div></div><div id="cloudStatus" class="small" style="margin-top:10px">Login ke baad existing Sync Code se connect karein.</div></div></section><section id="reports" class="page"><div class="card"><h2>📊 Reports</h2><div style="margin:10px 0;padding:12px;border:2px solid #e66a00;border-radius:10px;background:#a63d00"><b>🧾 GST REPORT</b><div class="small">GST report नीचे दिखाई देगी — Day / Month / Year / All Time के हिसाब से.</div></div>
 <div class="grid"><select id="reportPeriod" onchange="renderReport()"><option value="day">Today / Day</option><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select><input id="expenseAmount" type="number" min="0" placeholder="Today's Expense ₹"><input id="expenseNote" placeholder="Expense Note"><button onclick="addExpense()">➕ Add Expense</button></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" onclick="downloadSalesReportCsv()">⬇️ Sales Report CSV</button><button type="button" class="gray" onclick="downloadStockReportCsv()">⬇️ Stock/SKU CSV</button><button type="button" class="gray" onclick="downloadExpenseReportCsv()">⬇️ Expense CSV</button><button type="button" class="green" onclick="renderSupplierLedger()">🏭 Supplier Purchase Ledger</button></div><div id="supplierLedger" style="margin-top:12px"></div><div id="report" style="margin-top:12px"></div></div></section>
 </main>
@@ -414,12 +414,12 @@ function toggleGaneshMantra(){
    box.innerHTML='';box.style.display='none';btn.textContent='🪔 Lakshmi Mata Aarti';return;
  }
  box.style.display='block';box.dataset.playing='yes';btn.textContent='⏹️ Stop Aarti';
- box.innerHTML='<div style="padding:12px;border:1px solid #b84e00;border-radius:12px;background:#fff"><b>🪔 Lakshmi Mata Aarti</b><p style="margin:8px 0;font-size:14px">With music and devotional singing</p><audio id="lakshmiAartiAudio" controls preload="auto" style="width:100%"><source src="https://upload.wikimedia.org/wikipedia/commons/8/8b/Aarti_Puja%2C_Lakshmi_Laxmi.ogg" type="audio/ogg"><source src="./lakshmi-aarti.ogg" type="audio/ogg">Your browser cannot play audio.</audio><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">आरती तैयार हो रही is… पहली बार इंटरनेट चालू रखें ताकि ऑडियो सेव हो सके।</p></div>';
+ box.innerHTML='<div style="padding:12px;border:1px solid #b84e00;border-radius:12px;background:#fff"><b>🪔 Lakshmi Mata Aarti</b><p style="margin:8px 0;font-size:14px">With music and devotional singing</p><audio id="lakshmiAartiAudio" controls preload="auto" style="width:100%"><source src="https://upload.wikimedia.org/wikipedia/commons/8/8b/Aarti_Puja%2C_Lakshmi_Laxmi.ogg" type="audio/ogg"><source src="./lakshmi-aarti.ogg" type="audio/ogg">Your browser cannot play audio.</audio><p id="mantraOfflineStatus" style="font-size:12px;color:#777;margin:7px 0">आरती तैयार हो रही है… पहली बार इंटरनेट चालू रखें ताकि ऑडियो सेव हो सके।</p></div>';
  const audio=document.getElementById('lakshmiAartiAudio');
  const status=document.getElementById('mantraOfflineStatus');
  if(!audio)return;
  audio.loop=true;
- audio.addEventListener('playing',()=>{if(status)status.textContent='🔊 Lakshmi Mata Aarti is playing';});
+ audio.addEventListener('playing',()=>{if(status)status.textContent='🔊 लक्ष्मी माता की Aarti is playing';});
  audio.addEventListener('error',()=>{if(status)status.textContent='Audio is not available yet. Connect to the internet once and reopen the app.';});
  audio.play().then(()=>{if(status)status.textContent='🔊 Aarti is playing';}).catch(()=>{if(status)status.textContent='Select Play to listen to the Aarti. Keep the internet on the first time so the audio can be saved.';});
 }
@@ -512,7 +512,7 @@ function saveStock(){
  // Prepare barcode labels for the newly added quantity as soon as a product is added.
  const labelCopies=[];addedLabelItems.forEach(o=>{for(let i=0;i<o.q;i++)labelCopies.push(o.x)});
  if(labelCopies.length && document.getElementById('autoPrintLabels')?.checked) setTimeout(()=>printAllSpecificLabels(labelCopies),150);
- alert(rows.length+' size + colour stock entries added. '+labelCopies.length+' barcode labels are being sent to print.');
+ alert(rows.length+' Size + Colour stock entries add हो गईं. '+labelCopies.length+' barcode labels print के लिए भेजे जा रहे हैं.');
 }
 function clearStockForm(){['newcat','ssku','sname','customSizes','smrp','sselling','sdiscount','scost','scolor1','scolor2','scolor3','scolor4'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.sizecheck').forEach(x=>x.checked=false);document.getElementById('stockMatrix').innerHTML='Select sizes and colours first, then build the matrix.';document.getElementById('scat').value=''}
 function productFolderKey(x){return String(x.category||'Other')+'|'+String(x.sku||x.name||'ITEM')}
@@ -548,8 +548,8 @@ function toggleProductFolder(head){
  const open=details.style.display!=='block';details.style.display=open?'block':'none';
  const arrow=head.querySelector('.folder-arrow');if(arrow)arrow.textContent=open?'⌃':'⌄';
 }
-function recoverCloudSkuFromInput(){let sku=String(document.getElementById("cloudSkuLookupInput")?.value||"").trim().toUpperCase();const status=document.getElementById("cloudSkuRecoveryStatus");if(!sku){if(status)status.textContent="Enter an SKU ID first, e.g. DIVA-5.";return;}if(!sku.startsWith("DIVA-"))sku="DIVA-"+sku;if(!/^DIVA-\d+$/.test(sku)){if(status)status.textContent="Invalid SKU ID. Example: DIVA-5";return;}const input=document.getElementById("cloudSkuLookupInput");if(input)input.value=sku;if(!confirm(sku+" को Cloud history में खोजकर, रिकॉर्ड मिलने पर गायब स्टॉक वापस जोड़ने for कोशिश करें? मौजूदा मात्रा नहीं बदली जाएगी।")){if(status)status.textContent="Cancelled — no recovery was started.";return;}if(status)status.textContent=sku+" for Cloud history खोजी जा रही is…";repairMissingSkus(sku).then(()=>{if(status)status.textContent="Search complete. Check Cloud Sync status and Current Stock for details.";}).catch(e=>{if(status)status.textContent="Search incomplete. Check your internet connection, login, and previous Sync Code.";});} function readSkuLookupInput(){let sku=String(document.getElementById('skuIdLookupInput')?.value||'').trim().toUpperCase();if(!sku){alert('Enter an SKU ID, e.g. DIVA-33');return '';}if(!sku.startsWith('DIVA-'))sku='DIVA-'+sku;if(!/^DIVA-\d+$/.test(sku)){alert('Enter an SKU ID such as DIVA-33.');return '';}return sku;}
-function searchSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;const search=document.getElementById('stockSearch');if(search)search.value=sku;renderStock();const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+' for '+rows.length+' stock row(s) found. See below.':'❌ '+sku+' current stock not found. Select Recover from Cloud.';}
+function recoverCloudSkuFromInput(){let sku=String(document.getElementById("cloudSkuLookupInput")?.value||"").trim().toUpperCase();const status=document.getElementById("cloudSkuRecoveryStatus");if(!sku){if(status)status.textContent="Enter an SKU ID first, e.g. DIVA-5.";return;}if(!sku.startsWith("DIVA-"))sku="DIVA-"+sku;if(!/^DIVA-\d+$/.test(sku)){if(status)status.textContent="Invalid SKU ID. Example: DIVA-5";return;}const input=document.getElementById("cloudSkuLookupInput");if(input)input.value=sku;if(!confirm(sku+" को Cloud history में खोजकर, रिकॉर्ड मिलने पर गायब स्टॉक वापस जोड़ने की कोशिश करें? मौजूदा मात्रा नहीं बदली जाएगी।")){if(status)status.textContent="Cancelled — no recovery was started.";return;}if(status)status.textContent=sku+" की Cloud history खोजी जा रही है…";repairMissingSkus(sku).then(()=>{if(status)status.textContent="Search complete. Check Cloud Sync status and Current Stock for details.";}).catch(e=>{if(status)status.textContent="Search incomplete. Check your internet connection, login, and previous Sync Code.";});} function readSkuLookupInput(){let sku=String(document.getElementById('skuIdLookupInput')?.value||'').trim().toUpperCase();if(!sku){alert('Enter an SKU ID, e.g. DIVA-33');return '';}if(!sku.startsWith('DIVA-'))sku='DIVA-'+sku;if(!/^DIVA-\d+$/.test(sku)){alert('Enter an SKU ID such as DIVA-33.');return '';}return sku;}
+function searchSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;const search=document.getElementById('stockSearch');if(search)search.value=sku;renderStock();const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+' की '+rows.length+' stock row(s) मिलीं। नीचे देखें।':'❌ '+sku+' current stock में नहीं मिली। Recover from Cloud दबाएँ।';}
 async function recoverListedMissingSkus(){
  const ids=['DIVA-1','DIVA-2','DIVA-4','DIVA-7','DIVA-8','DIVA-9','DIVA-11','DIVA-13','DIVA-14','DIVA-15','DIVA-17','DIVA-21','DIVA-22'];
  const status=document.getElementById('skuRecoveryStatus');
@@ -560,9 +560,9 @@ async function recoverListedMissingSkus(){
   try{await repairMissingSkus(sku);done++;}
   catch(e){console.error('DIVA batch SKU recovery',sku,e);}
  }
- if(status)status.textContent='Search complete. '+done+'/13 SKU for जाँच हुई। Cloud Sync status और Current Stock में नतीजा देखें; जिन for history Cloud में नहीं is, उन्हें लैपटॉप से पहले Cloud में भेजना होगा।';
+ if(status)status.textContent='Search complete. '+done+'/13 SKU SKUs checked. Check Cloud Sync status and Current Stock for results. If history is not in Cloud, sync it from the laptop first.';
 }
-async function recoverSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;await repairMissingSkus(sku);const search=document.getElementById('stockSearch');if(search){search.value=sku;renderStock();}const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+' for '+rows.length+' stock row(s)  found.':'इस SKU for Cloud history में entry नहीं मिली या Sync जाँचने for ज़रूरत is।';}
+async function recoverSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;await repairMissingSkus(sku);const search=document.getElementById('stockSearch');if(search){search.value=sku;renderStock();}const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+' की '+rows.length+' stock row(s) मिल गईं।':'इस SKU की Cloud history में entry नहीं मिली या Sync जाँचने की ज़रूरत है।';}
 function renderStock(){
  const el=document.getElementById('productFolders'),mainEl=document.getElementById('productMainFolders');if(!el&&!mainEl)return;
  const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
@@ -600,7 +600,7 @@ function printDesignLabels(button){
   const n=Math.floor(Number(field.value||0)),key=field.dataset.stockKey,x=(db.stock||[]).find(v=>String(v.key)===String(key));
   if(!n)continue;
   if(!x||Number(x.qty||0)<=0){alert('No stock is available for this size.');return}
-  if(n<0||n>Number(x.qty||0)){alert('Size '+(x.size||'')+' Print quantity cannot exceed available stock for this item. Available stock: '+Number(x.qty||0));return}
+  if(n<0||n>Number(x.qty||0)){alert('Size '+(x.size||'')+' के लिए print quantity stock से ज़्यादा नहीं हो सकती. उपलब्ध stock: '+Number(x.qty||0));return}
   for(let i=0;i<n;i++)flat.push(x);
  }
  if(!flat.length){alert('Enter Print Qty for the required sizes/colours in this design first.');return}
@@ -627,7 +627,7 @@ function editStockQtyByKey(k){
  if(raw.trim()===''||!/^\d+(?:\.\d+)?$/.test(raw.trim())){alert('Enter a quantity of 0 or more.');return}
  const qty=Number(raw.trim());
  if(!Number.isFinite(qty)||qty<0){alert('Invalid quantity.');return}
- if(qty===0&&!confirm('Are you sure you want to '+(x.sku||'this product')+' size '+(x.size||'-')+'  set stock to 0?'))return;
+ if(qty===0&&!confirm('क्या '+(x.sku||'इस product')+' size '+(x.size||'-')+'  set stock to 0?'))return;
  x.qty=qty;
  save();
  renderStock();loadBillProducts();renderDashboard();renderLabels();
@@ -693,7 +693,7 @@ function refreshUnusedSkuOptions(){
  sel.innerHTML='<option value="">Auto SKU (next in sequence)</option>';
  for(const n of [5,6,10,12]){
   const sku='DIVA-'+n;
-  const opt=document.createElement('option');opt.value=sku;opt.textContent=sku+' — New product';sel.appendChild(opt);
+  const opt=document.createElement('option');opt.value=sku;opt.textContent=sku+' — नया product';sel.appendChild(opt);
  }
  if([...sel.options].some(o=>o.value===current))sel.value=current;
 }
@@ -810,15 +810,15 @@ function saveLabelPrintSettings(){
  const get=id=>Math.max(0.01,Number(document.getElementById(id)?.value)||0);
  const s={paperW:get('lpPaperW'),paperH:get('lpPaperH'),labelW:get('lpLabelW'),labelH:get('lpLabelH'),gapX:Math.max(0,Number(document.getElementById('lpGapX')?.value)||0),gapY:Math.max(0,Number(document.getElementById('lpGapY')?.value)||0)};
  localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));
- updateLabelLayoutInfo(); alert('✅ Printer/label paper settings saved. Barcodes will print according to the selected paper's rows and columns.');
+ updateLabelLayoutInfo(); alert('✅ Printer / Label paper setting save हो गई. अब barcode उसी paper के Row + Column के हिसाब से print होंगे.');
 }
 function labelPrintStyle(){
  const s=getLabelPrintSettings(); const cols=1,rows=1;
  const css='@page{size:'+s.labelW+'in '+s.labelH+'in;margin:0}html,body{margin:0!important;padding:0!important;width:'+s.labelW+'in;min-height:0;overflow:visible}body{font-family:Arial,sans-serif;display:block}.label{position:relative;width:'+s.labelW+'in;height:'+s.labelH+'in;margin:0;padding:0;box-sizing:border-box;overflow:hidden;break-after:page;page-break-after:always;text-align:center;border:0.5px solid #222}.label:last-child{break-after:auto;page-break-after:auto}.label .prices{position:absolute;top:0.025in;left:0.03in;right:0.03in;height:0.16in;font-size:10px!important;line-height:0.16in!important;font-weight:900;white-space:nowrap;overflow:hidden}.label>b{position:absolute;top:0.20in;left:0;right:0;height:0.12in;font-size:8px;line-height:0.12in;font-weight:900;white-space:nowrap;overflow:hidden}.label>div.name{position:absolute;top:0.34in;left:0.04in;right:0.04in;font-size:8px;line-height:0.10in;white-space:nowrap;overflow:hidden}.label>div.meta{position:absolute;top:0.46in;left:0.04in;right:0.04in;font-size:7px;line-height:0.09in;white-space:nowrap;overflow:hidden}.label .barcode-real{position:absolute;top:0.57in;left:0.05in;width:calc(100% - 0.10in)!important;height:0.62in!important;margin:0!important;padding:0!important;overflow:hidden;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.label .barcode-real svg{display:block;width:100%;height:100%;shape-rendering:crispEdges}.small{font-size:5.5px!important;line-height:1!important}';
  return {s,cols,rows,css};
 }function printAllSpecificLabels(arr){
- if(window.AndroidPrinter){if(!arr||!arr.length){alert('Print quantity is 0');return}arr.forEach((x,i)=>setTimeout(()=>AndroidPrinter.printLabel(JSON.stringify(x)),i*250));alert('✅ '+arr.length+' label(s) sent directly to the printer.');return}
- let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked.');return}
+ if(window.AndroidPrinter){if(!arr||!arr.length){alert('Print quantity 0 है');return}arr.forEach((x,i)=>setTimeout(()=>AndroidPrinter.printLabel(JSON.stringify(x)),i*250));alert('✅ '+arr.length+' label direct printer को भेजे गए।');return}
+ let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
  let cards=arr.map((x)=>{let code=makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+esc(x.name)+'</div><div class="meta">'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'</div>';}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close();
@@ -836,16 +836,16 @@ function loadReturnStock(){
 }
 function renderStockReturns(){
  renderReturnOptions(); const el=document.getElementById('stockReturnTable'); if(!el)return; const arr=db.stockReturns||[];
- if(!arr.length){el.innerHTML='<div class="empty">No stock returns yet.</div>';return}
+ if(!arr.length){el.innerHTML='<div class="empty">अभी कोई stock return नहीं है.</div>';return}
  el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th><th>Supplier / Party</th><th>Reason</th></tr>'+arr.slice().reverse().map(r=>'<tr><td>'+new Date(r.date).toLocaleString()+'</td><td>'+esc(r.name)+'<br><small>'+esc(r.sku)+'</small></td><td>'+esc(r.color)+'</td><td>'+esc(r.size)+'</td><td>'+r.qty+'</td><td>'+esc(r.party||'')+'</td><td>'+esc(r.reason||'')+'</td></tr>').join('')+'</table></div>';
 }
 function saveStockReturn(){
  const key=document.getElementById('returnStockKey').value, qty=Number(document.getElementById('returnQty').value)||0; const x=db.stock.find(a=>a.key===key);
- if(!x){alert('Select product / size / colour');return} if(qty<=0){alert('Enter the return quantity');return} if(qty>x.qty){alert('Return quantity exceeds available stock');return}
+ if(!x){alert('Product / Size / Colour select करें');return} if(qty<=0){alert('Enter the return quantity');return} if(qty>x.qty){alert('Return quantity available stock से ज्यादा है');return}
  x.qty-=qty; db.stockReturns.push({date:new Date().toISOString(),key,xid:x.id||'',name:x.name,sku:x.sku,color:x.color,size:x.size,qty,party:document.getElementById('returnParty').value.trim(),reason:document.getElementById('returnReason').value.trim()}); save();
- document.getElementById('returnQty').value='';document.getElementById('returnParty').value='';document.getElementById('returnReason').value=''; renderStockReturns(); renderStock(); alert('Stock return saved and stock quantity reduced.');
+ document.getElementById('returnQty').value='';document.getElementById('returnParty').value='';document.getElementById('returnReason').value=''; renderStockReturns(); renderStock(); alert('Stock return save हो गया और stock से quantity कम हो गई.');
 }
-function delStock(i){if(confirm("Delete this stock entry?")){db.stock.splice(i,1);save();renderStock()}}
+function delStock(i){if(confirm("Stock entry delete करें?")){db.stock.splice(i,1);save();renderStock()}}
 function renderReturnOptions(){
  const sel=document.getElementById('returnStockKey'); if(!sel)return;
  const old=sel.value;
@@ -859,16 +859,16 @@ function loadReturnStock(){
 }
 function renderStockReturns(){
  renderReturnOptions(); const el=document.getElementById('stockReturnTable'); if(!el)return; const arr=db.stockReturns||[];
- if(!arr.length){el.innerHTML='<div class="empty">No stock returns yet.</div>';return}
+ if(!arr.length){el.innerHTML='<div class="empty">अभी कोई stock return नहीं है.</div>';return}
  el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th><th>Supplier / Party</th><th>Reason</th></tr>'+arr.slice().reverse().map(r=>`<tr><td>${new Date(r.date).toLocaleString()}</td><td>${esc(r.name)}<br><small>${esc(r.sku)}</small></td><td>${esc(r.color)}</td><td>${esc(r.size)}</td><td>${r.qty}</td><td>${esc(r.party||'')}</td><td>${esc(r.reason||'')}</td></tr>`).join('')+'</table></div>';
 }
 function saveStockReturn(){
  const key=document.getElementById('returnStockKey').value, qty=Number(document.getElementById('returnQty').value)||0; const x=db.stock.find(a=>a.key===key);
- if(!x){alert('Select product / size / colour');return} if(qty<=0){alert('Enter the return quantity');return} if(qty>x.qty){alert('Return quantity exceeds available stock');return}
+ if(!x){alert('Product / Size / Colour select करें');return} if(qty<=0){alert('Enter the return quantity');return} if(qty>x.qty){alert('Return quantity available stock से ज्यादा है');return}
  x.qty-=qty; db.stockReturns.push({date:new Date().toISOString(),key,xid:x.id||'',name:x.name,sku:x.sku,color:x.color,size:x.size,qty,party:document.getElementById('returnParty').value.trim(),reason:document.getElementById('returnReason').value.trim()}); save();
- document.getElementById('returnQty').value='';document.getElementById('returnParty').value='';document.getElementById('returnReason').value=''; renderStockReturns(); renderStock(); alert('Stock return saved and stock quantity reduced.');
+ document.getElementById('returnQty').value='';document.getElementById('returnParty').value='';document.getElementById('returnReason').value=''; renderStockReturns(); renderStock(); alert('Stock return save हो गया और stock से quantity कम हो गई.');
 }
-function delStock(i){if(confirm("Delete this stock entry?")){db.stock.splice(i,1);save();renderStock()}}
+function delStock(i){if(confirm("Stock entry delete करें?")){db.stock.splice(i,1);save();renderStock()}}
 function loadBillProducts(){
  let cat=document.getElementById("bcat").value, p=document.getElementById("bproduct"),old=p.value;
  let arr=db.stock.filter(x=>(!cat||x.category===cat)&&Number(x.qty)>0);
@@ -923,7 +923,7 @@ function printSelectedSkuVariantLabels(){
   const key=ch.dataset.stockKey,x=(db.stock||[]).find(a=>String(a.key)===String(key));
   const qtyInput=[...el.querySelectorAll('.sku-label-qty')].find(a=>String(a.dataset.stockKey)===String(key));
   const qty=Math.floor(Number(qtyInput?.value||0)),max=Math.max(0,Number(x?.qty)||0);
-  if(!x||qty<1||qty>max){alert('Print Qty must be between 1 and '+max+'  .');return}
+  if(!x||qty<1||qty>max){alert('Print Qty stock से 1 से '+max+' के बीच रखें.');return}
   for(let i=0;i<qty;i++)flat.push(x);
  }
  if(flat.length)printAllSpecificLabels(flat);
@@ -977,7 +977,7 @@ function printLabelObj(x){
    try{ AndroidPrinter.printLabel(JSON.stringify(x)); return; }catch(e){ console.error(e); }
  }
  let code=x.code||makeCode(x.category,x.sku,x.color,x.size),w=window.open('','_blank','width=900,height=900');
- if(!w){alert('Print window blocked. Allow pop-ups in your browser.');return}
+ if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return}
  const lp=labelPrintStyle(),svg=code128Svg(code);
  w.document.write('<!doctype html><html><head><title>Barcode Label '+esc(code)+'</title><style>'+lp.css+'</style></head><body><div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>DC</b><div class="name">'+esc(x.name)+'</div><div class="meta">'+esc(x.sku)+' | '+esc(x.color)+' | Size '+esc(x.size)+'</div>'+svg+'</div><script>setTimeout(()=>window.print(),500)<\/script></body></html>');w.document.close()
 }
@@ -988,7 +988,7 @@ function printAllLabels(){
    alert('✅ '+arr.length+'  labels sent directly to the printer.');
    return;
  }
- let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked.');return}
+ let w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है.');return}
  const lp=labelPrintStyle();
  let cards=arr.map(x=>{let code=x.code||makeCode(x.category,x.sku,x.color,x.size);return '<div class="label"><b>DC</b><div>'+esc(x.name)+'</div><div>'+esc(x.sku)+' | Colour: '+esc(x.color)+' | Size: '+esc(x.size)+'</div>'+code128Svg(code)+'<div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div></div>';}).join('');
  w.document.write('<!doctype html><html><head><title>Diva Barcode Labels</title><style>'+lp.css+'</style></head><body>'+cards+'<script>setTimeout(()=>window.print(),700)<\/script></body></html>');w.document.close()
@@ -1048,7 +1048,7 @@ async function startCameraScan(){
   let modal=document.getElementById('cameraScanner');
   if(!modal){
     modal=document.createElement('div');modal.id='cameraScanner';modal.style='position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;background:rgba(0,0,0,.97);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;box-sizing:border-box;overflow:hidden';
-    modal.innerHTML='<div style="color:#fff;font-size:19px;font-weight:bold;margin-bottom:6px">📷 Fast Barcode Scanner</div><div style="color:#ddd;font-size:12px;margin-bottom:7px">पूरा barcode frame में रखें • 15–30 cm • phone स्थिर रखें</div><div style="position:relative;width:99vw;height:82dvh"><video id="cameraVideo" autoplay playsinline muted webkit-playsinline="true" style="width:100%;height:100%;object-fit:fill;background:#111;border:2px solid #fff;border-radius:10px"></video><div style="position:absolute;left:3%;right:3%;top:40%;height:4px;background:#e66a00;box-shadow:0 0 10px #e66a00"></div></div><div id="cameraMsg" style="color:#fff;margin:8px;text-align:center">कैमरा शुरू हो रहा is…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 24px;border:0;border-radius:8px">✕ Close</button></div>';
+    modal.innerHTML='<div style="color:#fff;font-size:19px;font-weight:bold;margin-bottom:6px">📷 Fast Barcode Scanner</div><div style="color:#ddd;font-size:12px;margin-bottom:7px">Keep the full barcode inside the frame • 15–30 cm away • hold the phone steady</div><div style="position:relative;width:99vw;height:82dvh"><video id="cameraVideo" autoplay playsinline muted webkit-playsinline="true" style="width:100%;height:100%;object-fit:fill;background:#111;border:2px solid #fff;border-radius:10px"></video><div style="position:absolute;left:3%;right:3%;top:40%;height:4px;background:#e66a00;box-shadow:0 0 10px #e66a00"></div></div><div id="cameraMsg" style="color:#fff;margin:8px;text-align:center">कैमरा शुरू हो रहा है…</div><button type="button" onclick="stopCameraScan()" style="padding:10px 24px;border:0;border-radius:8px">✕ Close</button></div>';
     document.body.appendChild(modal);
   }else modal.style.display='flex';
   const video=document.getElementById('cameraVideo'),msg=document.getElementById('cameraMsg');
@@ -1100,7 +1100,7 @@ function renderSalesReturn(){
  sel.innerHTML='<option value="">Select Product / Colour / Size</option>'+db.stock.map(x=>`<option value="${esc(x.key)}">${esc(x.name)} — ${esc(x.sku)} / ${esc(x.color)} / Size ${esc(x.size)} (Current ${x.qty})</option>`).join('');
  if([...sel.options].some(o=>o.value===old))sel.value=old; loadSalesReturnStock();
  const arr=db.salesReturns||[],el=document.getElementById('salesReturnTable');
- if(!arr.length){el.innerHTML='<div class="empty">No sales returns yet.</div>';return}
+ if(!arr.length){el.innerHTML='<div class="empty">अभी कोई sales return नहीं है.</div>';return}
  el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th><th>Customer</th><th>Reason</th></tr>'+arr.slice().reverse().map(r=>`<tr><td>${new Date(r.date).toLocaleString()}</td><td>${esc(r.name)}<br><small>${esc(r.sku)}</small></td><td>${esc(r.color)}</td><td>${esc(r.size)}</td><td>${r.qty}</td><td>${esc(r.customer||'')}</td><td>${esc(r.reason||'')}</td></tr>`).join('')+'</table></div>';
 }
 function loadSalesReturnStock(){const key=document.getElementById('srStockKey')?.value;const x=db.stock.find(a=>a.key===key);document.getElementById('srStockInfo').textContent=x?`Current Stock: ${x.qty} | ${x.name} | ${x.color} | Size ${x.size}`:'';}
@@ -1151,7 +1151,7 @@ function selectSalesReturnBySkuSize(){
  if(!sku||!size){if(status)status.textContent='Enter both SKU ID and size.';return false}
  const norm=v=>String(v??'').trim().toUpperCase();
  const matches=(db.stock||[]).filter(a=>norm(a.sku)===sku && norm(a.size)===size);
- if(matches.length===0){if(status)status.textContent='❌ '+sku+' / '+size+' stock में नहीं मिला. पहले Stock में product/size for entry जाँचें.';return false}
+ if(matches.length===0){if(status)status.textContent='❌ '+sku+' / '+size+' not found in stock. Check the product/size entry in Stock first.';return false}
  if(matches.length>1){if(status)status.textContent='⚠️ '+sku+' / '+size+' has multiple colours. Select the item with the correct colour below.';}
  const sel=document.getElementById('srStockKey');
  sel.value=matches[0].key;
@@ -1177,8 +1177,8 @@ function addSalesReturnToStock(){
  document.getElementById('srQty').value='';document.getElementById('srCustomer').value='';document.getElementById('srReason').value='';document.getElementById('srScanCode').value='';renderSalesReturn();renderStock();alert('Sales return saved and quantity added back to stock.');
 }
 async function startSalesReturnCameraScan(){
- if(!navigator.mediaDevices?.getUserMedia){alert('Camera access उपलब्ध नहीं is. HTTPS या localhost पर खोलें.');return}
- let modal=document.getElementById('srCamera');if(!modal){modal=document.createElement('div');modal.id='srCamera';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Sales Return Barcode Scan</div><video id="srVideo" autoplay playsinline muted webkit-playsinline="true" style="width:99vw;height:78dvh;object-fit:contain;background:#111;border:2px solid #fff;border-radius:12px"></video><div id="srCameraMsg" style="color:#fff;margin:12px;text-align:center">कैमरा शुरू हो रहा is…</div><button type="button" onclick="stopSalesReturnCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';document.body.appendChild(modal)}else modal.style.display='flex';
+ if(!navigator.mediaDevices?.getUserMedia){alert('Camera access is unavailable. Open the app over HTTPS or localhost.');return}
+ let modal=document.getElementById('srCamera');if(!modal){modal=document.createElement('div');modal.id='srCamera';modal.style='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';modal.innerHTML='<div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">📷 Sales Return Barcode Scan</div><video id="srVideo" autoplay playsinline muted webkit-playsinline="true" style="width:99vw;height:78dvh;object-fit:contain;background:#111;border:2px solid #fff;border-radius:12px"></video><div id="srCameraMsg" style="color:#fff;margin:12px;text-align:center">कैमरा शुरू हो रहा है…</div><button type="button" onclick="stopSalesReturnCameraScan()" style="padding:10px 22px;border:0;border-radius:8px">✕ Close</button>';document.body.appendChild(modal)}else modal.style.display='flex';
  const v=document.getElementById('srVideo'),msg=document.getElementById('srCameraMsg');
  try{
   window.__srStop=false;v.muted=true;v.autoplay=true;v.playsInline=true;
@@ -1186,11 +1186,11 @@ async function startSalesReturnCameraScan(){
   await new Promise(resolve=>{if(v.readyState>=2&&v.videoWidth){resolve();return}let done=false;const finish=()=>{if(done)return;done=true;v.removeEventListener('loadeddata',finish);resolve()};v.addEventListener('loadeddata',finish);setTimeout(finish,1800)});
   try{await v.play()}catch(e){}
   if(!v.videoWidth||v.readyState<2){stream.getTracks().forEach(t=>t.stop());window.__srStream=null;v.srcObject=null;msg.textContent='Restarting camera…';stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});window.__srStream=stream;v.srcObject=stream;await new Promise(resolve=>{if(v.readyState>=2&&v.videoWidth){resolve();return}let done=false;const finish=()=>{if(done)return;done=true;v.removeEventListener('loadeddata',finish);resolve()};v.addEventListener('loadeddata',finish);setTimeout(finish,2500)});await v.play()}
-  if(!v.videoWidth){msg.textContent='वीडियो नहीं मिल रहा। Chrome for Allow camera permission.';return}
+  if(!v.videoWidth){msg.textContent='Video not available. Allow camera permission in Chrome.';return}
   if('BarcodeDetector' in window){let d;try{d=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e']})}catch(e){d=new BarcodeDetector()}const loop=async()=>{if(window.__srStop)return;try{const c=await d.detect(v);if(c.length){const code=c[0].rawValue;stopSalesReturnCameraScan();fillSalesReturnFromCode(code);return}}catch(e){}requestAnimationFrame(loop)};loop();}
   else if(window.ZXingBrowser){window.__srReader=new ZXingBrowser.BrowserMultiFormatReader();window.__srReader.decodeFromVideoDevice(null,v,(result,err)=>{if(window.__srStop)return;if(result&&result.text){const code=String(result.text).trim();stopSalesReturnCameraScan();fillSalesReturnFromCode(code)}})}
-  else msg.textContent='Barcode decoder is unavailable in this browser. Connect to the internet.';
- }catch(e){stopSalesReturnCameraScan();alert('Camera could not start: '+(e&&e.name==='NotAllowedError'?'Allow camera permission.':(e&&e.message||'Please try again.')))}
+  else msg.textContent='इस browser में barcode decoder उपलब्ध नहीं है. Internet चालू करें.';
+ }catch(e){stopSalesReturnCameraScan();alert('Camera could not start: '+(e&&e.name==='NotAllowedError'?'Allow camera permission.':(e&&e.message||'दोबारा कोशिश करें.')))}
 }
 function stopSalesReturnCameraScan(){window.__srStop=true;try{if(window.__srReader)window.__srReader.reset()}catch(e){}if(window.__srStream){window.__srStream.getTracks().forEach(t=>t.stop());window.__srStream=null}const m=document.getElementById('srCamera');if(m)m.style.display='none'}
 function addItem(){
@@ -1198,7 +1198,7 @@ function addItem(){
  if(!p||!sizeKey||rate<=0){alert("Select product, size, and selling price");return}
  let x=db.stock.find(a=>a.key===sizeKey); if(!x){alert("Stock not found");return}
  let already=cart.find(a=>a.key===x.key),wanted=q+(already?already.qty:0);
- if(x.qty<wanted){alert("Available stock is only "+x.qty+" is");return}
+ if(x.qty<wanted){alert("Available stock is only "+x.qty+" है");return}
  if(already){already.qty+=q;already.rate=rate;already.discount=discount}else cart.push({key:x.key,category:x.category,sku:x.sku,name:x.name,color:x.color,size:x.size,qty:q,mrp:x.mrp,rate,discount,cost:Number(x.cost)||0,gst:Number(x.gst)||0,hsn:x.hsn||"",sac:x.sac||"",uqc:x.uqc||"PCS"});
  renderCart();
 }
@@ -1278,7 +1278,7 @@ function renderCustomers(){
  el.innerHTML='<div class="tablewrap"><table><tr><th>Name</th><th>Mobile</th><th>Bills</th><th>Total Purchase</th><th>Last Purchase</th></tr>'+arr.slice().reverse().map(c=>`<tr><td>${esc(c.name||'')}</td><td>${esc(c.phone||'')}</td><td>${Number(c.totalBills||0)}</td><td>₹${Number(c.totalSpent||0).toFixed(2)}</td><td>${c.lastPurchase?new Date(c.lastPurchase).toLocaleString():''}</td></tr>`).join('')+'</table></div>';
 }
 function printCurrentBill(){if(!cart.length){alert("Add an item to the bill before printing");return}const subtotal=getCartSubtotal(),billDiscount=getBillDiscount(subtotal);printSale({billNo:"DRAFT",date:new Date().toISOString(),customer:document.getElementById("cust").value,phone:document.getElementById("phone").value,items:cart,subtotal,billDiscount,billDiscountType:document.getElementById("billDiscountType")?.value||"amount",billDiscountValue:Number(document.getElementById("billDiscountValue")?.value)||0,total:Math.max(0,subtotal-billDiscount),paymentMode:document.getElementById("paymentMode")?.value||"Cash"})}
-function printSale(b){const rows=(b.items||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}<br><small>${esc(x.sku)} / ${esc(x.color)} / ${esc(x.size)}</small></td><td>${x.qty}</td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.rate||0).toFixed(2)}</td><td>₹${Number(x.discount||0).toFixed(2)}</td><td>₹${(x.qty*Math.max(0,x.rate-x.discount)).toFixed(2)}</td></tr>`).join("");const totalDiscount=(b.items||[]).reduce((s,x)=>s+Number(x.qty||0)*Number(x.discount||0),0);const billDiscount=Number(b.billDiscount||0);const w=window.open("","_blank","width=800,height=900");if(!w){alert("Print window blocked. Allow pop-ups in your browser.");return}w.document.write(`<!doctype html><html><head><title>${esc(b.billNo||"Bill")}</title><style>body{font-family:Arial;margin:25px;color:#222}h1{text-align:center;margin:0 0 5px}.meta{display:flex;justify-content:space-between;margin:15px 0}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}th{background:#f3f3f3}.right{text-align:right;font-size:20px;font-weight:bold;margin-top:18px}.foot{text-align:center;margin-top:30px;color:#666}.bill-thanks{margin-top:24px;text-align:center;color:#333;font-size:13px;line-height:1.6}.bill-smile{display:block;width:22px;height:22px;margin:0 auto 4px}.bill-visit{font-size:15px;font-weight:700;letter-spacing:.3px}.bill-tagline{font-size:12px;font-weight:700;margin-top:3px}</style></head><body><h1>Diva Collection</h1><p style="text-align:center">Billing Invoice</p><div class="meta"><div>Bill No: <b>${esc(b.billNo||"")}</b><br>Customer: ${esc(b.customer||"Walk-in Customer")}<br>Mobile: ${esc(b.phone||"")}</div><div>Date: ${new Date(b.date).toLocaleString()}</div></div><table><tr><th>#</th><th>Item</th><th>Qty</th><th>MRP</th><th>Sale Price</th><th>Discount</th><th>Amount</th></tr>${rows}</table><div class="right"><span style="font-size:14px">Item Discount: ₹${totalDiscount.toFixed(2)}</span><br><span style="font-size:14px">Bill Discount: ₹${billDiscount.toFixed(2)}</span><br><span style="font-size:14px">Total Discount: ₹${(totalDiscount+billDiscount).toFixed(2)}</span><br>Grand Total: ₹${Number(b.total||0).toFixed(2)}<br><span style="font-size:14px">Payment Mode: ${esc(b.paymentMode||"Cash")}</span></div><div class="foot">Thank you for shopping with Diva Collection</div><div class="bill-thanks"><svg class="bill-smile" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-label="smile"><circle cx="12" cy="12" r="10" fill="none" stroke="#333" stroke-width="1.6"/><circle cx="8.5" cy="9" r="1" fill="#333"/><circle cx="15.5" cy="9" r="1" fill="#333"/><path d="M7.5 13.5 Q12 19 16.5 13.5" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round"/></svg><div class="bill-visit">Visit Again!</div><div class="bill-tagline">Aapki Fashion, Hamara Passion</div></div></body></html>`);w.document.close();setTimeout(()=>w.print(),300)}
+function printSale(b){const rows=(b.items||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}<br><small>${esc(x.sku)} / ${esc(x.color)} / ${esc(x.size)}</small></td><td>${x.qty}</td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.rate||0).toFixed(2)}</td><td>₹${Number(x.discount||0).toFixed(2)}</td><td>₹${(x.qty*Math.max(0,x.rate-x.discount)).toFixed(2)}</td></tr>`).join("");const totalDiscount=(b.items||[]).reduce((s,x)=>s+Number(x.qty||0)*Number(x.discount||0),0);const billDiscount=Number(b.billDiscount||0);const w=window.open("","_blank","width=800,height=900");if(!w){alert("Print window blocked है. Browser में pop-up allow करें.");return}w.document.write(`<!doctype html><html><head><title>${esc(b.billNo||"Bill")}</title><style>body{font-family:Arial;margin:25px;color:#222}h1{text-align:center;margin:0 0 5px}.meta{display:flex;justify-content:space-between;margin:15px 0}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}th{background:#f3f3f3}.right{text-align:right;font-size:20px;font-weight:bold;margin-top:18px}.foot{text-align:center;margin-top:30px;color:#666}.bill-thanks{margin-top:24px;text-align:center;color:#333;font-size:13px;line-height:1.6}.bill-smile{display:block;width:22px;height:22px;margin:0 auto 4px}.bill-visit{font-size:15px;font-weight:700;letter-spacing:.3px}.bill-tagline{font-size:12px;font-weight:700;margin-top:3px}</style></head><body><h1>Diva Collection</h1><p style="text-align:center">Billing Invoice</p><div class="meta"><div>Bill No: <b>${esc(b.billNo||"")}</b><br>Customer: ${esc(b.customer||"Walk-in Customer")}<br>Mobile: ${esc(b.phone||"")}</div><div>Date: ${new Date(b.date).toLocaleString()}</div></div><table><tr><th>#</th><th>Item</th><th>Qty</th><th>MRP</th><th>Sale Price</th><th>Discount</th><th>Amount</th></tr>${rows}</table><div class="right"><span style="font-size:14px">Item Discount: ₹${totalDiscount.toFixed(2)}</span><br><span style="font-size:14px">Bill Discount: ₹${billDiscount.toFixed(2)}</span><br><span style="font-size:14px">Total Discount: ₹${(totalDiscount+billDiscount).toFixed(2)}</span><br>Grand Total: ₹${Number(b.total||0).toFixed(2)}<br><span style="font-size:14px">Payment Mode: ${esc(b.paymentMode||"Cash")}</span></div><div class="foot">Thank you for shopping with Diva Collection</div><div class="bill-thanks"><svg class="bill-smile" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-label="smile"><circle cx="12" cy="12" r="10" fill="none" stroke="#333" stroke-width="1.6"/><circle cx="8.5" cy="9" r="1" fill="#333"/><circle cx="15.5" cy="9" r="1" fill="#333"/><path d="M7.5 13.5 Q12 19 16.5 13.5" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round"/></svg><div class="bill-visit">Visit Again!</div><div class="bill-tagline">Aapki Fashion, Hamara Passion</div></div></body></html>`);w.document.close();setTimeout(()=>w.print(),300)}
 function handleQuickSkuColorChange(){
  const sel=document.getElementById('quickSkuColor'),input=document.getElementById('quickSkuNewColor');
  if(input){const isNew=!!sel&&sel.value==='__NEW_COLOR__';input.style.display=isNew?'block':'none';if(!isNew)input.value='';}
@@ -1339,7 +1339,7 @@ function sendWhatsAppDue(billNo){
  if(!(due>0)){alert('There is no outstanding balance on this bill.');return}
  let phone=String(b.phone||'').replace(/\D/g,'');
  if(phone.length===10)phone='91'+phone;
- if(phone.length<11||phone.length>15){alert('इस bill में सही ग्राहक मोबाइल नंबर नहीं is। Bill में मोबाइल जाँचें।');return}
+ if(phone.length<11||phone.length>15){alert('This bill does not have a valid customer mobile number. Check the mobile number on the bill.');return}
  const items=(b.items||[]).map(x=>String(x.name||'Product')+' ('+String(x.size||'')+') × '+Number(x.qty||0)).join(', ');
  const msg='Hello '+String(b.customer||'जी')+'  ji,\nHere are your bill details from Diva Collection:\nBill No: '+String(b.billNo||'')+'\nDate: '+new Date(b.date).toLocaleDateString('en-IN')+'\nItems: '+items+'\nBill Total: ₹'+Number(b.total||0).toFixed(2)+'\nAmount Paid: ₹'+Number(b.paidAmount??((b.paymentMode==='Udhari')?0:(b.total||0))).toFixed(2)+'\nBalance Due: ₹'+due.toFixed(2)+'\nPlease pay at your convenience. Thank you!\nDiva Collection';
  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank','noopener');
@@ -1351,7 +1351,7 @@ function renderAllDueLedger(){
   .sort((a,b)=>Date.parse(a.date||0)-Date.parse(b.date||0));
  if(!rows.length){el.innerHTML='<div class="empty">No outstanding bills found.</div>';return;}
  const total=rows.reduce((s,b)=>s+Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0)),0);
- el.innerHTML='<h3>Total Outstanding: ₹'+total.toFixed(2)+'</h3><div class="tablewrap"><table><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>Bill Total</th><th>Paid</th><th>Due</th><th>Action</th></tr>'+rows.map(b=>{
+ el.innerHTML='<h3>Total Outstanding: ₹'+total.toFixed(2)+'</h3><div class="tablewrap"><table><tr><th>तारीख</th><th>Bill No.</th><th>ग्राहक</th><th>मोबाइल</th><th>कुल बिल</th><th>जमा</th><th>बकाया</th><th>Action</th></tr>'+rows.map(b=>{
  const due=Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0)),paid=Number(b.paidAmount??Math.max(0,Number(b.total||0)-due));
  const bill=String(b.billNo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
  return '<tr><td>'+esc(new Date(b.date).toLocaleDateString('en-IN'))+'</td><td>'+esc(b.billNo||'')+'</td><td>'+esc(b.customer||'Walk-in Customer')+'</td><td>'+esc(b.phone||'')+'</td><td>₹'+Number(b.total||0).toFixed(2)+'</td><td>₹'+paid.toFixed(2)+'</td><td><b>₹'+due.toFixed(2)+'</b></td><td><button type="button" class="green" onclick="sendWhatsAppDue(&quot;'+esc(b.billNo||'')+'&quot;)">WhatsApp</button></td></tr>';
@@ -1360,17 +1360,17 @@ function renderAllDueLedger(){
 function renderLowStockList(){
  const el=document.getElementById('lowStockList');if(!el)return;
  const rows=(db.stock||[]).filter(x=>Number(x.qty||0)<=5).sort((a,b)=>Number(a.qty||0)-Number(b.qty||0));
- if(!rows.length){el.innerHTML='<div class="empty">No low-stock items found.</div>';return;}
- el.innerHTML='<h3>⚠️ Low Stock (5 or less)</h3><div class="tablewrap"><table><tr><th>SKU</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th></tr>'+rows.map(x=>'<tr><td>'+esc(x.sku||x.skuId||'')+'</td><td>'+esc(x.name||'')+'</td><td>'+esc(x.color||'')+'</td><td>'+esc(x.size||'')+'</td><td><b>'+Number(x.qty||0)+'</b></td></tr>').join('')+'</table></div>';
+ if(!rows.length){el.innerHTML='<div class="empty">Low stock नहीं मिला।</div>';return;}
+ el.innerHTML='<h3>⚠️ Low Stock (5 या कम)</h3><div class="tablewrap"><table><tr><th>SKU</th><th>Product</th><th>Colour</th><th>Size</th><th>Qty</th></tr>'+rows.map(x=>'<tr><td>'+esc(x.sku||x.skuId||'')+'</td><td>'+esc(x.name||'')+'</td><td>'+esc(x.color||'')+'</td><td>'+esc(x.size||'')+'</td><td><b>'+Number(x.qty||0)+'</b></td></tr>').join('')+'</table></div>';
 }
 function renderSupplierLedger(){
  const el=document.getElementById('supplierLedger');if(!el)return;
  const rows=(db.purchases||[]).slice().sort((a,b)=>Date.parse(b.date||0)-Date.parse(a.date||0));
- if(!rows.length){el.innerHTML='<div class="empty">No purchase history found. Enter supplier details in the next purchase entry.</div>';return;}
+ if(!rows.length){el.innerHTML='<div class="empty">Purchase history नहीं मिली। Supplier details अगली purchase entry में भरें।</div>';return;}
  const total=rows.reduce((s,p)=>s+Number(p.qty||0)*Number(p.cost||0),0);
  const suppliers=new Map();
  rows.forEach(p=>{const n=String(p.supplier||'Supplier not entered').trim()||'Supplier not entered';const v=suppliers.get(n)||{count:0,amount:0};v.count++;v.amount+=Number(p.qty||0)*Number(p.cost||0);suppliers.set(n,v);});
- el.innerHTML='<h3>Supplier Purchase Summary — कुल दर्ज खरीद: ₹'+total.toFixed(2)+'</h3><div class="tablewrap"><table><tr><th>Supplier</th><th>Entries</th><th>Purchase Value</th></tr>'+Array.from(suppliers.entries()).sort((a,b)=>b[1].amount-a[1].amount).map(([n,v])=>'<tr><td>'+esc(n)+'</td><td>'+v.count+'</td><td>₹'+v.amount.toFixed(2)+'</td></tr>').join('')+'</table></div><h3>Purchase Details</h3><div class="tablewrap"><table><tr><th>Date</th><th>Supplier</th><th>Invoice</th><th>SKU</th><th>Product</th><th>Qty</th><th>Cost</th><th>Value</th></tr>'+rows.map(p=>'<tr><td>'+esc(p.date?new Date(p.date).toLocaleDateString('en-IN'):'')+'</td><td>'+esc(p.supplier||'')+'</td><td>'+esc(p.invoice||'')+'</td><td>'+esc(p.sku||'')+'</td><td>'+esc(p.name||'')+'</td><td>'+Number(p.qty||0)+'</td><td>₹'+Number(p.cost||0).toFixed(2)+'</td><td>₹'+(Number(p.qty||0)*Number(p.cost||0)).toFixed(2)+'</td></tr>').join('')+'</table></div>';
+ el.innerHTML='<h3>Supplier Purchase Summary — Total recorded purchases: ₹'+total.toFixed(2)+'</h3><div class="tablewrap"><table><tr><th>Supplier</th><th>Entries</th><th>Purchase Value</th></tr>'+Array.from(suppliers.entries()).sort((a,b)=>b[1].amount-a[1].amount).map(([n,v])=>'<tr><td>'+esc(n)+'</td><td>'+v.count+'</td><td>₹'+v.amount.toFixed(2)+'</td></tr>').join('')+'</table></div><h3>Purchase Details</h3><div class="tablewrap"><table><tr><th>Date</th><th>Supplier</th><th>Invoice</th><th>SKU</th><th>Product</th><th>Qty</th><th>Cost</th><th>Value</th></tr>'+rows.map(p=>'<tr><td>'+esc(p.date?new Date(p.date).toLocaleDateString('en-IN'):'')+'</td><td>'+esc(p.supplier||'')+'</td><td>'+esc(p.invoice||'')+'</td><td>'+esc(p.sku||'')+'</td><td>'+esc(p.name||'')+'</td><td>'+Number(p.qty||0)+'</td><td>₹'+Number(p.cost||0).toFixed(2)+'</td><td>₹'+(Number(p.qty||0)*Number(p.cost||0)).toFixed(2)+'</td></tr>').join('')+'</table></div>';
 }
 function renderDueReminders(){
  const el=document.getElementById('dueReminderList');if(!el)return;
@@ -1381,8 +1381,8 @@ function renderDueReminders(){
   const date=Date.parse(b.date||'');
   return due>0&&Number.isFinite(date)&&Math.floor((now-date)/86400000)>=30;
  }).sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
- if(!overdue.length){el.innerHTML='<div class="empty">No outstanding bills older than 30 days found.</div>';return;}
- el.innerHTML='<div class="tablewrap"><table><tr><th>Bill Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>Due</th><th>Days</th><th>Action</th></tr>'+overdue.map(b=>{
+ if(!overdue.length){el.innerHTML='<div class="empty">अभी 30 दिन या उससे पुराने बकाया bills नहीं मिले।</div>';return;}
+ el.innerHTML='<div class="tablewrap"><table><tr><th>Bill Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>बकाया</th><th>दिन</th><th>Action</th></tr>'+overdue.map(b=>{
   const due=Number(b.balanceDue??((b.paymentMode==='Udhari')?(b.total||0):0));
   const days=Math.max(0,Math.floor((now-Date.parse(b.date))/86400000));
   const bill=String(b.billNo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
@@ -1398,16 +1398,16 @@ function renderBillHistory(){
    return match && inPeriod(b.date,period);
  }).slice().reverse();
  const el=document.getElementById('billHistoryTable'); if(!el)return;
- if(!arr.length){el.innerHTML='<div class="empty">No bills found for this search/period.</div>';return}
- el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th>Status</th><th>Action</th></tr>'+arr.map(b=>{
+ if(!arr.length){el.innerHTML='<div class="empty">इस search/period में कोई पुराना bill नहीं मिला.</div>';return}
+ el.innerHTML='<div class="tablewrap"><table><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Mobile</th><th>Items</th><th>Total</th><th>Paid</th><th>बकाया</th><th>Status</th><th>Action</th></tr>'+arr.map(b=>{
    const units=(b.items||[]).reduce((a,i)=>a+Number(i.qty||0),0);
    return `<tr><td>${new Date(b.date).toLocaleString()}</td><td><b>#${esc(b.billNo||'')}</b></td><td>${esc(b.customer||'Walk-in Customer')}</td><td>${esc(b.phone||'')}</td><td>${units}</td><td>₹${Number(b.total||0).toFixed(2)}</td><td>₹${Number(b.paidAmount??((b.paymentMode==="Udhari")?0:(b.total||0))).toFixed(2)}</td><td><b style="color:${Number(b.balanceDue??((b.paymentMode==="Udhari")?(b.total||0):0))>0?"#b91c1c":"#e66a00"}">₹${Number(b.balanceDue??((b.paymentMode==="Udhari")?(b.total||0):0)).toFixed(2)}</b></td><td>${b.isTest?'<b style="color:#b45309">🧪 TEST — Sale से अलग</b>':'Sale'}</td><td><button class="gray" onclick="toggleTestBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">${b.isTest?'↩️ Sale में जोड़ें':'🧪 Test में अलग करें'}</button> <button class="green" onclick="printSavedBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">🖨️ Print</button> <button class="gray" onclick="viewSavedBill('${String(b.billNo||'').replace(/'/g,"\\'")}')">👁️ View</button></td></tr>`;
  }).join('')+'</table></div>';
 }
-function toggleTestBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill not found');return}const next=!b.isTest;const msg=next?'Mark this bill as TEST? It will be excluded from Dashboard, Sales, and Profit reports but remain in Bill History.':'Add this bill back to Sales and Profit reports?';if(!confirm(msg))return;b.isTest=next;save();renderBillHistory();renderDashboard();renderReport();alert(next?'Bill marked as TEST.':'Bill added back to Sales.')}
+function toggleTestBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill not found');return}const next=!b.isTest;const msg=next?'इस bill को TEST में अलग करें? यह Dashboard, Sales और Profit reports में नहीं गिना जाएगा। Bill History में सुरक्षित रहेगा।':'इस bill को वापस Sales और Profit reports में जोड़ें?';if(!confirm(msg))return;b.isTest=next;save();renderBillHistory();renderDashboard();renderReport();alert(next?'Bill TEST में अलग कर दिया गया।':'Bill वापस Sales में जोड़ दिया गया।')}
 function getSavedBill(billNo){return (db.sales||[]).find(b=>String(b.billNo)===String(billNo))}
 function printSavedBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill not found');return}printSale(b)}
-function viewSavedBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill not found');return}const rows=(b.items||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}<br><small>${esc(x.sku)} / ${esc(x.color)} / ${esc(x.size)}</small></td><td>${x.qty}</td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.rate||0).toFixed(2)}</td><td>₹${Number(x.discount||0).toFixed(2)}</td><td>₹${(x.qty*Math.max(0,x.rate-x.discount)).toFixed(2)}</td></tr>`).join('');const totalDiscount=(b.items||[]).reduce((s,x)=>s+Number(x.qty||0)*Number(x.discount||0),0);const w=window.open('','_blank','width=800,height=900');if(!w){alert('Pop-up blocked is. Allow pop-ups in your browser.');return}w.document.write(`<!doctype html><html><head><title>${esc(b.billNo)}</title><style>body{font-family:Arial;margin:25px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}.right{text-align:right;font-size:20px;font-weight:bold}</style></head><body><h1>Diva Collection</h1><p>Bill No: <b>${esc(b.billNo)}</b><br>Customer: ${esc(b.customer||'Walk-in Customer')}<br>Mobile: ${esc(b.phone||'')}<br>Date: ${new Date(b.date).toLocaleString()}</p><table><tr><th>#</th><th>Item</th><th>Qty</th><th>MRP</th><th>Sale Price</th><th>Discount</th><th>Amount</th></tr>${rows}</table><p style="text-align:right">Total Discount: ₹${totalDiscount.toFixed(2)}</p><p class="right">Grand Total: ₹${Number(b.total||0).toFixed(2)}</p><button onclick="window.print()">🖨️ Print</button></body></html>`);w.document.close()}
+function viewSavedBill(billNo){const b=getSavedBill(billNo);if(!b){alert('Bill not found');return}const rows=(b.items||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}<br><small>${esc(x.sku)} / ${esc(x.color)} / ${esc(x.size)}</small></td><td>${x.qty}</td><td>₹${Number(x.mrp||0).toFixed(2)}</td><td>₹${Number(x.rate||0).toFixed(2)}</td><td>₹${Number(x.discount||0).toFixed(2)}</td><td>₹${(x.qty*Math.max(0,x.rate-x.discount)).toFixed(2)}</td></tr>`).join('');const totalDiscount=(b.items||[]).reduce((s,x)=>s+Number(x.qty||0)*Number(x.discount||0),0);const w=window.open('','_blank','width=800,height=900');if(!w){alert('Pop-up blocked है. Browser में pop-up allow करें.');return}w.document.write(`<!doctype html><html><head><title>${esc(b.billNo)}</title><style>body{font-family:Arial;margin:25px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}.right{text-align:right;font-size:20px;font-weight:bold}</style></head><body><h1>Diva Collection</h1><p>Bill No: <b>${esc(b.billNo)}</b><br>Customer: ${esc(b.customer||'Walk-in Customer')}<br>Mobile: ${esc(b.phone||'')}<br>Date: ${new Date(b.date).toLocaleString()}</p><table><tr><th>#</th><th>Item</th><th>Qty</th><th>MRP</th><th>Sale Price</th><th>Discount</th><th>Amount</th></tr>${rows}</table><p style="text-align:right">Total Discount: ₹${totalDiscount.toFixed(2)}</p><p class="right">Grand Total: ₹${Number(b.total||0).toFixed(2)}</p><button onclick="window.print()">🖨️ Print</button></body></html>`);w.document.close()}
 function profitForSales(sales){
  let revenue=sales.reduce((s,b)=>s+Number(b.total||0),0);
  let cost=sales.reduce((s,b)=>s+(b.items||[]).reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0);
@@ -1455,7 +1455,7 @@ function periodProfit(period){
  return {revenue,cost,gross,expenses,net:gross-expenses};
 }
 function changeAppZoom(delta){let z=Number(localStorage.getItem('divaAppZoom')||100);z=Math.max(80,Math.min(150,z+delta*10));localStorage.setItem('divaAppZoom',String(z));document.documentElement.style.zoom=(z/100);}
-function toggleAppFullscreen(){if(!document.fullscreenElement){document.documentElement.requestFullscreen?.().catch(()=>alert('इस विंडो में Full Screen उपलब्ध नहीं is।'));}else{document.exitFullscreen?.();}}
+function toggleAppFullscreen(){if(!document.fullscreenElement){document.documentElement.requestFullscreen?.().catch(()=>alert('इस विंडो में Full Screen उपलब्ध नहीं है।'));}else{document.exitFullscreen?.();}}
 function openCalculator(){const o=document.getElementById('calcOverlay');if(o)o.classList.add('open');const d=document.getElementById('calcDisplay');if(d){d.focus();d.select();}}
 function closeCalculator(){document.getElementById('calcOverlay')?.classList.remove('open');}
 function calcAdd(v){const d=document.getElementById('calcDisplay');if(!d)return;if(d.value==='0'||d.value==='Error')d.value='';d.value+=v;}
@@ -1476,8 +1476,8 @@ function renderDashboard(){
  const stockCostValue=db.stock.reduce((s,x)=>s+Math.max(0,Number(x.qty||0))*Math.max(0,Number(x.cost||0)),0);
  const stockRetailValue=db.stock.reduce((s,x)=>s+Math.max(0,Number(x.qty||0))*Math.max(0,Number(x.selling||x.rate||0)),0);
  const d=document.getElementById('dashCards');
- if(d)d.innerHTML=`<div class="card"><div class="small">आज for Bills</div><div class="big">${today.length}</div></div>
- <div class="card"><div class="small">आज for Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div>
+ if(d)d.innerHTML=`<div class="card"><div class="small">Today's Bills</div><div class="big">${today.length}</div></div>
+ <div class="card"><div class="small">Today's Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div>
  <div class="card"><div class="small">Today's Gross Profit</div><div class="big">₹${day.gross.toFixed(2)}</div><div class="small">Sales − Cost</div></div>
  <div class="card"><div class="small">Today's Net Profit</div><div class="big">₹${day.net.toFixed(2)}</div><div class="small">Gross Profit − Expenses</div></div>
  <div class="card"><div class="small">Current Stock</div><div class="big">${stockUnits}</div></div>
@@ -1487,10 +1487,10 @@ function renderDashboard(){
  <div class="card"><div class="small">Bills This Month</div><div class="big">${month.length}</div></div>
  <div class="card"><div class="small">Net Profit This Month</div><div class="big">₹${mon.net.toFixed(2)}</div></div>`;
  const r=document.getElementById('recentBills');
- if(r)r.innerHTML=sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Mobile</th><th>Total</th></tr>'+sales.slice(-10).reverse().map(b=>`<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo)}</td><td>${esc(b.customer||'Walk-in')}</td><td>${esc(b.phone||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td></tr>`).join('')+'</table></div>':'<div class="empty">अभी कोई bill नहीं is.</div>';
+ if(r)r.innerHTML=sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Mobile</th><th>Total</th></tr>'+sales.slice(-10).reverse().map(b=>`<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo)}</td><td>${esc(b.customer||'Walk-in')}</td><td>${esc(b.phone||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td></tr>`).join('')+'</table></div>':'<div class="empty">No bills yet.</div>';
 }
 
-function addExpense(){let amount=Number(document.getElementById("expenseAmount").value)||0,note=document.getElementById("expenseNote").value.trim();if(amount<=0){alert("Enter expense amount");return}db.expenses=db.expenses||[];db.expenses.push({date:new Date().toISOString(),amount,note});save();document.getElementById("expenseAmount").value="";document.getElementById("expenseNote").value="";renderReport();alert("Expense saved")}
+function addExpense(){let amount=Number(document.getElementById("expenseAmount").value)||0,note=document.getElementById("expenseNote").value.trim();if(amount<=0){alert("Expense amount भरें");return}db.expenses=db.expenses||[];db.expenses.push({date:new Date().toISOString(),amount,note});save();document.getElementById("expenseAmount").value="";document.getElementById("expenseNote").value="";renderReport();alert("Expense save हो गया")}
 function inPeriod(date,period){let d=new Date(date),n=new Date();if(period==="day")return d.toDateString()===n.toDateString();if(period==="month")return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth();if(period==="year")return d.getFullYear()===n.getFullYear();return true}
 function divaCsvDownload(filename,rows){
  const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
@@ -1517,7 +1517,7 @@ function downloadExpenseReportCsv(){
  (db.expenses||[]).filter(e=>inPeriod(e.date,period)).forEach(e=>rows.push([e.date,Number(e.amount||0).toFixed(2),e.note]));
  divaCsvDownload('Diva-Expenses-'+period+'-'+new Date().toISOString().slice(0,10)+'.csv',rows);
 }
-function renderReport(){db.expenses=db.expenses||[];let period=document.getElementById("reportPeriod")?.value||"day",sales=db.sales.filter(x=>!x.isTest&&inPeriod(x.date,period)),expenses=db.expenses.filter(x=>inPeriod(x.date,period));let revenue=sales.reduce((s,b)=>s+Number(b.total||0),0),cost=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0),gross=revenue-cost,exp=expenses.reduce((s,e)=>s+Number(e.amount||0),0),net=gross-exp,units=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.qty||0),0),0);document.getElementById("report").innerHTML=`<div class="grid"><div class="card"><div class="small">Bills</div><div class="big">${sales.length}</div></div><div class="card"><div class="small">Items Sold</div><div class="big">${units}</div></div><div class="card"><div class="small">Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div><div class="card"><div class="small">Cost of Goods</div><div class="big">₹${cost.toFixed(2)}</div></div><div class="card"><div class="small">Gross Profit</div><div class="big">₹${gross.toFixed(2)}</div></div><div class="card"><div class="small">Expenses</div><div class="big">₹${exp.toFixed(2)}</div></div><div class="card"><div class="small">Net Profit</div><div class="big">₹${net.toFixed(2)}</div></div></div><h3>Sales Details</h3>${sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Sales</th><th>Cost</th><th>Gross Profit</th></tr>'+sales.map((b,i)=>{let c=b.items.reduce((a,x)=>a+Number(x.cost||0)*Number(x.qty||0),0),g=Number(b.total||0)-c;return `<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo||String(i+1))}</td><td>${esc(b.customer||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td><td>₹${c.toFixed(2)}</td><td>₹${g.toFixed(2)}</td></tr>`}).join('')+'</table></div>':'<div class="empty">इस period में कोई sale नहीं is.</div>'}`}
+function renderReport(){db.expenses=db.expenses||[];let period=document.getElementById("reportPeriod")?.value||"day",sales=db.sales.filter(x=>!x.isTest&&inPeriod(x.date,period)),expenses=db.expenses.filter(x=>inPeriod(x.date,period));let revenue=sales.reduce((s,b)=>s+Number(b.total||0),0),cost=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.cost||0)*Number(i.qty||0),0),0),gross=revenue-cost,exp=expenses.reduce((s,e)=>s+Number(e.amount||0),0),net=gross-exp,units=sales.reduce((s,b)=>s+b.items.reduce((a,i)=>a+Number(i.qty||0),0),0);document.getElementById("report").innerHTML=`<div class="grid"><div class="card"><div class="small">Bills</div><div class="big">${sales.length}</div></div><div class="card"><div class="small">Items Sold</div><div class="big">${units}</div></div><div class="card"><div class="small">Sales</div><div class="big">₹${revenue.toFixed(2)}</div></div><div class="card"><div class="small">Cost of Goods</div><div class="big">₹${cost.toFixed(2)}</div></div><div class="card"><div class="small">Gross Profit</div><div class="big">₹${gross.toFixed(2)}</div></div><div class="card"><div class="small">Expenses</div><div class="big">₹${exp.toFixed(2)}</div></div><div class="card"><div class="small">Net Profit</div><div class="big">₹${net.toFixed(2)}</div></div></div><h3>Sales Details</h3>${sales.length?'<div class="tablewrap"><table><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Sales</th><th>Cost</th><th>Gross Profit</th></tr>'+sales.map((b,i)=>{let c=b.items.reduce((a,x)=>a+Number(x.cost||0)*Number(x.qty||0),0),g=Number(b.total||0)-c;return `<tr><td>${new Date(b.date).toLocaleString()}</td><td>#${esc(b.billNo||String(i+1))}</td><td>${esc(b.customer||'')}</td><td>₹${Number(b.total||0).toFixed(2)}</td><td>₹${c.toFixed(2)}</td><td>₹${g.toFixed(2)}</td></tr>`}).join('')+'</table></div>':'<div class="empty">इस period में कोई sale नहीं है.</div>'}`}
 const FIREBASE_CONFIG={apiKey:"AIzaSyBORF42SXYvSvOAqjdVU3fOWg51XB08T4I",authDomain:"diva-collection-billing.firebaseapp.com",projectId:"diva-collection-billing",storageBucket:"diva-collection-billing.firebasestorage.app",messagingSenderId:"91025120704",appId:"1:91025120704:web:e4555e479de2e2b495bc25",measurementId:"G-X9EGSNMD1R"};
 let cloudApp=null,cloudAuth=null,cloudDb=null,cloudUser=null,cloudBusy=false;
 function cloudDevice(){let x=localStorage.getItem('DIVA_CLOUD_DEVICE');if(!x){x=crypto.randomUUID();localStorage.setItem('DIVA_CLOUD_DEVICE',x)}return x}
@@ -1635,30 +1635,30 @@ async function syncPullAndMerge(code){
  return docs.length;
 }
 async function sendMissingSkusFromThisDevice(){
- if(cloudBusy){cloudUI('Sync चल रहा is — पूरा होने दें।');return;}
+ if(cloudBusy){cloudUI('Sync in progress — please wait until it finishes.');return;}
  const code=cloudCode();
  if(!code){cloudUI('Connect using the same previous Sync Code first.');return;}
  const wanted=new Set(['DIVA-1','DIVA-2','DIVA-4','DIVA-7','DIVA-8','DIVA-9','DIVA-11','DIVA-13','DIVA-14','DIVA-15','DIVA-17','DIVA-21','DIVA-22']);
  const rows=(Array.isArray(db.stock)?db.stock:[]).filter(x=>wanted.has(String(x?.sku||x?.skuId||'').trim().toUpperCase()));
  if(!rows.length){cloudUI('The specified SKUs were not found in this device's stock. No data was changed.');return;}
- if(!confirm('Send '+rows.length+' stock row(s) उसी Cloud में भेजें? पहले से मौजूद stock quantity नहीं बदली जाएगी; केवल recovery history जोड़ी जाएगी।'))return;
- cloudBusy=true;cloudUI('इस डिवाइस के चुने हुए SKU Cloud में सुरक्षित भेजे जा रहे isं…');
+ if(!confirm('इस डिवाइस से '+rows.length+' stock row(s) उसी In Cloud, भेजें? पहले से मौजूद stock quantity नहीं बदली जाएगी; केवल recovery history जोड़ी जाएगी।'))return;
+ cloudBusy=true;cloudUI('Sending the selected SKUs from this device to Cloud…');
  try{
   await initCloud();
   const ops=rows.map(x=>({kind:'set',entity:'stock',key:syncRecordKey('stock',x),payload:syncClone(x)}));
   const uploaded=await syncUploadOps(code,ops);
-  cloudUI('✅ '+uploaded+'  stock row(s) sent to Cloud history. Now select “Recover Missing SKUs” on mobile.');
+  cloudUI('✅ '+uploaded+' stock row(s) Cloud history में भेजीं। अब मोबाइल पर “गायब SKU वापस लाएँ” दबाएँ।');
  }catch(e){
   console.error('DIVA MISSING SKU UPLOAD ERROR',e);
   cloudUI('Could not send SKUs to Cloud. Local stock was not changed; check internet/login.');
  }finally{cloudBusy=false;}
 }
 async function repairMissingSkus(targetSku){
- if(cloudBusy){cloudUI('Sync चल रहा is — पूरा होने दें।');return;}
+ if(cloudBusy){cloudUI('Sync in progress — please wait until it finishes.');return;}
  const code=cloudCode();
  if(!code){cloudUI('Connect your previous Sync Code first.');return;}
  const wanted=targetSku?new Set([String(targetSku).trim().toUpperCase()]):new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55','DIVA-56']);
- cloudBusy=true;cloudUI((targetSku?targetSku+' की':'चुने गए SKU की')+' Cloud history खोजी जा रही is…');
+ cloudBusy=true;cloudUI((targetSku?targetSku+' की':'चुने गए SKU की')+' Cloud history खोजी जा रही है…');
  try{
   await initCloud();
   const root=cloudDb.collection('cloudShops').doc(code),states=new Map();
@@ -1710,17 +1710,17 @@ async function repairMissingSkus(targetSku){
   if(!added){
    renderStock();
    cloudUI(states.size
-    ? 'Cloud में '+states.size+' matching SKU row(s) found; '+alreadyPresent+' variants मोबाइल में पहले से isं। कोई quantity नहीं बदली। Stock में search करके SKU जाँचें।'
-    : 'Cloud history/snapshot में इन SKU for rows नहीं मिलीं। लैपटॉप पर “📤 लैपटॉप के SKU Cloud में भेजें” फिर दबाएँ और success message देखें।');
+    ? 'In Cloud, '+states.size+' matching SKU row(s) found; '+alreadyPresent+' variants already exist on mobile. No quantities were changed. Search Stock to verify the SKUs.'
+    : 'Cloud history/snapshot में इन SKU की rows नहीं मिलीं। लैपटॉप पर “📤 लैपटॉप के SKU In Cloud, भेजें” फिर दबाएँ और success message देखें।');
    return;
   }
   const uploadOps=syncOpsFromDiff(before,db);
   const uploaded=await syncUploadOps(code,uploadOps);
   saveLocalOnly();refreshCloudApp();
-  cloudUI('✅ '+added+' missing stock row(s) restored; '+alreadyPresent+'  already existed; '+uploaded+' cloud updates भेजे। कोई पुरानी quantity overwrite नहीं की।');
+  cloudUI('✅ '+added+' missing stock row(s) restored; '+alreadyPresent+'  already existed; '+uploaded+' Cloud updates sent. No existing quantities were overwritten.');
  }catch(e){
   console.error('DIVA SKU RECOVERY ERROR',e);
-  cloudUI('SKU recovery नहीं हो पाई। Data नहीं मिटाया गया; internet/login और Firebase rules जाँचें।');
+  cloudUI('SKU recovery failed. No data was deleted; check internet/login and Firebase rules.');
  }finally{cloudBusy=false;}
 }
 async function syncPullLegacySnapshot(code){
@@ -1878,7 +1878,7 @@ function divaAutoSyncTick(){
  window.addEventListener('online',()=>setTimeout(divaAutoSyncTick,1000));
 })();
 async function createCloudCode(){
- if(!confirm('⚠️ नया Sync Code बनाने से यह डिवाइस आपके मौजूदा Cloud workspace से अलग हो सकता is। आपका पुराना Sync Code नहीं बदला जाएगा जब तक आप पुष्टि नहीं करते। Are you sure you want to आप सच में नया Sync Code बनाना चाहते isं?'))return;
+ if(!confirm('⚠️ Creating a new Sync Code may separate this device from your existing Cloud workspace. Your previous Sync Code will not change unless you confirm. Do you really want to create a new Sync Code?'))return;
  const code=randomCloudCode();
  localStorage.setItem('DIVA_CLOUD_CODE',code);
  localStorage.removeItem(SYNC_BASELINE_KEY);
@@ -1918,7 +1918,7 @@ document.addEventListener("keydown",function(e){
   if(e.key==="Enter"){ if(scannerBuffer.length>=4){ const code=scannerBuffer; scannerBuffer=""; clearTimeout(scannerTimer); fillFromCode(code); e.preventDefault(); } return; }
   if(e.key.length===1){ scannerBuffer+=e.key; clearTimeout(scannerTimer); scannerTimer=setTimeout(()=>scannerBuffer="",120); }
 });
-function openLaptopHelp(){alert("Laptop पर software Chrome/Edge में सीधे index.html खोलकर चल सकता is. USB/Bluetooth barcode scanner लगाकर Billing page पर barcode scan करें—code अपने आप product, colour और size भर देगा.");}
+function openLaptopHelp(){alert("On a laptop, open index.html directly in Chrome/Edge. Connect a USB/Bluetooth barcode scanner and scan the barcode on the Billing page—the product, colour, and size will fill automatically.");}
 
 renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();renderPurchase();renderDashboard();
 (function(){
@@ -1989,7 +1989,7 @@ window.renderReport=function(){
  });
  var gr=Object.keys(gstRows).map(function(k){var x=gstRows[k],cg=x.tax/2,sg=x.tax/2;return "<tr><td>"+esc(x.hsn)+"</td><td>"+x.rate.toFixed(2)+"%</td><td>"+x.qty+"</td><td>₹"+x.taxable.toFixed(2)+"</td><td>₹"+cg.toFixed(2)+"</td><td>₹"+sg.toFixed(2)+"</td><td>₹"+x.tax.toFixed(2)+"</td></tr>"}).join("");
  var gt=Object.values(gstRows).reduce(function(a,x){return {taxable:a.taxable+x.taxable,tax:a.tax+x.tax}}, {taxable:0,tax:0});
- var gh=document.createElement("div");gh.className="card";gh.id="gstReportCard";gh.innerHTML="<h3>🧾 GST REPORT</h3><p class='small'>GST selling price में included मानकर taxable value निकाली गई is. HSN और GST % Product/Purchase entry से लिए जाते isं.</p><div class='grid'><div class='card'><div class='small'>Taxable Sales</div><div class='big'>₹"+gt.taxable.toFixed(2)+"</div></div><div class='card'><div class='small'>CGST</div><div class='big'>₹"+(gt.tax/2).toFixed(2)+"</div></div><div class='card'><div class='small'>SGST</div><div class='big'>₹"+(gt.tax/2).toFixed(2)+"</div></div><div class='card'><div class='small'>Total GST</div><div class='big'>₹"+gt.tax.toFixed(2)+"</div></div></div>"+(gr?"<h4>HSN / GST-wise Details</h4><div class='tablewrap'><table><tr><th>HSN</th><th>GST %</th><th>Qty</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>Total GST</th></tr>"+gr+"</table></div>":"<div class='empty'>इस period में GST वाली कोई sale नहीं is. Product/Purchase में GST % भरें.</div>");el.appendChild(gh);
+ var gh=document.createElement("div");gh.className="card";gh.id="gstReportCard";gh.innerHTML="<h3>🧾 GST REPORT</h3><p class='small'>Taxable value is calculated assuming GST is included in the selling price. HSN and GST % are taken from Product/Purchase entries.</p><div class='grid'><div class='card'><div class='small'>Taxable Sales</div><div class='big'>₹"+gt.taxable.toFixed(2)+"</div></div><div class='card'><div class='small'>CGST</div><div class='big'>₹"+(gt.tax/2).toFixed(2)+"</div></div><div class='card'><div class='small'>SGST</div><div class='big'>₹"+(gt.tax/2).toFixed(2)+"</div></div><div class='card'><div class='small'>Total GST</div><div class='big'>₹"+gt.tax.toFixed(2)+"</div></div></div>"+(gr?"<h4>HSN / GST-wise Details</h4><div class='tablewrap'><table><tr><th>HSN</th><th>GST %</th><th>Qty</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>Total GST</th></tr>"+gr+"</table></div>":"<div class='empty'>इस period में GST वाली कोई sale नहीं है. Product/Purchase में GST % भरें.</div>");el.appendChild(gh);
 };
 addEnhancements();
 setTimeout(function(){
@@ -2009,7 +2009,7 @@ setTimeout(function(){
     if(document.getElementById('appLockOverlay'))return;
     const o=document.createElement('div'); o.id='appLockOverlay';
     o.style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:999999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
-    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔒 Diva Billing Locked</h2><p class="small">Enter your PIN to unlock the app.</p><input id="unlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digit PIN" style="text-align:center;font-size:22px;letter-spacing:6px"><button id="unlockBtn" style="margin-top:12px;width:100%">🔓 Unlock</button><div id="unlockMsg" class="small danger" style="margin-top:8px"></div></div>';
+    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔒 Diva Billing Locked</h2><p class="small">App खोलने के लिए PIN डालें.</p><input id="unlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digit PIN" style="text-align:center;font-size:22px;letter-spacing:6px"><button id="unlockBtn" style="margin-top:12px;width:100%">🔓 Unlock</button><div id="unlockMsg" class="small danger" style="margin-top:8px"></div></div>';
     document.body.appendChild(o);
     document.getElementById('unlockBtn').onclick=unlockApp;
     const unlockInput=document.getElementById('unlockPin'); let autoUnlockLast=''; function tryAutoUnlock(){const pin=unlockInput.value.trim();if(/^\d{4,6}$/.test(pin)&&pin!==autoUnlockLast){autoUnlockLast=pin;unlockApp();}else if(!pin||pin.length<4)autoUnlockLast='';} ['input','change','keyup','paste'].forEach(function(ev){unlockInput.addEventListener(ev,function(){setTimeout(tryAutoUnlock,ev==='paste'?80:0)});}); unlockInput.addEventListener('input',function(){if(this.value.length<4)autoUnlockLast=''}); unlockInput.onkeydown=e=>{if(e.key==='Enter')unlockApp()};
@@ -2056,11 +2056,11 @@ setTimeout(function(){
     ensureLockUI();
     const o=document.getElementById('appLockOverlay');
     o.style.display='flex';
-    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔐 Diva Billing App Lock</h2><p class="small">पहली बार app खोल रहे isं। पहले 4–6 digit PIN बनाएं। बिना PIN के app नहीं खुलेगा.</p><input id="newLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="New PIN (4–6 digits)" style="text-align:center;font-size:22px;letter-spacing:6px"><input id="confirmLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN दोबारा डालें" style="text-align:center;font-size:22px;letter-spacing:6px;margin-top:10px"><button id="saveFirstPin" style="margin-top:12px;width:100%">🔓 PIN Save करके App खोलें</button><div id="firstPinMsg" class="small danger" style="margin-top:8px"></div></div>';
+    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔐 Diva Billing App Lock</h2><p class="small">This is your first time opening the app. Create a 4–6 digit PIN. The app cannot open without a PIN.</p><input id="newLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="नया PIN (4–6 digits)" style="text-align:center;font-size:22px;letter-spacing:6px"><input id="confirmLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN दोबारा डालें" style="text-align:center;font-size:22px;letter-spacing:6px;margin-top:10px"><button id="saveFirstPin" style="margin-top:12px;width:100%">🔓 PIN Save करके App खोलें</button><div id="firstPinMsg" class="small danger" style="margin-top:8px"></div></div>';
     document.getElementById('saveFirstPin').onclick=function(){
       const p=document.getElementById('newLockPin').value.trim(), q=document.getElementById('confirmLockPin').value.trim();
       if(!/^\d{4,6}$/.test(p)){document.getElementById('firstPinMsg').textContent='❌ PIN must be 4 to 6 digits.';return}
-      if(p!==q){document.getElementById('firstPinMsg').textContent='❌ दोनों PIN समान नहीं isं.';return}
+      if(p!==q){document.getElementById('firstPinMsg').textContent='❌ The PINs do not match.';return}
       localStorage.setItem(LOCK_KEY,p);
       o.style.display='none';
       startAutoLock();
@@ -2079,15 +2079,15 @@ setTimeout(function(){
   }
   function setPin(){
     const old=getPin();
-    if(old && prompt('Enter current PIN')!==old){alert('❌ Current PIN गलत is.');return}
+    if(old && prompt('Current PIN डालें')!==old){alert('❌ Current PIN is incorrect.');return}
     const p=prompt('Create a new 4–6 digit PIN');
     if(!/^\d{4,6}$/.test(String(p||''))){alert('PIN must be 4 to 6 digits.');return}
     localStorage.setItem(LOCK_KEY,p); pinVault('write',p); alert('✅ App Lock PIN has been set.');
     startAutoLock();
   }
   function removePin(){
-    const p=prompt('Enter current PIN');
-    if(p!==getPin()){alert('❌ PIN गलत is.');return}
+    const p=prompt('Current PIN डालें');
+    if(p!==getPin()){alert('❌ Incorrect PIN.');return}
     localStorage.removeItem(LOCK_KEY);pinVault('delete');clearTimeout(lockTimer);alert('🔓 App Lock disabled.');
   }
   function startAutoLock(){
@@ -2100,8 +2100,8 @@ setTimeout(function(){
   window.appLockSettings=function(){
     const has=!!getPin();
     if(has){
-      const a=confirm('App Lock चालू is. OK = PIN बदलें, Cancel = Lock Close.');
-      if(a)setPin(); else if(confirm('Are you sure you want to App Lock बंद करना is?'))removePin();
+      const a=confirm('App Lock is enabled. OK = Change PIN, Cancel = Disable Lock.');
+      if(a)setPin(); else if(confirm('Disable App Lock?'))removePin();
     }else setPin();
   };
   window.lockNow=lockApp;
@@ -2127,11 +2127,11 @@ setTimeout(function(){
     const tabs=document.getElementById('draftTabs');
     tabs.innerHTML=drafts.map((d,i)=>'<button type="button" class="'+(i===activeDraft?'':'gray')+'" onclick="switchParallelBill('+i+')">Bill '+(i+1)+(d.customer?' — '+esc(d.customer):'')+'</button>').join('');
   }
-  window.saveParallelBill=function(){saveDraftState();renderDraftBar();alert('✅ Bill draft saved.')};
+  window.saveParallelBill=function(){saveDraftState();renderDraftBar();alert('✅ Bill draft save हो गया.')};
   window.switchParallelBill=function(i){saveDraftState();activeDraft=i;loadDraft(drafts[i]);renderDraftBar()};
   window.newParallelBill=function(){saveDraftState();drafts.push({customer:'',phone:'',cart:[]});activeDraft=drafts.length-1;loadDraft(drafts[activeDraft]);localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));renderDraftBar()};
   window.closeParallelBill=function(){
-    if(drafts.length<=1){if(!confirm('Clear the current bill and start a new bill?'))return;drafts[0]={customer:'',phone:'',cart:[]};activeDraft=0;loadDraft(drafts[0]);}
+    if(drafts.length<=1){if(!confirm('Current bill खाली करके नया bill शुरू करें?'))return;drafts[0]={customer:'',phone:'',cart:[]};activeDraft=0;loadDraft(drafts[0]);}
     else{drafts.splice(activeDraft,1);activeDraft=Math.max(0,activeDraft-1);localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));loadDraft(drafts[activeDraft]);}
     renderDraftBar();
   };
@@ -2173,7 +2173,7 @@ setTimeout(function(){
     return null;
   }
   async function writeBytes(bytes){
-    if(!printerChar)throw new Error('Printer connected नहीं is');
+    if(!printerChar)throw new Error('Printer is not connected');
     const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
     const chunk=printerChar.properties.writeWithoutResponse?180:20;
     for(let i=0;i<data.length;i+=chunk){
@@ -2190,9 +2190,9 @@ setTimeout(function(){
     return out;
   }
   window.connectBluetoothPrinter=async function(){
-    if(!navigator.bluetooth){alert('इस Chrome/browser में Bluetooth Web API available नहीं is. Android Chrome में HTTPS app खोलें.');return}
+    if(!navigator.bluetooth){alert('Bluetooth Web API is not available in this Chrome/browser. Open the app over HTTPS in Android Chrome.');return}
     try{
-      pstatus('🔵 Bluetooth printer खोज रहे isं...');
+      pstatus('🔵 Searching for Bluetooth printers...');
       printerDevice=await navigator.bluetooth.requestDevice({
         acceptAllDevices:true,
         optionalServices:SERVICE_UUIDS
@@ -2239,9 +2239,9 @@ setTimeout(function(){
     const arr=db.stock.filter(x=>!q||[x.name,x.sku,x.color,x.size,x.category,x.code].some(v=>String(v||'').toLowerCase().includes(q)));
     const selected=[];
     arr.forEach(x=>{const e=document.getElementById('labelqty_'+x.key);const n=Math.floor(Number(e?.value||0));if(n>0)for(let i=0;i<Math.min(n,Number(x.qty)||0);i++)selected.push(x)});
-    if(!selected.length){alert('Labels page पर जिस product for barcode quantity चाहिए, उस for Qty भरें.');return}
+    if(!selected.length){alert('On the Labels page, enter the Qty for the product you want barcodes for.');return}
     try{
-      pstatus('🏷️ '+selected.length+' barcode labels print हो रहे isं...');
+      pstatus('🏷️ '+selected.length+' barcode labels are printing...');
       for(const x of selected)await bluetoothPrintLabel(x);
       pstatus('✅ '+selected.length+' barcode label print command sent.');
     }catch(e){pstatus('❌ Barcode print failed: '+(e.message||e));alert('Barcode was not printed: '+(e.message||e))}
@@ -2249,7 +2249,7 @@ setTimeout(function(){
   window.printFirstBarcodeBluetooth=async function(){
     if(!printerChar){alert('Connect the Bluetooth printer first.');return}
     const x=(db.stock||[]).find(a=>Number(a.qty)>0);
-    if(!x){alert('Stock में product नहीं is.');return}
+    if(!x){alert('Product is not in stock.');return}
     try{await bluetoothPrintLabel(x);pstatus('✅ Barcode printed: '+(x.name||x.sku))}catch(e){alert('Barcode was not printed: '+(e.message||e))}
   };
   window.testBluetoothPrinter=async function(){
@@ -2258,10 +2258,10 @@ setTimeout(function(){
         alert('Select Add / Connect Bluetooth Printer first.');
         return;
       }
-      pstatus('🖨️ Test print भेज रहे isं...');
+      pstatus('🖨️ Sending test print...');
       await writeBytes(escposTest());
       pstatus('✅ Test print command sent.');
-    }catch(e){pstatus('❌ Print failed: '+(e.message||e));alert('Bluetooth printing failed. The printer must be BLE/ESC-POS compatible.');}
+    }catch(e){pstatus('❌ Print failed: '+(e.message||e));alert('Bluetooth printing failed. The printer must be BLE/ESC/POS compatible.');}
   };
 })();
 </script><script>
@@ -2282,7 +2282,7 @@ setTimeout(function(){
 /* Prepare label images before the user taps Share; preserves SKU/stock/sync */
 (function(){
  window.prepareOpenLabelFiles = async function(arr){
-   if(!Array.isArray(arr)||!arr.length) throw new Error('Print Qty 0 is');
+   if(!Array.isArray(arr)||!arr.length) throw new Error('Print Qty is 0');
    const files=[];
    for(let i=0;i<arr.length;i++){
      const x=arr[i],code=window.makeCode(x.category,x.sku,x.color,x.size);
@@ -2339,7 +2339,7 @@ setTimeout(function(){
    try{localStorage.setItem('DIVA_LABEL_PRINT_SETTINGS',JSON.stringify(s));localStorage.setItem('DIVA_LABEL_FORMAT_V9','1');}
    catch(e){alert('Settings were not saved: '+e.message);return;}
    if(window.updateLabelLayoutInfo)window.updateLabelLayoutInfo();
-   alert('✅ Custom printer setting save हो गई. Print Preview खोलकर size जाँचें; Android/Printer driver में भी यही paper size चुनना पड़ सकता is.');
+   alert('✅ Custom printer settings saved. Check the size in Print Preview; you may also need to select the same paper size in Android/Printer driver.');
  };
  window.labelPrintStyle=function(){
    const s=window.getLabelPrintSettings();
@@ -2353,8 +2353,8 @@ setTimeout(function(){
    return {s,cols,rows,perPage,css,orientation:orient};
  };
  window.printAllSpecificLabels=function(arr){
-   if(!arr||!arr.length){alert('Print quantity is 0');return;}
-   const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked. Allow pop-ups in your browser.');return;}
+   if(!arr||!arr.length){alert('Print quantity 0 है');return;}
+   const w=window.open('','_blank','width=900,height=900');if(!w){alert('Print window blocked है. Browser में pop-up allow करें.');return;}
    const lp=window.labelPrintStyle();let cards='';
    arr.forEach((x,i)=>{
      if(i%lp.perPage===0)cards+='<div class="sheet">';
@@ -2369,12 +2369,12 @@ setTimeout(function(){
    const shareBtn=w.document.getElementById('sharePngBtn');
    const closeBtn=w.document.getElementById('closePreviewBtn');
    printBtn.onclick=()=>w.print();
-   closeBtn.onclick=()=>{try{w.close();}catch(e){};w.document.body.innerHTML='<p style="font:18px Arial;padding:20px">प्रीव्यू Close: इस टैब को Back से Close।</p>';};
+   closeBtn.onclick=()=>{try{w.close();}catch(e){};w.document.body.innerHTML='<p style="font:18px Arial;padding:20px">Close the preview: use Back to close this tab.</p>';};
    let filesPromise=null;
    async function getFiles(){
      if(w._openLabelFiles&&w._openLabelFiles.length)return w._openLabelFiles;
      if(filesPromise)return filesPromise;
-     saveBtn.disabled=true;shareBtn.disabled=true;saveBtn.textContent='लेबल तैयार हो रहे isं…';shareBtn.textContent='लेबल तैयार हो रहे isं…';
+     saveBtn.disabled=true;shareBtn.disabled=true;saveBtn.textContent='Preparing labels…';shareBtn.textContent='Preparing labels…';
      filesPromise=(async()=>{try{
        const files=await window.prepareOpenLabelFiles(arr);
        if(!files||!files.length)throw new Error('PNG file was not created');
@@ -2385,7 +2385,7 @@ setTimeout(function(){
    }
    function downloadFiles(files){if(!files||!files.length){w.alert('PNG was not created. Please try again.');return;}files.forEach((f,i)=>{const url=URL.createObjectURL(f);const a=w.document.createElement('a');a.href=url;a.download=f.name||('Diva_Label_'+(i+1)+'.png');a.style.display='none';w.document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);});w.alert('PNG download started. Check Downloads on your mobile.');}
    saveBtn.onclick=async()=>{const files=await getFiles();downloadFiles(files);};
-   shareBtn.onclick=async()=>{const files=w._openLabelFiles;if(!files||!files.length){w.alert('लेबल अभी तैयार हो रहे isं। 2 सेकंड बाद फिर Share दबाएँ।');return;}const nav=w.navigator;if(!nav.share){w.alert('इस पेज में Android Share सुविधा उपलब्ध नहीं is। डाउनलोड अपने-आप नहीं किया जाएगा।');return;}try{if(nav.canShare&&!nav.canShare({files:files})){w.alert('This browser cannot share PNG files. The file will not be downloaded automatically.');return;}await nav.share({title:'Diva Collection Barcode Labels',text:'Diva Collection barcode label PNG files',files:files});}catch(e){if(e&&e.name!=='AbortError')w.alert('Share नहीं खुला: '+(e.message||e.name));}};
+   shareBtn.onclick=async()=>{const files=w._openLabelFiles;if(!files||!files.length){w.alert('Labels are still being prepared. Select Share again in 2 seconds.');return;}const nav=w.navigator;if(!nav.share){w.alert('Android Share is not available on this page. The file will not be downloaded automatically.');return;}try{if(nav.canShare&&!nav.canShare({files:files})){w.alert('This browser cannot share PNG files. The file will not be downloaded automatically.');return;}await nav.share({title:'Diva Collection Barcode Labels',text:'Diva Collection barcode label PNG files',files:files});}catch(e){if(e&&e.name!=='AbortError')w.alert('Share नहीं खुला: '+(e.message||e.name));}};
    getFiles();
  };
  window.printAllLabels=function(){
