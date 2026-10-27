@@ -562,7 +562,7 @@ async function recoverListedMissingSkus(){
  }
  if(status)status.textContent='Search complete. '+done+'/13 SKU SKUs checked. Check Cloud Sync status and Current Stock for results. If history is not in Cloud, sync it from the laptop first.';
 }
-async function recoverSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;await repairMissingSkus(sku);const search=document.getElementById('stockSearch');if(search){search.value=sku;renderStock();}const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+' की '+rows.length+' stock row(s) मिल गईं।':'इस SKU की Cloud history में entry नहीं मिली या Sync जाँचने की ज़रूरत है।';}
+async function recoverSkuIdFromInput(){const sku=readSkuLookupInput();if(!sku)return;const input=document.getElementById('skuIdLookupInput');if(input)input.value=sku;await repairMissingSkus(sku);const search=document.getElementById('stockSearch');if(search){search.value=sku;renderStock();}const rows=(db.stock||[]).filter(x=>String(x.sku||x.skuId||'').trim().toUpperCase()===sku);const status=document.getElementById('skuRecoveryStatus');if(status)status.textContent=rows.length?'✅ '+sku+': '+rows.length+' stock row(s) found.':'No Cloud history entry found for this SKU, or Sync needs to be checked.';}
 function renderStock(){
  const el=document.getElementById('productFolders'),mainEl=document.getElementById('productMainFolders');if(!el&&!mainEl)return;
  const q=(document.getElementById('stockSearch')?.value||'').trim().toLowerCase(),cat=document.getElementById('stockCatFilter')?.value||'';
@@ -600,7 +600,7 @@ function printDesignLabels(button){
   const n=Math.floor(Number(field.value||0)),key=field.dataset.stockKey,x=(db.stock||[]).find(v=>String(v.key)===String(key));
   if(!n)continue;
   if(!x||Number(x.qty||0)<=0){alert('No stock is available for this size.');return}
-  if(n<0||n>Number(x.qty||0)){alert('Size '+(x.size||'')+' Print quantity cannot exceed available stock for this item. Available stock: '+Number(x.qty||0));return}
+  if(n<0||n>Number(x.qty||0)){alert('Size '+(x.size||'')+' print quantity cannot exceed available stock. Available stock: '+Number(x.qty||0));return}
   for(let i=0;i<n;i++)flat.push(x);
  }
  if(!flat.length){alert('Enter Print Qty for the required sizes/colours in this design first.');return}
@@ -923,7 +923,7 @@ function printSelectedSkuVariantLabels(){
   const key=ch.dataset.stockKey,x=(db.stock||[]).find(a=>String(a.key)===String(key));
   const qtyInput=[...el.querySelectorAll('.sku-label-qty')].find(a=>String(a.dataset.stockKey)===String(key));
   const qty=Math.floor(Number(qtyInput?.value||0)),max=Math.max(0,Number(x?.qty)||0);
-  if(!x||qty<1||qty>max){alert('Print Qty must be between 1 and '+max+'  .');return}
+  if(!x||qty<1||qty>max){alert('Print Qty must be between 1 and '+max+'.');return}
   for(let i=0;i<qty;i++)flat.push(x);
  }
  if(flat.length)printAllSpecificLabels(flat);
@@ -1198,7 +1198,7 @@ function addItem(){
  if(!p||!sizeKey||rate<=0){alert("Select product, size, and selling price");return}
  let x=db.stock.find(a=>a.key===sizeKey); if(!x){alert("Stock not found");return}
  let already=cart.find(a=>a.key===x.key),wanted=q+(already?already.qty:0);
- if(x.qty<wanted){alert("Available stock is only "+x.qty");return}
+ if(x.qty<wanted){alert("Available stock is only "+x.qty);return}
  if(already){already.qty+=q;already.rate=rate;already.discount=discount}else cart.push({key:x.key,category:x.category,sku:x.sku,name:x.name,color:x.color,size:x.size,qty:q,mrp:x.mrp,rate,discount,cost:Number(x.cost)||0,gst:Number(x.gst)||0,hsn:x.hsn||"",sac:x.sac||"",uqc:x.uqc||"PCS"});
  renderCart();
 }
@@ -1647,7 +1647,7 @@ async function sendMissingSkusFromThisDevice(){
   await initCloud();
   const ops=rows.map(x=>({kind:'set',entity:'stock',key:syncRecordKey('stock',x),payload:syncClone(x)}));
   const uploaded=await syncUploadOps(code,ops);
-  cloudUI('✅ '+uploaded+' stock row(s) Cloud history में sent to Cloud history. Now select “Recover Missing SKUs” on mobile.');
+  cloudUI('✅ '+uploaded+' stock row(s) sent to Cloud history. Now select “Recover Missing SKUs” on mobile.');
  }catch(e){
   console.error('DIVA MISSING SKU UPLOAD ERROR',e);
   cloudUI('Could not send SKUs to Cloud. Local stock was not changed; check internet/login.');
@@ -1658,7 +1658,7 @@ async function repairMissingSkus(targetSku){
  const code=cloudCode();
  if(!code){cloudUI('Connect your previous Sync Code first.');return;}
  const wanted=targetSku?new Set([String(targetSku).trim().toUpperCase()]):new Set(['DIVA-5','DIVA-6','DIVA-10','DIVA-12','DIVA-50','DIVA-51','DIVA-52','DIVA-53','DIVA-54','DIVA-55','DIVA-56']);
- cloudBusy=true;cloudUI((targetSku?targetSku+' की':'selected SKUs')+' Cloud history is being searched…');
+ cloudBusy=true;cloudUI((targetSku?targetSku:'selected SKUs')+' Cloud history is being searched…');
  try{
   await initCloud();
   const root=cloudDb.collection('cloudShops').doc(code),states=new Map();
