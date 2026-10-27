@@ -2356,7 +2356,7 @@ setTimeout(function(){
 #divaPhotoZoomClose{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;width:44px;height:44px;border:0;border-radius:50%;background:#fff;color:#111;font-size:28px;font-weight:700;z-index:2}
 #divaPhotoZoomHint{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;color:#fff;font-size:13px;pointer-events:none}
 .folder-photo{cursor:zoom-in}
-</style></head><body><div class="printbar"><button id="doPrintBtn" type="button">🖨️ Print Labels</button><button id="savePngBtn" type="button">लेबल PNG सेव करें</button><button id="sharePngBtn" type="button" style="background:#167d3f;color:#fff;font-weight:700">📤 Share / OpenLabel</button><button id="closePreviewBtn" type="button">Close</button><span>Paper: '+lp.s.paperW+' × '+lp.s.paperH+' inch | Label: '+lp.s.labelW+' × '+lp.s.labelH+' inch | '+lp.orientation+'</span></div>'+cards+'</body></html>');
+</style></head><body><div class="printbar"><button id="doPrintBtn" type="button">🖨️ Print Labels</button><button id="savePngBtn" type="button">लेबल PNG सेव करें</button><button id="sharePngBtn" type="button" style="background:#167d3f;color:#fff;font-weight:700">📤 OpenLabel में भेजें / Share</button><button id="closePreviewBtn" type="button">Close</button><span>Paper: '+lp.s.paperW+' × '+lp.s.paperH+' inch | Label: '+lp.s.labelW+' × '+lp.s.labelH+' inch | '+lp.orientation+'</span></div>'+cards+'</body></html>');
    w.document.close();
    const printBtn=w.document.getElementById('doPrintBtn');
    const saveBtn=w.document.getElementById('savePngBtn');
@@ -2374,10 +2374,10 @@ setTimeout(function(){
        if(!files||!files.length)throw new Error('PNG फाइल नहीं बनी');
        w._openLabelFiles=files;return files;
      }catch(e){filesPromise=null;w.alert('PNG बनाने में समस्या: '+(e&&e.message?e.message:String(e)));return [];}
-     finally{saveBtn.disabled=false;shareBtn.disabled=false;saveBtn.textContent='लेबल PNG सेव करें';shareBtn.textContent='फाइल शेयर करें';}})();
+     finally{saveBtn.disabled=false;shareBtn.disabled=false;saveBtn.textContent='लेबल PNG सेव करें';shareBtn.textContent='📤 OpenLabel में भेजें / Share';}})();
      return filesPromise;
    }
-   function downloadFiles(files){if(!files||!files.length){w.alert('PNG नहीं बनी। फिर कोशिश करें।');return;}files.forEach((f,i)=>{const url=URL.createObjectURL(f);const a=w.document.createElement('a');a.href=url;a.download=f.name||('Diva_Label_'+(i+1)+'.png');a.style.display='none';w.document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);});w.alert('PNG डाउनलोड शुरू हुआ। मोबाइल के Downloads में देखें।');}
+   function downloadFiles(files){if(!files||!files.length){w.alert('PNG नहीं बनी। फिर कोशिश करें।');return;}files.forEach((f,i)=>{const url=URL.createObjectURL(f);const a=w.document.createElement('a');a.href=url;a.download=f.name||('Diva_Label_'+(i+1)+'.png');a.style.display='none';w.document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);});w.alert('PNG डाउनलोड हो रही है। मोबाइल के Downloads में खोलें और OpenLabel चुनें।');}
    saveBtn.onclick=async()=>{const files=await getFiles();downloadFiles(files);};
    shareBtn.onclick=async()=>{const files=await getFiles();if(!files||!files.length){w.alert('Barcode label file तैयार नहीं हुई।');return;}const nav=w.navigator;try{if(nav.share&&(!nav.canShare||nav.canShare({files:files}))){await nav.share({title:'Diva Collection Barcode Labels',text:'Diva Collection barcode label PNG files',files:files});return;}downloadFiles(files);w.alert('इस ब्राउज़र में Share sheet नहीं खुली, इसलिए PNG Downloads में सेव की गई है। वहाँ से OpenLabel या Print चुनें।');}catch(e){if(e&&e.name!=='AbortError'){downloadFiles(files);w.alert('Share नहीं खुला। PNG Downloads में सेव की गई है; वहाँ से OpenLabel/Print चुनें।');}}};
    getFiles();
