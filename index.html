@@ -1210,6 +1210,8 @@ function renderCart(){
  document.getElementById("total").textContent=(subtotal-discount).toFixed(2);
 }
 function selectPaymentMode(mode){const allowed=["Cash","UPI","Card","Udhari"];if(!allowed.includes(mode))return;const select=document.getElementById("paymentMode");if(select)select.value=mode;document.querySelectorAll("[data-payment-mode]").forEach(btn=>{const active=btn.getAttribute("data-payment-mode")===mode;btn.setAttribute("aria-pressed",active?"true":"false");btn.style.background=active?"#e66a00":"#fff";btn.style.color=active?"#fff":"#222";btn.style.borderColor=active?"#a94300":"#d7b99f";});}
+window.selectPaymentMode=selectPaymentMode;
+document.addEventListener("click",function(event){const button=event.target&&event.target.closest?event.target.closest("[data-payment-mode]"):null;if(!button)return;event.preventDefault();selectPaymentMode(button.getAttribute("data-payment-mode"));},true);
 let saleCompletionBusy=false;
 function completeSale(){
  if(saleCompletionBusy)return;
