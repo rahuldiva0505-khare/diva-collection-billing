@@ -734,6 +734,38 @@ function clearNewProductPhoto(){
  const input=document.getElementById('pnewProductPhoto');if(input)input.value='';
  const el=document.getElementById('pnewProductPhotoPreview');if(el)el.innerHTML='<span>👗</span><small>Product photo will appear here</small>';
 }
+function showNewProductBarcodePreview(items){
+ const list=Array.isArray(items)?items.filter(Boolean):[];
+ if(!list.length)return;
+ window._divaNewProductBarcodeItems=list.map(x=>({...x}));
+ const old=document.getElementById('newProductBarcodePreview');if(old)old.remove();
+ const overlay=document.createElement('div');overlay.id='newProductBarcodePreview';
+ overlay.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box';
+ const rows=list.map((x,i)=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px;border-bottom:1px solid #ddd"><div><b>'+esc(x.sku||'')+'</b><div class="small">'+esc(x.color||'')+' / '+esc(x.size||'')+'</div></div><label style="white-space:nowrap">Print Qty <input type="number" min="0" max="'+Math.max(0,Number(x._newQty)||0)+'" value="'+Math.max(0,Math.floor(Number(x._newQty)||0))+'" data-preview-index="'+i+'" style="width:68px;padding:6px"></label></div>').join('');
+ overlay.innerHTML='<div style="width:min(760px,100%);max-height:94dvh;overflow:auto;background:#fff;color:#222;border-radius:12px;padding:14px;box-sizing:border-box"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h3 style="margin:0">🏷️ New Product Barcode Preview</h3><button type="button" class="gray" onclick="closeNewProductBarcodePreview()">✕</button></div><p class="small">Product saved. Check the barcode preview below. Printing will start only when you press Print.</p><iframe id="newProductBarcodePreviewFrame" title="Barcode label preview" style="width:100%;height:38vh;min-height:230px;border:1px solid #bbb;border-radius:8px;background:#fff"></iframe><div style="margin-top:10px;border:1px solid #ddd;border-radius:8px;overflow:hidden">'+rows+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="green" onclick="printNewProductBarcodePreview()">🖨️ Print Selected Labels</button><button type="button" class="gray" onclick="closeNewProductBarcodePreview()">Close</button></div></div>';
+ document.body.appendChild(overlay);
+ const lp=labelPrintStyle();
+ const cards=list.map(x=>'<div class="label"><div class="prices">MRP ₹'+Number(x.mrp||0).toFixed(2)+' &nbsp; | &nbsp; SELL ₹'+Number(x.selling||0).toFixed(2)+'</div><b>Diva Collection</b><div class="name">'+esc(x.name||'')+'</div><div class="meta">'+esc(x.sku||'')+' | Colour: '+esc(x.color||'')+' | Size: '+esc(x.size||'')+'</div>'+code128Svg(makeCode(x.category,x.sku,x.color,x.size))+'</div>').join('');
+ const previewCss=lp.css+'html,body{width:100%!important;min-height:100%;overflow:auto!important}body{padding:8px!important;box-sizing:border-box}.preview-wrap{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}.label{margin:0!important;break-after:auto!important;page-break-after:auto!important}';
+ const frame=document.getElementById('newProductBarcodePreviewFrame');
+ if(frame)frame.srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+previewCss+'</style></head><body><div class="preview-wrap">'+cards+'</div></body></html>';
+}
+function closeNewProductBarcodePreview(){
+ const el=document.getElementById('newProductBarcodePreview');if(el)el.remove();
+ window._divaNewProductBarcodeItems=[];
+}
+function printNewProductBarcodePreview(){
+ const items=window._divaNewProductBarcodeItems||[],flat=[];
+ items.forEach((x,i)=>{
+  const field=document.querySelector('#newProductBarcodePreview [data-preview-index="'+i+'"]');
+  const qty=Math.max(0,Math.min(Math.floor(Number(field&&field.value)||0),Math.floor(Number(x._newQty)||0)));
+  const {_newQty,...labelItem}=x;
+  for(let n=0;n<qty;n++)flat.push(labelItem);
+ });
+ if(!flat.length){alert('Enter a print quantity of at least 1.');return}
+ closeNewProductBarcodePreview();
+ printAllSpecificLabels(flat);
+}
 function saveNewPurchaseProduct(){
  const newcat=document.getElementById('pnewcat').value.trim();
  const searchCat=document.getElementById('pcatSearch')?.value.trim()||'';
@@ -753,7 +785,7 @@ function saveNewPurchaseProduct(){
  let matrix=[...document.querySelectorAll('.purchasematrixqty')];if(!matrix.length){buildPurchaseMatrix();matrix=[...document.querySelectorAll('.purchasematrixqty')]}
  let rows=matrix.map(i=>({size:i.dataset.size,color:i.dataset.color,qty:Number(i.value)||0})).filter(x=>x.qty>0);if(!rows.length){alert('Enter a quantity for at least one size + colour');return}
  if(newcat&&!db.categories.includes(newcat))db.categories.push(newcat);let added=[];
- rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0}else{x={key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)};db.stock.push(x)}db.purchases=db.purchases||[];db.purchases.push({date:new Date().toISOString(),key:k,name:x.name,sku:x.sku,color:x.color,size:x.size,qty:q,cost:cost||x.cost||0,supplier:document.getElementById('psupplier').value.trim(),invoice:document.getElementById('pinvoice').value.trim()});added.push(x)});
+ rows.forEach(({size,color,qty:q})=>{let k=key(cat,sku,color,size),x=db.stock.find(a=>a.key===k);if(x){x.qty=Number(x.qty||0)+q;x.name=name;x.mrp=mrp||x.mrp;x.selling=selling;x.discount=discount;x.cost=cost||x.cost||0}else{x={key:k,category:cat,sku,name,color,size,qty:q,mrp,selling,discount,cost,code:makeCode(cat,sku,color,size)};db.stock.push(x)}db.purchases=db.purchases||[];db.purchases.push({date:new Date().toISOString(),key:k,name:x.name,sku:x.sku,color:x.color,size:x.size,qty:q,cost:cost||x.cost||0,supplier:document.getElementById('psupplier').value.trim(),invoice:document.getElementById('pinvoice').value.trim()});added.push({...x,_newQty:q})});
  if(pendingNewProductPhoto){
   if(!Array.isArray(db.productPhotos))db.productPhotos=[];
   const photoKey=productFolderKey({category:cat,sku,name}),idx=db.productPhotos.findIndex(p=>String(p.key)===photoKey);
@@ -764,7 +796,7 @@ function saveNewPurchaseProduct(){
  const m=sku.match(/^DIVA-(\d+)$/i); if(m) localStorage.setItem('DIVA_NEXT_SKU_NO',String(Number(m[1])+1));
  renderCategories(); renderStock(); renderPurchase(); renderLabels();
  document.getElementById('newPurchaseResult').innerHTML='<b>✅ Product purchase saved.</b> '+added.length+' entries added. Barcode labels are ready.';
- ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='Select sizes and colours first, then build the matrix.'; clearNewProductPhoto(); preparePurchaseSku();
+ ['pnewcat','pname','pmrp','pselling','pdiscount','pcost','psupplier','pinvoice','pcustomSizes','pcolor1','pcolor2','pcolor3','pcolor4'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''}); document.querySelectorAll('.psizecheck').forEach(x=>x.checked=false); document.getElementById('purchaseMatrix').innerHTML='Select sizes and colours first, then build the matrix.'; clearNewProductPhoto(); preparePurchaseSku(); showNewProductBarcodePreview(added);
 
 }
 function getLabelPrintSettings(){
