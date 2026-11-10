@@ -1950,9 +1950,7 @@ renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();
     syncBaseline=null;
   }
   cloudUI('☁️ Diva Collection cloud sync: '+cloudCode());
-  setTimeout(function(){
-    if(navigator.onLine && typeof syncCloudNow==='function') syncCloudNow();
-  },800);
+  // Cloud sync starts after the saved device code has been restored from IndexedDB.
 })();
 </script><script>
 (function(){
@@ -2085,7 +2083,7 @@ setTimeout(function(){
     const o=document.getElementById('appLockOverlay');
     o.style.display='flex';
     o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔐 Diva Billing App Lock</h2><p class="small">This is your first time opening the app. Create a 4–6 digit PIN. The app cannot open without a PIN.</p><input id="newLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="New PIN (4–6 digits)" style="text-align:center;font-size:22px;letter-spacing:6px"><input id="confirmLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="Confirm PIN" style="text-align:center;font-size:22px;letter-spacing:6px;margin-top:10px"><button id="saveFirstPin" style="margin-top:12px;width:100%">🔓 Save PIN & Open App</button><div id="firstPinMsg" class="small danger" style="margin-top:8px"></div></div>';
-    document.getElementById('saveFirstPin').onclick=function(){
+    document.getElementById('saveFirstPin').onclick=async function(){
       const p=document.getElementById('newLockPin').value.trim(), q=document.getElementById('confirmLockPin').value.trim();
       if(!/^\d{4,6}$/.test(p)){document.getElementById('firstPinMsg').textContent='❌ PIN must be 4 to 6 digits.';return}
       if(p!==q){document.getElementById('firstPinMsg').textContent='❌ The PINs do not match.';return}
@@ -2176,6 +2174,7 @@ setTimeout(function(){
   window.addEventListener('load',async function(){
     ensureLockUI();addHeaderButtons();initMulti();
     const savedPin=await recoverPinBeforeStartup();
+    if(navigator.onLine && cloudCode()) setTimeout(()=>syncCloudNow(),250);
     if(savedPin)lockApp(); else setupPinOnFirstLaunch();
   });
   setTimeout(function(){ensureLockUI();addHeaderButtons();initMulti()},500);
