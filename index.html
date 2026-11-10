@@ -1547,8 +1547,8 @@ function cloudUI(msg){const e=document.getElementById('cloudCode'),s=document.ge
 async function initCloud(){if(!cloudApp)cloudApp=firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();if(!cloudDb)cloudDb=firebase.firestore();if(!cloudAuth.currentUser)await cloudAuth.signInAnonymously();cloudUser=cloudAuth.currentUser}
 function cleanCloudData(){return JSON.parse(JSON.stringify(db))}
 async function syncCloudNow(){if(cloudBusy)return;const code=cloudCode();if(!code){cloudUI('Pehle New Sync Code ya existing Sync Code connect karein.');return}cloudBusy=true;cloudUI('Cloud sync ho raha hai...');try{await initCloud();const ref=cloudDb.collection('cloudShops').doc(code);const snap=await ref.get();const localStamp=Number(localStorage.getItem('DIVA_CLOUD_STAMP')||0);const remote=snap.exists?snap.data():null;if(remote&&remote.updatedAt&&Number(remote.updatedAt)>localStamp&&remote.data){const localStock=Array.isArray(db.stock)?db.stock:[];const remoteData=remote.data;const remoteStock=Array.isArray(remoteData.stock)?remoteData.stock:[];const stockKeys=new Set(remoteStock.map(x=>String(x.key||x.id||[x.category,x.sku,x.color,x.size].join('|'))));const preservedLocalRows=localStock.filter(x=>!stockKeys.has(String(x.key||x.id||[x.category,x.sku,x.color,x.size].join('|'))));db=remoteData;db.stock=remoteStock.concat(preservedLocalRows);if(preservedLocalRows.length)console.warn('DIVA safety: preserved '+preservedLocalRows.length+' local stock rows missing from cloud snapshot');if(!Array.isArray(db.stock))db.stock=[];if(!Array.isArray(db.sales))db.sales=[];if(!Array.isArray(db.expenses))db.expenses=[];if(!Array.isArray(db.stockReturns))db.stockReturns=[];if(!Array.isArray(db.purchases))db.purchases=[];if(!Array.isArray(db.salesReturns))db.salesReturns=[];save();localStorage.setItem('DIVA_CLOUD_STAMP',String(remote.updatedAt));refreshCloudApp();cloudUI('Cloud se latest data aa gaya ✓ '+new Date(remote.updatedAt).toLocaleTimeString());}else{const stamp=Date.now();await ref.set({updatedAt:stamp,device:cloudDevice(),data:cleanCloudData()});localStorage.setItem('DIVA_CLOUD_STAMP',String(stamp));cloudUI('Data cloud me save ho gaya ✓ '+new Date(stamp).toLocaleTimeString());}}catch(e){console.error(e);cloudUI('Cloud sync failed. Internet/Firebase check karein.')}finally{cloudBusy=false}}
-async function createCloudCode(){const code=randomCloudCode();localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');cloudUI('New Sync Code ready: '+code);await syncCloudNow()}
-async function connectCloudCode(){const code=document.getElementById('cloudCode').value.trim().toUpperCase();if(!code){cloudUI('Sync Code dalo.');return}localStorage.setItem('DIVA_CLOUD_CODE',code);localStorage.setItem('DIVA_CLOUD_STAMP','0');await syncCloudNow()}
+async function createCloudCode(){const code=randomCloudCode();localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)window.divaPersistCloudCode(code);localStorage.setItem('DIVA_CLOUD_STAMP','0');cloudUI('New Sync Code ready: '+code);await syncCloudNow()}
+async function connectCloudCode(){const code=document.getElementById('cloudCode').value.trim().toUpperCase();if(!code){cloudUI('Sync Code dalo.');return}localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)window.divaPersistCloudCode(code);localStorage.setItem('DIVA_CLOUD_STAMP','0');await syncCloudNow()}
 function refreshCloudApp(){renderCategories();loadBillProducts();renderStock();renderCart();renderPurchase();renderDashboard();renderBillHistory();renderCustomers();renderReport();renderLabels();renderStockReturns();renderSalesReturn()}
 /* DIVA CLOUD SYNC V3 — cloud-first initial pull + safe two-way merge */
 let syncApplying=false;
@@ -1900,7 +1900,7 @@ function divaAutoSyncTick(){
 async function createCloudCode(){
  if(!confirm('⚠️ Creating a new Sync Code may separate this device from your existing Cloud workspace. Your previous Sync Code will not change unless you confirm. Do you really want to create a new Sync Code?'))return;
  const code=randomCloudCode();
- localStorage.setItem('DIVA_CLOUD_CODE',code);
+ localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)window.divaPersistCloudCode(code);
  localStorage.removeItem(SYNC_BASELINE_KEY);
  localStorage.setItem(SYNC_APPLIED_KEY,'[]');
  syncBaseline=null;
@@ -1917,7 +1917,7 @@ async function connectCloudCode(){
   syncBaseline=syncClone(db);
   localStorage.setItem('DIVA_SYNC_SWITCH_PULL_FIRST',code);
  }
- localStorage.setItem('DIVA_CLOUD_CODE',code);
+ localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)window.divaPersistCloudCode(code);
  await syncCloudNow();
 }
 function refreshCloudApp(){renderCategories();loadBillProducts();renderStock();renderCart();renderPurchase();renderDashboard();renderBillHistory();renderCustomers();renderReport();renderLabels();renderStockReturns();renderSalesReturn();}
@@ -1944,7 +1944,7 @@ renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();
 (function(){
   const DEFAULT_DIVA_SYNC_CODE='DIVA-HNF2L3ES';
   if(!localStorage.getItem('DIVA_CLOUD_CODE')){
-    localStorage.setItem('DIVA_CLOUD_CODE',DEFAULT_DIVA_SYNC_CODE);
+    localStorage.setItem('DIVA_CLOUD_CODE',DEFAULT_DIVA_SYNC_CODE); if(window.divaPersistCloudCode)window.divaPersistCloudCode(DEFAULT_DIVA_SYNC_CODE);
     localStorage.removeItem(SYNC_BASELINE_KEY);
     localStorage.setItem(SYNC_APPLIED_KEY,'[]');
     syncBaseline=null;
@@ -2036,7 +2036,8 @@ setTimeout(function(){
   }
   // Keep a second, independent copy of the App PIN in IndexedDB.
   // This prevents a browser/PWA localStorage reset from repeatedly asking to create a new PIN.
-  function pinVault(mode, value){
+  function pinVault(mode, value, key){
+    key=key||'appPin';
     return new Promise(function(resolve){
       try{
         if(!window.indexedDB){resolve('');return}
@@ -2049,13 +2050,13 @@ setTimeout(function(){
             const tx=db.transaction('settings',mode==='read'?'readonly':'readwrite');
             const store=tx.objectStore('settings');
             if(mode==='read'){
-              const get=store.get('appPin');
+              const get=store.get(key);
               get.onsuccess=function(){resolve(String(get.result||''))};
               get.onerror=function(){resolve('')};
             }else if(mode==='delete'){
-              store.delete('appPin');tx.oncomplete=function(){resolve('')};tx.onerror=function(){resolve('')};
+              store.delete(key);tx.oncomplete=function(){resolve('')};tx.onerror=function(){resolve('')};
             }else{
-              store.put(String(value||''),'appPin');tx.oncomplete=function(){resolve('ok')};tx.onerror=function(){resolve('')};
+              store.put(String(value||''),key);tx.oncomplete=function(){resolve('ok')};tx.onerror=function(){resolve('')};
             }
           }catch(e){resolve('')}
           db.onversionchange=function(){db.close()};
@@ -2063,12 +2064,19 @@ setTimeout(function(){
       }catch(e){resolve('')}
     });
   }
+  window.divaPersistCloudCode=function(code){return pinVault('write',String(code||''),'cloudCode')};
   async function recoverPinBeforeStartup(){
     let local='';
     try{local=String(localStorage.getItem(LOCK_KEY)||'')}catch(e){}
     const vault=await pinVault('read');
     if(!local && vault){try{localStorage.setItem(LOCK_KEY,vault);local=vault}catch(e){}}
     else if(local && !vault){await pinVault('write',local)}
+    let savedCloud='';
+    try{savedCloud=String(await pinVault('read',null,'cloudCode')||'').trim().toUpperCase()}catch(e){}
+    let currentCloud='';
+    try{currentCloud=String(localStorage.getItem('DIVA_CLOUD_CODE')||'').trim().toUpperCase()}catch(e){}
+    if(savedCloud){try{localStorage.setItem('DIVA_CLOUD_CODE',savedCloud)}catch(e){}}
+    else if(currentCloud){await pinVault('write',currentCloud,'cloudCode')}
     return local||vault;
   }
   function getPin(){return String(localStorage.getItem(LOCK_KEY)||'')}
@@ -2082,6 +2090,7 @@ setTimeout(function(){
       if(!/^\d{4,6}$/.test(p)){document.getElementById('firstPinMsg').textContent='❌ PIN must be 4 to 6 digits.';return}
       if(p!==q){document.getElementById('firstPinMsg').textContent='❌ The PINs do not match.';return}
       localStorage.setItem(LOCK_KEY,p);
+      await pinVault('write',p,'appPin');
       o.style.display='none';
       startAutoLock();
     };
