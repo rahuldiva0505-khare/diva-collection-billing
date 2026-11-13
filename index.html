@@ -2116,7 +2116,7 @@ setTimeout(function(){
       const msg=document.getElementById('pinRecoveryMsg');
       const p=document.getElementById('newLockPin').value.trim(), q=document.getElementById('confirmLockPin').value.trim();
       if(!accountVerified){msg.textContent='Pehle Firebase account verify karein.';return}
-      if(!/^\\d{4,6}$/.test(p)){msg.textContent='❌ PIN 4 se 6 digit ka hona chahiye.';return}
+      if(!/^\d{4,6}$/.test(p)){msg.textContent='❌ PIN 4 se 6 digit ka hona chahiye.';return}
       if(p!==q){msg.textContent='❌ Dono PIN match nahi karte.';return}
       try{
         localStorage.setItem(LOCK_KEY,p);
