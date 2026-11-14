@@ -2083,15 +2083,51 @@ setTimeout(function(){
     ensureLockUI();
     const o=document.getElementById('appLockOverlay');
     o.style.display='flex';
-    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(360px,92vw);text-align:center"><h2>🔐 Diva Billing App Lock</h2><p class="small">This is your first time opening the app. Create a 4–6 digit PIN. The app cannot open without a PIN.</p><input id="newLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="New PIN (4–6 digits)" style="text-align:center;font-size:22px;letter-spacing:6px"><input id="confirmLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="Confirm PIN" style="text-align:center;font-size:22px;letter-spacing:6px;margin-top:10px"><button id="saveFirstPin" style="margin-top:12px;width:100%">🔓 Save PIN & Open App</button><div id="firstPinMsg" class="small danger" style="margin-top:8px"></div></div>';
+    o.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:min(380px,92vw);text-align:center"><h2>🔐 Diva Billing App Lock</h2><p class="small">App data reset detected. First verify your authorized Firebase account, then create a device PIN.</p><input id="pinRecoveryEmail" type="email" autocomplete="username" value="rahuldiva0505@gmail.com" placeholder="Firebase account email" style="width:100%;box-sizing:border-box;padding:11px;margin:8px 0"><input id="pinRecoveryPassword" type="password" autocomplete="current-password" placeholder="Firebase account password" style="width:100%;box-sizing:border-box;padding:11px"><button id="verifyPinRecovery" style="margin-top:12px;width:100%">Verify Firebase Account</button><div id="pinRecoveryMsg" class="small" style="margin-top:8px"></div><div id="firstPinFields" style="display:none"><p class="small">Account verified. Create a new 4–6 digit PIN for this device.</p><input id="newLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="New PIN (4–6 digits)" style="text-align:center;font-size:22px;letter-spacing:6px;width:100%;box-sizing:border-box"><input id="confirmLockPin" type="password" inputmode="numeric" maxlength="6" placeholder="Confirm PIN" style="text-align:center;font-size:22px;letter-spacing:6px;margin-top:10px;width:100%;box-sizing:border-box"><button id="saveFirstPin" style="margin-top:12px;width:100%">🔓 Save PIN & Open App</button></div></div>';
+    let accountVerified=false;
+    document.getElementById('verifyPinRecovery').onclick=async function(){
+      const email=document.getElementById('pinRecoveryEmail').value.trim();
+      const password=document.getElementById('pinRecoveryPassword').value;
+      const msg=document.getElementById('pinRecoveryMsg');
+      const btn=this;
+      if(!email||!password){msg.textContent='Email aur password dono bharein.';return}
+      btn.disabled=true;msg.textContent='Firebase account verify ho raha hai...';
+      try{
+        await initCloud();
+        if(cloudAuth.currentUser)await cloudAuth.signOut();
+        const cred=await cloudAuth.signInWithEmailAndPassword(email,password);
+        const allowedUids=['8jAS7UKkf9OfNgtW7yiMtKIrK512','yCk8UGcn1FV6nvBkvNKu9ZlWDmG3'];
+        if(!divaUserAuthorized(cred.user)||!allowedUids.includes(String(cred.user.uid))){
+          await cloudAuth.signOut();
+          throw new Error('Ye Firebase account Diva Collection ke approved owner account se match nahi karta.');
+        }
+        accountVerified=true;
+        document.getElementById('pinRecoveryPassword').value='';
+        document.getElementById('pinRecoveryEmail').disabled=true;
+        document.getElementById('verifyPinRecovery').style.display='none';
+        document.getElementById('firstPinFields').style.display='block';
+        msg.textContent='✅ Firebase account verified. Ab device PIN banayein.';
+      }catch(e){
+        msg.textContent='❌ Verification nahi hui: '+(e.code==='auth/invalid-credential'?'Email ya password galat hai.':(e.message||e.code||'Firebase error'));
+        btn.disabled=false;
+      }
+    };
     document.getElementById('saveFirstPin').onclick=async function(){
+      const msg=document.getElementById('pinRecoveryMsg');
       const p=document.getElementById('newLockPin').value.trim(), q=document.getElementById('confirmLockPin').value.trim();
-      if(!/^\d{4,6}$/.test(p)){document.getElementById('firstPinMsg').textContent='❌ PIN must be 4 to 6 digits.';return}
-      if(p!==q){document.getElementById('firstPinMsg').textContent='❌ The PINs do not match.';return}
-      localStorage.setItem(LOCK_KEY,p);
-      await pinVault('write',p,'appPin');
-      o.style.display='none';
-      startAutoLock();
+      if(!accountVerified){msg.textContent='Pehle Firebase account verify karein.';return}
+      if(!/^\d{4,6}$/.test(p)){msg.textContent='❌ PIN 4 se 6 digit ka hona chahiye.';return}
+      if(p!==q){msg.textContent='❌ Dono PIN match nahi karte.';return}
+      try{
+        localStorage.setItem(LOCK_KEY,p);
+        const saved=await pinVault('write',p,'appPin');
+        if(saved!=='ok')throw new Error('Device PIN vault me save nahi ho paya. Browser storage check karein.');
+        o.style.display='none';
+        startAutoLock();
+      }catch(e){
+        try{localStorage.removeItem(LOCK_KEY)}catch(ignore){}
+        msg.textContent='❌ PIN save nahi hua: '+(e.message||'Storage error');
+      }
     };
   }
   function lockApp(){
