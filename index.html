@@ -2168,13 +2168,22 @@ setTimeout(function(){
     if(p===getPin()||(sharedPinRecord&&await verifySharedPin(p,sharedPinRecord))){try{await cachePinOnDevice(p)}catch(e){}document.getElementById('appLockOverlay').style.display='none';startAutoLock()}
     else document.getElementById('unlockMsg').textContent='❌ Incorrect PIN';
   }
-  function setPin(){
+  async function setPin(){
     const old=getPin();
     if(old && prompt('Enter current PIN')!==old){alert('❌ Current PIN is incorrect.');return}
-    const p=prompt('Create a new 4–6 digit PIN');
+    const p=prompt('Create a new 4–6 digit shared PIN');
     if(!/^\d{4,6}$/.test(String(p||''))){alert('PIN must be 4 to 6 digits.');return}
-    localStorage.setItem(LOCK_KEY,p); pinVault('write',p); alert('✅ App Lock PIN has been set.');
-    startAutoLock();
+    try{
+      await initCloud();
+      if(!divaUserAuthorized(cloudAuth.currentUser))throw new Error('Pehle Cloud Account Login me Firebase account login karein. Shared PIN update nahi hua.');
+      const record=await makeSharedPinRecord(p);
+      record.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
+      await sharedPinRef().set(record);
+      sharedPinRecord=record;
+      await cachePinOnDevice(p);
+      alert('✅ Shared PIN mobile aur laptop dono ke liye update ho gaya.');
+      startAutoLock();
+    }catch(e){alert('❌ PIN update nahi hua: '+(e.message||e));}
   }
   function removePin(){
     const p=prompt('Enter current PIN');
