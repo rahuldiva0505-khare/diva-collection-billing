@@ -2091,6 +2091,8 @@ setTimeout(function(){
       const record=await makeSharedPinRecord(pin);record.updatedAt=firebase.firestore.FieldValue.serverTimestamp();tx.set(ref,record);return {record:record,created:true};});
   }
   async function cachePinOnDevice(pin){localStorage.setItem(LOCK_KEY,pin);const saved=await pinVault('write',pin,'appPin');if(saved!=='ok')throw new Error('Device PIN save nahi ho paya.');}
+  // Firebase may restore its saved login after the first page load; hydrate the shared verifier then too.
+  try{if(cloudAuth)cloudAuth.onAuthStateChanged(function(user){if(divaUserAuthorized(user)){getOrCreateSharedPin(getPin()).then(function(result){sharedPinRecord=result.record||null;}).catch(function(e){console.warn('Shared PIN verifier not loaded.',e)});}});}catch(e){}
   async function recoverPinBeforeStartup(){
     let local='';
     try{local=String(localStorage.getItem(LOCK_KEY)||'')}catch(e){}
