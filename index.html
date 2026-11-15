@@ -2064,12 +2064,40 @@ setTimeout(function(){
     });
   }
   window.divaPersistCloudCode=function(code){return pinVault('write',String(code||''),'cloudCode')};
+  // Shared PIN verifier: Firestore stores a salted PBKDF2 hash, never the raw PIN.
+  const SHARED_PIN_ITERATIONS=310000;
+  let sharedPinRecord=null;
+  function bytesToB64(bytes){let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin);}
+  function b64ToBytes(value){return Uint8Array.from(atob(String(value||'')),c=>c.charCodeAt(0));}
+  async function makeSharedPinRecord(pin){
+    if(!window.crypto||!crypto.subtle)throw new Error('Secure PIN storage is not supported by this browser.');
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:salt,iterations:SHARED_PIN_ITERATIONS,hash:'SHA-256'},key,256);
+    return {version:1,algorithm:'PBKDF2-SHA-256',iterations:SHARED_PIN_ITERATIONS,salt:bytesToB64(salt),hash:bytesToB64(new Uint8Array(bits))};
+  }
+  async function verifySharedPin(pin,record){
+    try{if(!record||record.algorithm!=='PBKDF2-SHA-256'||!record.salt||!record.hash)return false;
+      const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+      const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:b64ToBytes(record.salt),iterations:Number(record.iterations)||SHARED_PIN_ITERATIONS,hash:'SHA-256'},key,256);
+      const a=new Uint8Array(bits),b=b64ToBytes(record.hash);if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0;
+    }catch(e){return false;}
+  }
+  function sharedPinRef(){return cloudDb.collection('appSecurity').doc('sharedPin');}
+  async function getOrCreateSharedPin(pin){
+    await initCloud();if(!divaUserAuthorized(cloudAuth.currentUser))throw new Error('Authorized Firebase login required for shared PIN.');
+    const ref=sharedPinRef();
+    return cloudDb.runTransaction(async function(tx){const snap=await tx.get(ref);if(snap.exists)return {record:snap.data(),created:false};if(!pin)return {record:null,created:false};
+      const record=await makeSharedPinRecord(pin);record.updatedAt=firebase.firestore.FieldValue.serverTimestamp();tx.set(ref,record);return {record:record,created:true};});
+  }
+  async function cachePinOnDevice(pin){localStorage.setItem(LOCK_KEY,pin);const saved=await pinVault('write',pin,'appPin');if(saved!=='ok')throw new Error('Device PIN save nahi ho paya.');}
   async function recoverPinBeforeStartup(){
     let local='';
     try{local=String(localStorage.getItem(LOCK_KEY)||'')}catch(e){}
     const vault=await pinVault('read');
     if(!local && vault){try{localStorage.setItem(LOCK_KEY,vault);local=vault}catch(e){}}
     else if(local && !vault){await pinVault('write',local)}
+    try{await initCloud();if(divaUserAuthorized(cloudAuth.currentUser)){const shared=await getOrCreateSharedPin(local||vault||'');sharedPinRecord=shared.record||null;}}catch(e){console.warn('Diva shared PIN sync unavailable; local PIN remains active.',e)}
     let savedCloud='';
     try{savedCloud=String(await pinVault('read',null,'cloudCode')||'').trim().toUpperCase()}catch(e){}
     let currentCloud='';
@@ -2101,12 +2129,14 @@ setTimeout(function(){
           await cloudAuth.signOut();
           throw new Error('Ye Firebase account Diva Collection ke approved owner account se match nahi karta.');
         }
+        const shared=await getOrCreateSharedPin('');
+        sharedPinRecord=shared.record||null;
         accountVerified=true;
         document.getElementById('pinRecoveryPassword').value='';
         document.getElementById('pinRecoveryEmail').disabled=true;
         document.getElementById('verifyPinRecovery').style.display='none';
         document.getElementById('firstPinFields').style.display='block';
-        msg.textContent='✅ Firebase account verified. Ab device PIN banayein.';
+        if(sharedPinRecord){document.querySelector('#firstPinFields p').textContent='Shared PIN pehle se bana hua hai. Wahi PIN dono devices par dalein.';document.getElementById('newLockPin').placeholder='Existing shared PIN';document.getElementById('confirmLockPin').style.display='none';document.getElementById('saveFirstPin').textContent='Verify Shared PIN & Open App';msg.textContent='✅ Account verified. Apna existing shared PIN dalein.';}else{document.querySelector('#firstPinFields p').textContent='Pehli baar shared PIN banayein. Yehi PIN mobile aur laptop dono par chalega.';document.getElementById('confirmLockPin').style.display='block';document.getElementById('saveFirstPin').textContent='Save Shared PIN & Open App';msg.textContent='✅ Account verified. Naya shared PIN banayein.';}
       }catch(e){
         msg.textContent='❌ Verification nahi hui: '+(e.code==='auth/invalid-credential'?'Email ya password galat hai.':(e.message||e.code||'Firebase error'));
         btn.disabled=false;
@@ -2117,17 +2147,12 @@ setTimeout(function(){
       const p=document.getElementById('newLockPin').value.trim(), q=document.getElementById('confirmLockPin').value.trim();
       if(!accountVerified){msg.textContent='Pehle Firebase account verify karein.';return}
       if(!/^\d{4,6}$/.test(p)){msg.textContent='❌ PIN 4 se 6 digit ka hona chahiye.';return}
-      if(p!==q){msg.textContent='❌ Dono PIN match nahi karte.';return}
+      if(!sharedPinRecord&&p!==q){msg.textContent='❌ Dono PIN match nahi karte.';return}
       try{
-        localStorage.setItem(LOCK_KEY,p);
-        const saved=await pinVault('write',p,'appPin');
-        if(saved!=='ok')throw new Error('Device PIN vault me save nahi ho paya. Browser storage check karein.');
-        o.style.display='none';
-        startAutoLock();
-      }catch(e){
-        try{localStorage.removeItem(LOCK_KEY)}catch(ignore){}
-        msg.textContent='❌ PIN save nahi hua: '+(e.message||'Storage error');
-      }
+        if(sharedPinRecord){if(!await verifySharedPin(p,sharedPinRecord))throw new Error('Shared PIN galat hai. Dono devices ka wahi PIN dalein.');}
+        else{const result=await getOrCreateSharedPin(p);sharedPinRecord=result.record||null;if(!sharedPinRecord||!await verifySharedPin(p,sharedPinRecord))throw new Error('Shared PIN Firebase me save/verify nahi ho paya. Koi local change nahi kiya.');}
+        await cachePinOnDevice(p);o.style.display='none';startAutoLock();
+      }catch(e){msg.textContent='❌ '+(e.message||'PIN save nahi hua.');}
     };
   }
   function lockApp(){
@@ -2136,9 +2161,9 @@ setTimeout(function(){
     document.getElementById('unlockPin').value='';
     document.getElementById('unlockMsg').textContent='';
   }
-  function unlockApp(){
+  async function unlockApp(){
     const p=document.getElementById('unlockPin').value.trim();
-    if(p===getPin()){document.getElementById('appLockOverlay').style.display='none';startAutoLock()}
+    if(p===getPin()||(sharedPinRecord&&await verifySharedPin(p,sharedPinRecord))){try{await cachePinOnDevice(p)}catch(e){}document.getElementById('appLockOverlay').style.display='none';startAutoLock()}
     else document.getElementById('unlockMsg').textContent='❌ Incorrect PIN';
   }
   function setPin(){
