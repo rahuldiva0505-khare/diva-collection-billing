@@ -2165,7 +2165,8 @@ setTimeout(function(){
   }
   async function unlockApp(){
     const p=document.getElementById('unlockPin').value.trim();
-    if(p===getPin()||(sharedPinRecord&&await verifySharedPin(p,sharedPinRecord))){try{await cachePinOnDevice(p)}catch(e){}document.getElementById('appLockOverlay').style.display='none';startAutoLock()}
+    const valid=sharedPinRecord?await verifySharedPin(p,sharedPinRecord):p===getPin();
+    if(valid){try{await cachePinOnDevice(p)}catch(e){}document.getElementById('appLockOverlay').style.display='none';startAutoLock()}
     else document.getElementById('unlockMsg').textContent='❌ Incorrect PIN';
   }
   async function setPin(){
