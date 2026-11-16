@@ -1797,8 +1797,7 @@ async function cloudAccountLogin(){
   // have started with an anonymous Firebase session, so startup alone cannot
   // always hydrate the shared PIN on this device.
   try{
-   const shared=await getOrCreateSharedPin(getPin());
-   sharedPinRecord=shared.record||null;
+   await window.divaLoadSharedPinAfterLogin();
    if(status)status.textContent='✅ Authorized login ho gaya. Shared PIN Firebase se verify ho gaya.';
   }catch(pinError){
    console.warn('DIVA shared PIN login hydration failed.',pinError);
@@ -2100,6 +2099,8 @@ setTimeout(function(){
     return cloudDb.runTransaction(async function(tx){const snap=await tx.get(ref);if(snap.exists)return {record:snap.data(),created:false};if(!pin)return {record:null,created:false};
       const record=await makeSharedPinRecord(pin);record.updatedAt=firebase.firestore.FieldValue.serverTimestamp();tx.set(ref,record);return {record:record,created:true};});
   }
+  // Expose a narrow bridge because the Cloud Account Login handler is outside this PIN-lock closure.
+  window.divaLoadSharedPinAfterLogin=async function(){const shared=await getOrCreateSharedPin(getPin());sharedPinRecord=shared.record||null;return sharedPinRecord;};
   async function cachePinOnDevice(pin){localStorage.setItem(LOCK_KEY,pin);const saved=await pinVault('write',pin,'appPin');if(saved!=='ok')throw new Error('Device PIN save nahi ho paya.');}
   // Firebase may restore its saved login after the first page load; hydrate the shared verifier then too.
   let sharedPinUnsub=null;
