@@ -1793,7 +1793,17 @@ async function cloudAccountLogin(){
    if(status)status.textContent='⛔ Is account ko app owner ne authorize nahi kiya. Owner se permission lein.';
    return;
   }
-  if(status)status.textContent='✅ Authorized login ho gaya: '+(cloudUser.email||email);
+  // Load the shared PIN verifier after an explicit owner login. The app may
+  // have started with an anonymous Firebase session, so startup alone cannot
+  // always hydrate the shared PIN on this device.
+  try{
+   const shared=await getOrCreateSharedPin(getPin());
+   sharedPinRecord=shared.record||null;
+   if(status)status.textContent='✅ Authorized login ho gaya. Shared PIN Firebase se verify ho gaya.';
+  }catch(pinError){
+   console.warn('DIVA shared PIN login hydration failed.',pinError);
+   if(status)status.textContent='✅ Authorized login ho gaya; Shared PIN sync abhi verify nahi hua. '+(pinError.message||'');
+  }
   document.getElementById('cloudPassword').value='';
   if(cloudCode())await syncCloudNow();
  }catch(e){console.error('DIVA ACCOUNT LOGIN',e);if(status)status.textContent='❌ Login nahi hua: '+(e.code==='auth/invalid-credential'?'Email ya password galat hai.':(e.message||e.code||'Firebase error'));}
