@@ -1825,7 +1825,7 @@ function updateCloudAuthStatus(user){
  const status=document.getElementById('cloudAuthStatus');
  if(status)status.textContent=divaUserAuthorized(user)?'✅ Authorized login: '+(user.email||'Firebase account'):'Cloud account login required for syncing. Local billing remains available.';
 }
-(function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);});}catch(e){console.warn('Diva Firebase auth status',e);}})();
+(function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);if(divaUserAuthorized(user)){restoreCloudCodeFromFirebase().then(function(code){if(code&&window.divaLockRecoveryReady)syncCloudNow();}).catch(function(e){console.warn('DIVA Cloud Code restore failed.',e);});}});}catch(e){console.warn('Diva Firebase auth status',e);}})();
 
 async function syncCloudNow(){
  if(cloudBusy)return;
