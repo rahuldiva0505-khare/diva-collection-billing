@@ -1542,6 +1542,8 @@ const FIREBASE_CONFIG={apiKey:"AIzaSyBORF42SXYvSvOAqjdVU3fOWg51XB08T4I",authDoma
 let cloudApp=null,cloudAuth=null,cloudDb=null,cloudUser=null,cloudBusy=false;
 function cloudDevice(){let x=localStorage.getItem('DIVA_CLOUD_DEVICE');if(!x){x=crypto.randomUUID();localStorage.setItem('DIVA_CLOUD_DEVICE',x)}return x}
 function cloudCode(){return String(localStorage.getItem('DIVA_CLOUD_CODE')||'').trim().toUpperCase()}
+async function persistCloudCodeToFirebase(code){code=String(code||'').trim().toUpperCase();if(!/^DIVA-[A-Z0-9]{8}$/.test(code))throw new Error('Invalid Diva Cloud Code.');await initCloud();const user=cloudAuth&&cloudAuth.currentUser;if(!divaUserAuthorized(user))throw new Error('Pehle authorized Firebase account se Login karein.');await cloudDb.collection('appSecurity').doc('cloudSync').set({cloudCode:code,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid},{merge:true});return code;}
+async function restoreCloudCodeFromFirebase(){await initCloud();const user=cloudAuth&&cloudAuth.currentUser;if(!divaUserAuthorized(user))return '';const ref=cloudDb.collection('appSecurity').doc('cloudSync');const snap=await ref.get();const saved=snap.exists?String(snap.data().cloudCode||'').trim().toUpperCase():'';if(saved&&/^DIVA-[A-Z0-9]{8}$/.test(saved)){localStorage.setItem('DIVA_CLOUD_CODE',saved);if(window.divaPersistCloudCode)await window.divaPersistCloudCode(saved);return saved;}const local=cloudCode();if(local){await persistCloudCodeToFirebase(local);return local;}return '';}
 function randomCloudCode(){const a=new Uint8Array(8);crypto.getRandomValues(a);return 'DIVA-'+Array.from(a,x=>(x%36).toString(36)).join('').toUpperCase()}
 function cloudUI(msg){const e=document.getElementById('cloudCode'),s=document.getElementById('cloudStatus'),rs=document.getElementById('skuRecoveryStatus');if(e)e.value=cloudCode();if(s&&msg)s.textContent=msg;if(rs&&msg)rs.textContent=msg}
 async function initCloud(){if(!cloudApp)cloudApp=firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();if(!cloudDb)cloudDb=firebase.firestore();if(!cloudAuth.currentUser)await cloudAuth.signInAnonymously();cloudUser=cloudAuth.currentUser}
@@ -1804,7 +1806,8 @@ async function cloudAccountLogin(){
    if(status)status.textContent='✅ Authorized login ho gaya; Shared PIN sync abhi verify nahi hua. '+(pinError.message||'');
   }
   document.getElementById('cloudPassword').value='';
-  if(cloudCode())await syncCloudNow();
+  const restoredCode=await restoreCloudCodeFromFirebase();
+  if(restoredCode)await syncCloudNow();
  }catch(e){console.error('DIVA ACCOUNT LOGIN',e);if(status)status.textContent='❌ Login nahi hua: '+(e.code==='auth/invalid-credential'?'Email ya password galat hai.':(e.message||e.code||'Firebase error'));}
 }
 async function cloudAccountLogout(){
@@ -1822,7 +1825,7 @@ function updateCloudAuthStatus(user){
  const status=document.getElementById('cloudAuthStatus');
  if(status)status.textContent=divaUserAuthorized(user)?'✅ Authorized login: '+(user.email||'Firebase account'):'Cloud account login required for syncing. Local billing remains available.';
 }
-(function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);});}catch(e){console.warn('Diva Firebase auth status',e);}})();
+(function(){try{if(!cloudApp)cloudApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);if(!cloudAuth)cloudAuth=firebase.auth();cloudAuth.onAuthStateChanged(function(user){updateCloudAuthStatus(user);if(divaUserAuthorized(user)){restoreCloudCodeFromFirebase().then(function(code){if(code&&window.divaLockRecoveryReady)syncCloudNow();}).catch(function(e){console.warn('DIVA Cloud Code restore failed.',e);});}});}catch(e){console.warn('Diva Firebase auth status',e);}})();
 
 async function syncCloudNow(){
  if(cloudBusy)return;
@@ -1909,7 +1912,8 @@ function divaAutoSyncTick(){
 async function createCloudCode(){
  if(!confirm('⚠️ Creating a new Sync Code may separate this device from your existing Cloud workspace. Your previous Sync Code will not change unless you confirm. Do you really want to create a new Sync Code?'))return;
  const code=randomCloudCode();
- localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)window.divaPersistCloudCode(code);
+ try{await persistCloudCodeToFirebase(code);}catch(e){cloudUI('❌ Cloud Code Firebase me save nahi hua: '+(e.message||e));return;}
+ localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)await window.divaPersistCloudCode(code);
  localStorage.removeItem(SYNC_BASELINE_KEY);
  localStorage.setItem(SYNC_APPLIED_KEY,'[]');
  syncBaseline=null;
@@ -1926,7 +1930,8 @@ async function connectCloudCode(){
   syncBaseline=syncClone(db);
   localStorage.setItem('DIVA_SYNC_SWITCH_PULL_FIRST',code);
  }
- localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)window.divaPersistCloudCode(code);
+ try{await persistCloudCodeToFirebase(code);}catch(e){cloudUI('❌ Cloud Code Firebase me save nahi hua: '+(e.message||e));return;}
+ localStorage.setItem('DIVA_CLOUD_CODE',code); if(window.divaPersistCloudCode)await window.divaPersistCloudCode(code);
  await syncCloudNow();
 }
 function refreshCloudApp(){renderCategories();loadBillProducts();renderStock();renderCart();renderPurchase();renderDashboard();renderBillHistory();renderCustomers();renderReport();renderLabels();renderStockReturns();renderSalesReturn();}
@@ -1951,15 +1956,9 @@ function openLaptopHelp(){alert("On a laptop, open index.html directly in Chrome
 
 renderCategories();loadBillProducts();renderStock();renderCart();renderLabels();renderPurchase();renderDashboard();
 (function(){
-  const DEFAULT_DIVA_SYNC_CODE='DIVA-HNF2L3ES';
-  if(!localStorage.getItem('DIVA_CLOUD_CODE')){
-    localStorage.setItem('DIVA_CLOUD_CODE',DEFAULT_DIVA_SYNC_CODE); if(window.divaPersistCloudCode)window.divaPersistCloudCode(DEFAULT_DIVA_SYNC_CODE);
-    localStorage.removeItem(SYNC_BASELINE_KEY);
-    localStorage.setItem(SYNC_APPLIED_KEY,'[]');
-    syncBaseline=null;
-  }
-  cloudUI('☁️ Diva Collection cloud sync: '+cloudCode());
-  // Cloud sync starts after the saved device code has been restored from IndexedDB.
+  // Never invent or auto-generate a replacement Cloud Code when browser storage is empty.
+  // The authorized Firebase account restores the saved workspace code after login.
+  cloudUI(cloudCode()?'☁️ Diva Collection cloud sync: '+cloudCode():'🔐 Login to restore your saved Cloud Sync Code.');
 })();
 </script><script>
 (function(){
